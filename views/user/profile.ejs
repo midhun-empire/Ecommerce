@@ -1,0 +1,65 @@
+
+<%-include("../../views/partials/user/header.ejs")%>
+<div class="hero">
+  <div class="container">
+      <div class="row justify-content-between">
+          <div class="col-lg-5">
+              <div class="intro-excerpt">
+                  <h1>User Profile</h1>
+              </div>
+          </div>
+      </div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Display user information -->
+  <h3>Name: <%= user.name %></h3>
+  <p>Email: <%= user.email %></p>
+  <p>Phone: <%= user.phone %></p>
+  <p>Address: <%= user.address %></p>
+
+  <!-- Buttons for editing actions -->
+  <div class="mt-4">
+      <a href="/profile/edit-address">
+          <button class="btn btn-primary">Edit Address</button>
+      </a>
+      <a href="/profile/change-password">
+          <button class="btn btn-secondary">Change Password</button>
+      </a>
+      <a href="/profile/delete-account">
+          <button class="btn btn-danger">Delete Account</button>
+      </a>
+  </div>
+
+  <!-- Display orders -->
+  <h4 class="mt-5">Orders</h4>
+  <table class="table">
+      <thead>
+          <tr>
+              <th>Order ID</th>
+              <th>Product</th>
+              <th>Date</th>
+              <th>Status</th>
+          </tr>
+      </thead>
+      <tbody>
+          <% user.orders.forEach(order => { %>
+              <tr>
+                  <td><%= order.id %></td>
+                  <td><%= order.product %></td>
+                  <td><%= order.date %></td>
+                  <td><%= order.status %></td>
+              </tr>
+          <% }) %>
+      </tbody>
+  </table>
+</div>
+
+  <!-- Scripts -->
+  <script src="/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/tiny-slider.js"></script>
+  <script src="/js/custom.js"></script>
+  
+
+<%-include("../../views/partials/user/footer.ejs")%>

@@ -1,10 +1,19 @@
 const express = require('express')
 const app = express()
 const path = require('path')
+const session = require('express-session')
 const userRouter= require('./routes/userRouter.js')
 const env = require("dotenv").config()
 const db = require("./config/db.js")
 db()
+
+app.use(session({
+    secret: 'your-secret-key',  
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }  
+  }))
+
 
 app.use(express.json())
 app.use(express.urlencoded({extended:true}))

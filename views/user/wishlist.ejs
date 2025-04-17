@@ -1,0 +1,81 @@
+
+<%-include("../../views/partials/user/header.ejs")%>
+
+
+<!-- Start Hero Section -->
+<div class="hero">
+    <div class="container">
+      <div class="row justify-content-between">
+        <div class="col-lg-5">
+          <div class="intro-excerpt">
+            <h1>Wishlist</h1>
+          </div>
+        </div>
+        <div class="col-lg-7"></div>
+      </div>
+    </div>
+  </div>
+  <!-- End Hero Section -->
+  
+  <div class="untree_co-section before-footer-section">
+    <div class="container">
+      <div class="row mb-5">
+        <div class="site-blocks-table">
+          <table class="table">
+            <thead>
+              <tr>
+                <th class="product-thumbnail">Image</th>
+                <th class="product-name">Product</th>
+                <th class="product-price">Price</th>
+                <th class="product-stock">Stock</th>
+                <th class="product-remove">Remove</th>
+                <th class="product-action">Add to Cart</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (typeof wishlistItems !== 'undefined' && wishlistItems.length > 0) { %>
+                <% wishlistItems.forEach(item => { %>
+                  <tr>
+                    <td class="product-thumbnail">
+                      <img src="<%= item.product.image %>" class="img-fluid" style="width: 100px;">
+                    </td>
+                    <td class="product-name">
+                      <h2 class="h5 text-black"><%= item.product.name %></h2>
+                    </td>
+                    <td><%= item.product.price %> ₹</td>
+                    <td>
+                      <% if (item.product.stock > 0) { %>
+                        <span class="text-success">In Stock</span>
+                      <% } else { %>
+                        <span class="text-danger">Out of Stock</span>
+                      <% } %>
+                    </td>
+                    <td><a href="#" class="btn btn-sm btn-outline-danger">Remove</a></td>
+                    <td>
+                      <% if (item.product.stock > 0) { %>
+                        <a href="#" class="btn btn-sm btn-dark">Add to Cart</a>
+                      <% } else { %>
+                        <button class="btn btn-sm btn-secondary" disabled>Out of Stock</button>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="6" class="text-center text-muted">Your wishlist is currently empty.</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+  
+      <div class="row">
+        <div class="col-md-6">
+          <a href="/shop" class="btn btn-outline-black btn-sm">Continue Shopping</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+ <%-include("../../views/partials/user/footer.ejs")%> 

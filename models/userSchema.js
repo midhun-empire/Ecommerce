@@ -1,7 +1,6 @@
-import { name } from "ejs"
-import { type } from "os"
 
-const mongoose = require("mongoose")
+
+const mongoose = require('mongoose')
 const {Schema} = mongoose
 
 
@@ -22,10 +21,7 @@ const userSchema = new Schema({
         unique:false,
         sparse:true
     },
-    googleId:{
-        type:String,
-         unique:true,   
-    },
+   
     password:{
         type:String,
         required:false
@@ -50,6 +46,11 @@ const userSchema = new Schema({
         type:Schema.Types.ObjectId,
         ref:"Order"
     }],
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
     createdOn:{
         type:Date,
         default:Date.now,
