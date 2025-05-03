@@ -1,0 +1,48 @@
+<%- include('../../views/partials/admin/header') %>
+
+<!-- Dashboard Widgets -->
+<div class="widgets">
+  <!-- Example widget -->
+  <div class="widget">
+    <div class="widget-header">
+      <div>
+        <div class="widget-title">Total Sales</div>
+        <div class="widget-value">$48,259</div>
+      </div>
+      <div class="widget-icon bg-primary">
+        <i class="fas fa-chart-line"></i>
+      </div>
+    </div>
+    <div>
+      <span class="text-success"><i class="fas fa-arrow-up"></i> 12.5%</span>
+      <span style="font-size: 0.8rem; color: #6c757d;"> from last month</span>
+    </div>
+  </div>
+
+  <!-- Add other widgets here... -->
+</div>
+
+<!-- Charts and Activities -->
+<div class="data-section">
+  <div class="chart-container">
+    <h3 class="section-title">Sales Analytics</h3>
+    <div class="chart-placeholder">Chart Placeholder</div>
+  </div>
+
+  <div class="recent-activity">
+    <h3 class="section-title">Recent Activity</h3>
+    <ul class="activity-list">
+      <li class="activity-item">
+        <div class="activity-icon bg-success"><i class="fas fa-check"></i></div>
+        <div class="activity-details">
+          <h4>Order #10248 completed</h4>
+          <p>20 minutes ago</p>
+        </div>
+      </li>
+      <!-- More activities... -->
+    </ul>
+  </div>
+</div>
+
+
+<%- include("../../views/partials/admin/footer") %>

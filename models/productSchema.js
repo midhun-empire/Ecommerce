@@ -13,14 +13,14 @@ const productSchema = new Schema({
         required:true
 
     },
-    brand:{
-        type:String,
-        required:true
-
-    },
+    brand: {
+        type: Schema.Types.ObjectId,  // Updated to reference Brand
+        ref: 'Brand',  // This will link to the Brand model
+        required: true,
+      },
     category:{
         type:Schema.Types.ObjectId,
-        ref:"category",
+        ref:"Category",
         required:true
 
     },

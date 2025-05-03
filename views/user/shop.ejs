@@ -1,505 +1,345 @@
-        <%-include("../../views/partials/user/header.ejs")%>
-		
-
-
-        <div class="container px-0">
-            <!-- Selected Filters Section -->
-            <div class="selected-filters" id="selectedFilters">
-                <!-- Dynamically populated by JavaScript -->
-            </div>
-            
-            <div class="row mt-5 ">
-                <!-- Sidebar Filters -->
-                <div class="col-md-3 mt-5">
-                    <div class="filter-panel ">
-                        <h4 class="filter-title d-flex align-items-center">
-                            <i class="fa-solid fa-sliders me-2 fs-5"></i>Filters
-                          </h4>
-                          
-                        
-                        <!-- Category Filter -->
-                        <div class="filter-group mt-3">
-                            <h5>Categories</h5>
-                            <div class="form-check">
-                                <input class="form-check-input filter-checkbox" type="checkbox" value="chairs" id="categoryChairs" data-filter-type="category" data-filter-value="chairs">
-                                <label class="form-check-label" for="categoryChairs">
-                                    Chairs
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input filter-checkbox" type="checkbox" value="tables" id="categoryTables" data-filter-type="category" data-filter-value="tables">
-                                <label class="form-check-label" for="categoryTables">
-                                    Tables
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input filter-checkbox" type="checkbox" value="sofas" id="categorySofas" data-filter-type="category" data-filter-value="sofas">
-                                <label class="form-check-label" for="categorySofas">
-                                    Sofas
-                                </label>
-                            </div>
-                          
-                        </div>
-                        
-                        <!-- Brand Filter -->
-                        <div class="filter-group mt-4">
-                            <h5>Brands</h5>
-                            <div class="form-check">
-                                <input class="form-check-input filter-checkbox" type="checkbox" value="nordic" id="brandNordic" data-filter-type="brand" data-filter-value="nordic">
-                                <label class="form-check-label" for="brandNordic">
-                                    WoodenStreet
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input filter-checkbox" type="checkbox" value="kruzo" id="brandKruzo" data-filter-type="brand" data-filter-value="kruzo">
-                                <label class="form-check-label" for="brandKruzo">
-                                    Pepperfry
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input filter-checkbox" type="checkbox" value="ergo" id="brandErgo" data-filter-type="brand" data-filter-value="ergo">
-                                <label class="form-check-label" for="brandErgo">
-                                    Warner Bros
-                                </label>
-                            </div>
-                        
-                        </div>
-                        
-                        <!-- Price Range Filter -->
-                        <div class="filter-group mt-5 ">
-                            <h5>Price Range</h5>
-                            <label for="priceRange" class="form-label ">Up to $<span id="priceValue">200</span></label>
-                            <input type="range" class="form-range  " min="0" max="200" step="10" value="200" id="priceRange">
-                        </div>
-                        
-                       
-                        
-                        <!-- Reset Filters -->
-                        <button class="btn btn-outline-secondary w-70" id="resetFilters">Reset Filters</button>
-                    </div>
-                </div>
-  
-            
-             
-                <!-- Product Grid -->
-                <div class="col-md-9 mt-5">
-                   
-                    
-                    <!-- Sort Controls -->
-                    <div class="d-flex justify-content-between align-items-center mb-4 ">
-                        <div class="text-center w-100">
-                            <span id="productCount">8</span> products found
-                        </div>
-              <div class="d-flex align-items-center">
-                            <label class="me-1">Sort:</label>
-                            <select class="form-select sort-dropdown" id="sortSelect">
-                                <option value="featured">Featured</option>
-                                <option value="price-low">Price: Low to High</option>
-                                <option value="price-high">Price: High to Low</option>
-                                <option value="name-asc">Name: A to Z</option>
-                                <option value="name-desc">Name: Z to A</option>
-                            </select>
-                            <!-- <div class="ms-2">
-                                <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search..." style="width: 150px;" >
-                            </div> -->
-                        </div>
-                    </div>
-                    
-                    <!-- Products Row -->
-                    <div class="row" id="productsContainer">
-                        <!-- Products will be dynamically added here by JavaScript -->
-                    </div>
-                    
-                    <!-- Pagination -->
-                    <nav aria-label="Page navigation" class="mt-5">
-                        <ul class="pagination justify-content-center"  style="margin-right: 30%">
-                            <li class="page-item disabled">
-                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
-                            </li>
-                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item">
-                                <a class="page-link" href="#">Next</a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
-            </div>
-        </div>
-    
-        <script>
-
-            
-            // Sample product data
-            const products = [
-                { 
-                    id: 1, 
-                    name: 'Nordic Chair', 
-                    price: 50.00, 
-                    image: 'images/product-3.png', 
-                    brand: 'nordic', 
-                    category: 'chairs',
-                 
-                },
-                { 
-                    id: 2, 
-                    name: 'Modern Nordic Chair', 
-                    price: 50.00, 
-                    image: 'images/product-1.png', 
-                    brand: 'nordic', 
-                    category: 'sofas',
-                    
-                },
-                { 
-                    id: 3, 
-                    name: ' Aerodynamic Chair', 
-                    price: 78.00, 
-                    image: 'images/product-2.png', 
-                    brand: 'kruzo', 
-                    category: 'sofas',
-                    
-                },
-                { 
-                    id: 4, 
-                    name: 'Modern Ergonomic sofa', 
-                    price: 43.00, 
-                    image: 'images/s1.png', 
-                    brand: 'ergo', 
-                    category: 'sofas',
-                  
-                },
-                { 
-                    id: 5, 
-                    name: 'Coffee Table', 
-                    price: 120.00, 
-                    image: 'images/qq.png', 
-                    brand: 'nordic', 
-                    category: 'tables',
-                 
-                },
-                { 
-                    id: 6, 
-                    name: 'Dining Table', 
-                    price: 150.00, 
-                    image: 'images/d.png', 
-                    brand: 'comfort', 
-                    category: 'tables',
-                    
-                },
-                { 
-                    id: 7, 
-                    name: 'Study Table', 
-                    price: 95.00, 
-                    image: 'images/st.png', 
-                    brand: 'nordic', 
-                    category: 'tables',
-                 
-                },
-                { 
-                    id: 8, 
-                    name: 'Bedside Table', 
-                    price: 85.00, 
-                    image: 'images/bb.png', 
-                    brand: 'ergo', 
-                    category: 'tables',
-                  
-                },
-                {
-                    id: 9, 
-                    name: 'Office Chair', 
-                    price: 78.00, 
-                    image: 'images/oc.png', 
-                    brand: 'kruzo', 
-                    category: 'chairs',
-                },
-                {
-                    id: 10, 
-                    name: 'Yellow Chair', 
-                    price: 88.00, 
-                    image: 'images/plastic.png', 
-                    brand: 'kruzo', 
-                    category: 'chairs',
-                },
-                {
-                    id: 11, 
-                    name: 'Ergonomic sofa', 
-                    price: 150.00, 
-                    image: 'images/ss1.png', 
-                    brand: 'ergo', 
-                    category: 'sofas',
-                },
-                {
-                    
-                    id: 12, 
-                    name: 'Swing Chair', 
-                    price: 188.00, 
-                    image: 'images/swing.png', 
-                    brand: 'kruzo', 
-                    category: 'chairs',
-                }
-            ];
-    
-            // Global state for active filters
-            const activeFilters = {
-                category: [],
-                brand: [],
-                price: 200
-            };
-    
-            // Sort type
-            let currentSort = 'featured';
-    
-            // Function to render products
-            function renderProducts(productList) {
-    const container = document.getElementById('productsContainer');
-    container.innerHTML = '';
-
-    if (productList.length === 0) {
-        container.innerHTML = '<div class="col-12 text-center py-5"><h4>No products match your filters</h4><p>Try adjusting your filter criteria or <button class="btn btn-secondary btn-sm" id="resetFiltersEmpty">Reset All Filters</button></p></div>';
-        document.getElementById('resetFiltersEmpty').addEventListener('click', resetAllFilters);
-        document.getElementById('productCount').textContent = '0';
-        return;
-    }
-
-    document.getElementById('productCount').textContent = productList.length;
-
-    productList.forEach(product => {
-        const productElement = document.createElement('div');
-        productElement.className = 'col-12 col-md-4 col-lg-3 mb-5';
-        productElement.innerHTML = `
-            <div class="product-item text-center">
-                <img src="${product.image}" class="img-fluid product-thumbnail">
-                <h3 class="product-title fs-6 mt-2">${product.name}</h3>
-                <strong class="product-price d-block mb-2">$${product.price.toFixed(2)}</strong>
-                <button class="btn btn-outline-primary btn-sm add-to-cart-btn" data-product-id="${product.id}">Add to Cart</button>
-            </div>
-        `;
-        container.appendChild(productElement);
-    });
+<%- include("../../views/partials/user/header") %>
+<style>
+.main-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  margin-top: 100px; /* Added this line to push down content */
 }
-                 // Listen for all Add to Cart button clicks
-    document.addEventListener('click', function (e) {
-        if (e.target.classList.contains('add-to-cart-btn')) {
-            const productId = e.target.getAttribute('data-product-id');
-            addToCart(productId);
-        }
-    });
 
-    function addToCart(productId) {
-        let cart = JSON.parse(localStorage.getItem('cart')) || [];
-
-        // Check if product is already in cart
-        const existingProduct = cart.find(item => item.id === productId);
-        if (existingProduct) {
-            existingProduct.quantity += 1;
-        } else {
-            cart.push({ id: productId, quantity: 1 });
-        }
-
-        localStorage.setItem('cart', JSON.stringify(cart));
-        alert('Product added to cart!');
-    }
-    
-            // Function to filter products
-            function filterProducts() {
-                let filteredProducts = [...products];
-                
-                // Filter by category
-                if (activeFilters.category.length > 0) {
-                    filteredProducts = filteredProducts.filter(product => 
-                        activeFilters.category.includes(product.category)
-                    );
-                }
-                
-                // Filter by brand
-                if (activeFilters.brand.length > 0) {
-                    filteredProducts = filteredProducts.filter(product => 
-                        activeFilters.brand.includes(product.brand)
-                    );
-                }
-                
-            
-                
-                // Filter by price
-                filteredProducts = filteredProducts.filter(product => 
-                    product.price <= activeFilters.price
-                );
-                
-                // Sort products
-                switch (currentSort) {
-                    case 'price-low':
-                        filteredProducts.sort((a, b) => a.price - b.price);
-                        break;
-                    case 'price-high':
-                        filteredProducts.sort((a, b) => b.price - a.price);
-                        break;
-                    case 'name-asc':
-                        filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
-                        break;
-                    case 'name-desc':
-                        filteredProducts.sort((a, b) => b.name.localeCompare(a.name));
-                        break;
-                    default:
-                        // Featured is default order (no sorting)
-                        break;
-                }
-                
-                renderProducts(filteredProducts);
-                updateSelectedFilters();
-            }
-    
-            // Update the selected filters display
-            function updateSelectedFilters() {
-                const container = document.getElementById('selectedFilters');
-                container.innerHTML = '';
-                
-                // Add category filters
-                activeFilters.category.forEach(category => {
-                    addFilterBadge('Category: ' + category.charAt(0).toUpperCase() + category.slice(1), 'category', category);
-                });
-                
-                // Add brand filters
-                activeFilters.brand.forEach(brand => {
-                    addFilterBadge('Brand: ' + brand.charAt(0).toUpperCase() + brand.slice(1), 'brand', brand);
-                });
-                
-                // Add color filters
-                activeFilters.color.forEach(color => {
-                    addFilterBadge('Color: ' + color.charAt(0).toUpperCase() + color.slice(1), 'color', color);
-                });
-                
-                // Add price filter
-                if (activeFilters.price < 200) {
-                    addFilterBadge(`Price: Up to $${activeFilters.price}`, 'price', activeFilters.price);
-                }
-                
-                function addFilterBadge(text, type, value) {
-                    const badge = document.createElement('div');
-                    badge.className = 'filter-badge';
-                    badge.innerHTML = `
-                        ${text}
-                        <span class="remove-filter" data-filter-type="${type}" data-filter-value="${value}">&times;</span>
-                    `;
-                    container.appendChild(badge);
-                    
-                    // Add click event to remove filter
-                    badge.querySelector('.remove-filter').addEventListener('click', function() {
-                        const filterType = this.dataset.filterType;
-                        const filterValue = this.dataset.filterValue;
-                        
-                        if (filterType === 'price') {
-                            activeFilters.price = 200;
-                            document.getElementById('priceRange').value = 200;
-                            document.getElementById('priceValue').textContent = '200';
-                        } else {
-                            const index = activeFilters[filterType].indexOf(filterValue);
-                            if (index > -1) {
-                                activeFilters[filterType].splice(index, 1);
-                            }
-                            
-                            // Uncheck the corresponding checkbox
-                            const checkbox = document.querySelector(`input[data-filter-type="${filterType}"][data-filter-value="${filterValue}"]`);
-                            if (checkbox) {
-                                checkbox.checked = false;
-                            }
-                        }
-                        
-                        filterProducts();
-                    });
-                }
-            }
-                          
+ .shop-topbar {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   margin-bottom: 20px;
+ }
 
 
-            
-            // Reset all filters
-            function resetAllFilters() {
-                activeFilters.category = [];
-                activeFilters.brand = [];
-                activeFilters.color = [];
-                activeFilters.price = 200;
-                
-                // Reset all checkboxes
-                document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
-                    checkbox.checked = false;
-                });
-                
-                // Reset price range
-                const priceRange = document.getElementById('priceRange');
-                priceRange.value = 200;
-                document.getElementById('priceValue').textContent = '200';
-                
-                // Reset sort
-                document.getElementById('sortSelect').value = 'featured';
-                currentSort = 'featured';
-                
-                filterProducts();
-            }
-    
-            // Initialize the page
-            function initPage() {
-                // Render all products initially
-                renderProducts(products);
-                
-                // Add event listeners for filters
-                document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
-                    checkbox.addEventListener('change', function() {
-                        const filterType = this.dataset.filterType;
-                        const filterValue = this.dataset.filterValue;
-                        
-                        if (this.checked) {
-                            activeFilters[filterType].push(filterValue);
-                        } else {
-                            const index = activeFilters[filterType].indexOf(filterValue);
-                            if (index > -1) {
-                                activeFilters[filterType].splice(index, 1);
-                            }
-                        }
-                        
-                        filterProducts();
-                    });
-                });
-                
-                // Price range filter
-                const priceRange = document.getElementById('priceRange');
-                const priceValue = document.getElementById('priceValue');
-                
-                priceRange.addEventListener('input', function() {
-                    priceValue.textContent = this.value;
-                    activeFilters.price = parseInt(this.value);
-                    filterProducts();
-                });
-                
-                // Sort select
-                document.getElementById('sortSelect').addEventListener('change', function() {
-                    currentSort = this.value;
-                    filterProducts();
-                });
-                
-                // Reset filters button
-                document.getElementById('resetFilters').addEventListener('click', resetAllFilters);
-            }
-    
-            // Run initialization when DOM is loaded
-            document.addEventListener('DOMContentLoaded', initPage);
-        </script>
-    
-		
-
-		
-
-		<!-- Start Footer Section -->
-		
-		<!-- End Footer Section -->	
-
-
-		<script src="js/bootstrap.bundle.min.js"></script>
-		<script src="js/tiny-slider.js"></script>
-		<script src="js/custom.js"></script>
-	</body>
-
-</html>
+ .search-form {
+  display: flex;
+  align-items: stretch; /* Ensure both input and button are equal height */
+  height: 40px;
+}
 
 
 
-<%-include("../../views/partials/user/footer.ejs")%>
+ .search-input {
+   flex: 1;
+   padding: 8px 10px;
+   font-size: 14px;
+   border: none;
+   outline: none;
+   background-color: rgb(194, 194, 194);
+ }
+
+
+ .search-button {
+  padding: 10px 20px;
+  background-color: #1e918b;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 0 25px 25px 0; /* Only right corners rounded */
+  transition: background-color 0.3s, transform 0.2s;
+  height: 100%; /* Make it fill the height of the form */
+}
+
+
+
+ .search-button:hover {
+   background-color: #0056b3;
+   transform: scale(1.05);
+ }
+ .sidebar {
+   padding: 20px;
+   border: 1px solid #ddd;
+   background-color: #f9f9f9;
+   border-radius: 8px;
+   margin-bottom: 20px;
+   width: 250px;
+   text-align: center;
+ }
+
+
+ .filter-section {
+   margin-bottom: 20px;
+ }
+
+
+ .filter-title {
+   font-weight: bold;
+   margin-bottom: 10px;
+   font-size: 16px;
+   color: #333;
+ }
+
+
+ .filter-item {
+   margin: 5px 0;
+ }
+
+
+ .filter-item a {
+   text-decoration: none;
+   color: #333;
+ }
+
+
+ .filter-item a:hover {
+   color: #007bff;
+ }
+
+
+ .product-list-container {
+   display: flex;
+   gap: 20px;
+   justify-content: space-between;  /* Ensure products and sidebar are spaced evenly */
+  margin-bottom: 20px;  /* Space below the product grid */
+   
+ }
+
+
+ .product-grid {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 20px;
+   width: calc(100% - 270px);
+ }
+
+
+ .product-card {
+   width: calc(33.333% - 20px);
+   border: 1px solid #ddd;
+   padding: 15px;
+   border-radius: 8px;
+   text-align: center;
+   position: relative;
+ }
+
+
+ .product-card img {
+   max-width: 100%;
+   height: auto;
+   border-radius: 5px;
+ }
+
+
+ .wishlist-btn {
+   position: absolute;
+   top: 8px;
+   right: 8px;
+   background-color: rgba(237, 247, 247, 0.8);
+   color: #fff;
+   padding: 8px;
+   border-radius: 50%;
+   cursor: pointer;
+ }
+
+
+ .add-to-cart-btn {
+   background-color: #46698f;
+   color: #fff;
+   padding: 10px;
+   border: none;
+   border-radius: 5px;
+   cursor: pointer;
+   width: 100%;
+   margin-top: 10px;
+ }
+
+
+ .pagination {
+   display: flex;
+   justify-content: center;
+   gap: 10px;
+   margin: 20px 0;
+ }
+
+
+ .pagination a {
+   padding: 8px 12px;
+   background-color: #f0f0f0;
+   border: 1px solid #ddd;
+   color: #333;
+   text-decoration: none;
+ }
+
+
+ .pagination .active {
+   background-color: #007bff;
+   color: #fff;
+ }
+
+
+ .price-filter {
+   padding: 10px;
+   background-color: #f9f9f9;
+   border-radius: 8px;
+   margin-top: 20px;
+ }
+
+
+ .price-filter .price-options {
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+ }
+
+
+ .price-button {
+   padding: 12px 20px;
+   background-color: #f1f1f1;
+   color: #333;
+   border: 1px solid #ddd;
+   border-radius: 30px;
+   cursor: pointer;
+   transition: background-color 0.3s, transform 0.2s;
+   text-align: center;
+   font-size: 14px;
+ }
+
+
+ .price-button:hover {
+   background-color: #007bff;
+   color: white;
+   transform: scale(1.05);
+ }
+
+
+ .price-button:active {
+   transform: scale(0.95);
+ }
+
+
+ .category-brand-container {
+   text-align: center;
+ }
+ a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.product-card p, .product-card h4 {
+  text-decoration: none;
+}
+.category-brand-container ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+
+</style>
+
+
+<div class="main-container">
+ <section class="shop-page container">
+   <div class="shop-topbar">
+     <div class="search-bar">
+       <form action="/search" method="POST" class="search-form">
+         <input type="text" name="query" placeholder="Search items..." class="search-input" />
+         <button type="submit" class="search-button">Search</button>
+       </form>
+     </div>
+   </div>
+  
+   <div class="product-list-container">
+     <aside class="sidebar">
+       <div class="filter-section mt-4">
+         <div class="filter-title">Categories</div>
+         <div class="category-brand-container">
+           <ul>
+            <%for(let i=0;i<category.length;i++){%>
+               <li class="filter-item">
+                 <a href="/filter?category=<%=category[i]._id%>"><%=category[i].name%></a>
+               </li>
+               <% } %>
+           </ul>
+         </div>
+       </div>
+
+
+      
+       <div class="filter-section">
+         <div class="filter-title">Brands</div>
+         <div class="category-brand-container">
+           <ul>
+            <%for(let i=0;i<brand.length;i++){%>
+               <li class="filter-item">
+                 <a href="/filter?brand=<%=brand[i]._id%>"><%=brand[i].brandname%></a>
+               </li>
+               <% } %>
+           </ul>
+         </div>
+       </div>
+
+
+      
+       <div class="price-filter mb-4">
+         <div class="filter-title">Filter by Price</div>
+         <form id="price-filter-form">
+           <div class="price-options">
+             <a href="/filterPrice?gt=0&lt=5000"><button type="button" class="price-button">Under ₹5000</button></a>
+             <a href="/filterPrice?gt=5000&lt=10000"><button type="button" class="price-button">₹5000 - ₹10000</button></a>
+             <a href="/filterPrice?gt=10000&lt=15000"><button type="button" class="price-button">₹10000- ₹15000</button></a>
+             <a href="/filterPrice?gt=15000&lt=100000"><button type="button" class="price-button">Above ₹15000</button></a>
+           </div>
+         </form>
+         <div class="filter-section mt-20">
+            <div class="filter-title">Sort By</div>
+            <form id="sort-form" action="/sort" method="GET">
+              <select name="sort" class="form-control" onchange="document.getElementById('sort-form').submit()">
+                <option value="">-- Select --</option>
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+                <option value="name-asc">Name: A to Z</option>
+                <option value="name-desc">Name: Z to A</option>
+              </select>
+            </form>
+          </div>
+          
+       </div>
+     </aside>
+
+     
+
+     <main class="product-grid">
+        <% for(let i = 0; i < products.length; i++) { %>
+          <div class="product-card">
+            <span class="wishlist-btn" onclick="">❤️</span>
+            <a href="/productDetails/<%=products[i]._id%>">
+              <img src="/Uploads/re-image/<%= products[i].productImage[0] %>" alt="<%= products[i].productName %>" />
+              <h4><%= products[i].productName %></h4>
+              <p>Brand: <%= products[i].brand.brandname %></p>
+              <p>Price: ₹<%= products[i].salePrice.toLocaleString('en-IN') %> <span class="text-muted"><strike>₹<%= products[i].regularPrice.toLocaleString('en-IN') %></strike></span></p>
+            </a>
+            <button class="add-to-cart-btn" onclick="">Add to Cart</button>
+          </div>
+        <% } %>
+      </main>
+
+
+<!-- Pagination -->
+ 
+  
+ </section>
+</div>
+<div class="pagination">
+    <% if (currentPage > 1) { %>
+        <a class="btn" href="/shop?page=<%= currentPage - 1 %>">Prev</a>
+      <% } %>
+ 
+ 
+      <% for (let i = 1; i <= totalPages; i++) { %>
+        <a class="btn <%= currentPage === i ? 'active' : '' %>" href="/shop?page=<%= i %>"><%= i %></a>
+      <% } %>
+ 
+ 
+      <% if (currentPage < totalPages) { %>
+        <a class="btn" href="/shop?page=<%= currentPage + 1 %>">Next</a>
+      <% } %>
+ 
+   </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+<%- include("../../views/partials/user/footer") %>
