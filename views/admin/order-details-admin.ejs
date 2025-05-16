@@ -1,0 +1,332 @@
+
+<%- include("../../views/partials/admin/header") %>
+
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css">
+</head>
+
+<style>
+  /* Custom Styles for Order Details Page */
+body {
+    background-color: #f4f6f9;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #2c3e50;
+}
+
+.card-body p {
+    color: #2c3e50;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+.card-body p strong {
+    color: #1a2b3c;
+    font-weight: 600;
+}
+
+.container-fluid {
+    padding: 20px;
+}
+
+.card {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    background-color: #ffffff;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 15px 20px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.card-header h2, .card-header h4 {
+    color: #333;
+    margin-bottom: 0;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background-color: #545b62;
+    border-color: #4e555b;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table thead {
+    background-color: #f1f3f5;
+}
+
+.table thead th {
+    color: #495057;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.status-select {
+    color: #495057;
+    border-color: #ced4da;
+    border-radius: 4px;
+}
+
+.order-summary .mb-3 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.text-primary {
+    color: #007bff !important;
+}
+
+.text-success {
+    color: #28a745 !important;
+}
+
+.border-warning {
+    border-color: #ffc107 !important;
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    color: #212529;
+    border-color: #ffc107;
+    transition: all 0.3s ease;
+}
+
+.btn-warning:hover {
+    background-color: #e0a800;
+    border-color: #d39e00;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+
+    .card-header .btn {
+        margin-top: 10px;
+    }
+}
+
+/* Subtle Animations */
+.card, .btn {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-5px);
+}
+</style>
+<div class="container-fluid">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="card-title">Order Details</h2>
+        <div>
+          <a href="/admin/orderList" class="btn btn-secondary">Back to Orders</a>
+        </div>
+      </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-8">
+        <div class="card mb-4">
+          <div class="card-header">
+            <h4>Order Information</h4>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <p><strong>Order ID : </strong> <%= orders._id %></p>
+                <p><strong>Order Date : </strong> <%= orders.createdAt.toLocaleDateString() %></p>
+                <p><strong>Order Status : </strong> 
+                  <select class="form-select status-select w-auto d-inline-block" data-order-id="<%= orders._id %>">
+                    <option value="pending" <%= orders.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                    <option value="shipped" <%= orders.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+                    <option value="out_for_delivery" <%= orders.status === 'out_for_delivery' ? 'selected' : '' %>>Out for Delivery</option>
+                    <option value="delivered" <%= orders.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                    <option value="cancelled" <%= orders.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                  </select>
+                </p>
+              </div>
+              <div class="col-md-6">
+                <p><strong>Customer Name : </strong> <%= orders.userId?.name || 'N/A' %></p>
+                <p><strong>Customer Email : </strong> <%= orders.userId.email || 'NA' %></p>
+                <p><strong>Phone Number : </strong> <%= orders.userId.phone || 'N/A' %></p>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <div class="card">
+          <div class="card-header">
+            <h4>Product Details</h4>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% orders.orderedItems.forEach((item) => { %>
+                    <tr>
+                      <td>
+                        <%= item.product ? item.product.productName : 'Product Not Available' %>
+                      </td>
+                      <td><%= item.quantity %></td>
+                      <td><%= item.price.toFixed(2) %></td>
+                      <td><%= (item.price * item.quantity).toFixed(2) %></td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+                
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header">
+            <h4>Order Summary</h4>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <strong>Subtotal:</strong>
+              <span class="float-end"><%= (finalAmount + (orders.discount || 0)).toFixed(2) %></span>
+            </div>
+            <% if (orders.discount > 0) { %>
+              <div class="mb-3">
+                <strong>Discount:</strong>
+                <span class="float-end text-success">-<%= orders.discount.toFixed(2) %></span>
+              </div>
+            <% } %>
+            <div class="mb-3">
+              <strong>Shipping:</strong>
+              <span class="float-end"><%= orders.shippingPrice ? orders.shippingPrice.toFixed(2) : '0.00' %></span>
+            </div>
+            <hr>
+            <div class="mb-3">
+              <h5>Total Amount:</h5>
+              <h4 class="float-end text-primary"><%= finalAmount.toFixed(2) %></h4>
+            </div>
+          </div>
+        </div>
+  
+        <div class="card mt-3">
+          <div class="card-header">
+            <h4>Shipping Information</h4>
+          </div>
+          <div class="card-body">
+            <p><strong>Name:</strong> <%= orders.address.name %></p>
+          <p><strong>Address:</strong> 
+           <%= orders.address.street %>, 
+           <%= orders.address.city %>, 
+           <%= orders.address.state %> 
+           <%= orders.address.zipCode %>
+           </p>
+           <p><strong>Country:</strong> <%= orders.address.country || 'India' %></p>
+          <p><strong>Phone:</strong> <%= orders.address.phone %></p>
+
+          </div>
+        </div>
+  
+        <% if (orders.returnRequested) { %>
+          <div class="card mt-3 border-warning">
+            <div class="card-header bg-warning">
+              <h4 class="text-white">Return Request</h4>
+            </div>
+            <div class="card-body">
+              <p><strong>Reason:</strong> <%= orders.returnReason || 'Not specified' %></p>
+              <button class="btn btn-warning btn-sm handle-return" data-order-id="<%= orders._id %>">
+                Handle Return
+              </button>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <%- include("../../views/partials/admin/footer") %>
+
+  <script>
+
+function handleStatusChange() {
+    const orderId = this.dataset.orderId;
+    const newStatus = this.value;
+
+    fetch('/admin/changeStatus', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        orderId: orderId,
+        status: newStatus
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Order Status Updated',
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Failed to Update Status',
+          text: data.message || 'Please try again'
+        });
+      }
+    })
+    .catch(error => {
+      Swal.fire({
+        icon: 'error',
+        title: 'Network Error',
+        text: 'Failed to update status. Please try again.'
+      });
+    });
+  }
+
+  // ✅ Bind the function to all status-select dropdowns after DOM is ready
+  document.addEventListener("DOMContentLoaded", function() {
+    const selects = document.querySelectorAll('.status-select');
+    selects.forEach(select => {
+      select.addEventListener('change', handleStatusChange);
+    });
+  });
+  </script>
+
+
+

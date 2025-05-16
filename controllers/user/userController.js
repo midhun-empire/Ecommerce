@@ -52,6 +52,7 @@ const loadHomepage = async (req, res) => {
       
 
         const user = req.session.user;
+      
         const userData = await User.findById(user);
         
         const categories = await Category.find({ isListed: true });
@@ -288,29 +289,6 @@ const loadWishlist = async (req,res)=>{
 }
 
 
-const loadProfilePage = async (req, res) => {
-    try {
-        // Dummy user data
-        const user = {
-            name: "John Doe",
-            email: "johndoe@example.com",
-            phone: "+1234567890",
-            address: "123 Main Street, City, Country",
-            orders: [
-                { id: 1, product: "Sofa", date: "2025-04-10", status: "Delivered" },
-                { id: 2, product: "Table", date: "2025-03-15", status: "Shipped" }
-            ]
-        };
-
-        // Set currentPage to "profile" or any relevant page name
-        const currentPage = "profile"; 
-
-        return res.render("profile", { user, currentPage });
-    } catch (error) {
-        console.log("Error loading profile page", error);
-        res.status(500).send("Server Error");
-    }
-};
 
 
 const securePassword = async (password)=>{
@@ -657,7 +635,6 @@ module.exports = {
     loadLoginPage,
     signup,
     loadWishlist,
-    loadProfilePage,
     VerifyOtp,
     resendOtp,
     login,

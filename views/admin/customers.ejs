@@ -1,4 +1,7 @@
 <%- include("../../views/partials/admin/header") %>
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css">
+  </head>
 <div class="content-header row">
     <div class="d-flex justify-content-between align-items-center">
         <h2 class="content-title card-title">Customers</h2>
@@ -32,20 +35,26 @@
                                 <td><%=data[i].email%></td>
                                 <td><%=data[i].phone%></td>
                                 <td> 
-                                    <%if(data[i].isBlocked===false){%>
-
-                                        <button class="btn btn-danger" style="width: 80px;">
-                                            <a href="/admin/blockCustomer?id=<%=data[i]._id%>" class="text-white" style="text-decoration: none;">Block</a>
-                                        </button>
-                                        <%}else{%>
-                                        <button class="btn btn-success" style="width: 80px;">
-                                            <a href="/admin/UnblockCustomer?id=<%=data[i]._id%>" class="text-white" style="text-decoration: none;">Unblock</a>
-                                        </button> 
-                                        <%}%>
-                                </td>
+                                    <% if (data[i].isBlocked === false) { %>
+                                      <button class="btn btn-danger block-btn" 
+                                              data-id="<%= data[i]._id %>" 
+                                              data-action="block" 
+                                              style="width: 80px;">
+                                        Block
+                                      </button>
+                                    <% } else { %>
+                                      <button class="btn btn-success block-btn" 
+                                              data-id="<%= data[i]._id %>" 
+                                              data-action="unblock" 
+                                              style="width: 80px;">
+                                        Unblock
+                                      </button>
+                                    <% } %>
+                                  </td>
+                                  
                             </tr>
 
-                            <%}%>
+                            <% } %>
                     </tbody>
                   </table>
         </div>
@@ -62,4 +71,33 @@
                 </ul>
             </nav>
         </div>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+        <script>
+             $(document).ready(function () {
+    $('.block-btn').click(function () {
+      const userId = $(this).data('id');
+      const action = $(this).data('action'); // "block" or "unblock"
+      const url = action === 'block' 
+                    ? `/admin/blockCustomer?id=${userId}` 
+                    : `/admin/UnblockCustomer?id=${userId}`;
+      const actionText = action === 'block' ? 'Block' : 'Unblock';
+
+      Swal.fire({
+        title: `Are you sure?`,
+        text: `Do you want to ${actionText} this user?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: action === 'block' ? '#d33' : '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: `Yes, ${actionText.toLowerCase()} them!`
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = url;
+        }
+      });
+    });
+  });
+        </script>
         <%- include("../../views/partials/admin/footer") %>

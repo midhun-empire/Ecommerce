@@ -4,11 +4,23 @@ const {v4:uuidv4 } = require('uuid')
 
 
 const orderSchema = new Schema({
+   
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+      },
+
     orderId:{
         type:String,
         default:()=>uuidv4(),
         unique:true
     },
+    paymentMethod: {
+        type: String,
+        required: true,
+        enum: ['COD', 'Online', 'Razorpay'], // Add methods you support
+      },
     orderedItems:[{
 
         product:{
@@ -23,7 +35,13 @@ const orderSchema = new Schema({
         price:{
             type:Number,
             default:0
-        }
+        },
+        status: { 
+            type: String,
+            required: true,
+            enum: ["Pending", "Processing", "Shipped", "Out for Delivery", "Delivered", "Cancelled", "Returned", "Return Request","Payment Failed","failed"],
+            default:'Pending'
+        },
     }],
     totalPrice:{
         type:Number,
@@ -37,11 +55,11 @@ const orderSchema = new Schema({
         type:Number,
         required:true
     },
-    address:{
-        type:Schema.Types.ObjectId,
-        ref:"Address",
-        required:true
-    },
+    address: {
+        type: Object, // Embedded object, not reference
+        required: true
+      }
+      ,
     invoiceData:{
         type:Date
     },

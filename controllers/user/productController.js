@@ -7,9 +7,10 @@ const User = require('../../models/userSchema')
 
 const productDetails = async (req, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.session.user;
       const userData = await User.findById(userId);
-  
+    
+
       const productId = req.params.productId;
   
       // Validate ObjectId to avoid CastError

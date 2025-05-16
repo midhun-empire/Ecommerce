@@ -297,6 +297,15 @@
                 <option value="name-desc">Name: Z to A</option>
               </select>
             </form>
+
+             <!-- Reset Filters Button -->
+  <div style="margin-top: 10px;">
+    <a href="/shop">
+      <button type="button" class="price-button" style="background-color: #000000; color: white;">
+        Reset Filters
+      </button>
+    </a>
+  </div>
           </div>
           
        </div>
@@ -314,7 +323,8 @@
               <p>Brand: <%= products[i].brand.brandname %></p>
               <p>Price: ₹<%= products[i].salePrice.toLocaleString('en-IN') %> <span class="text-muted"><strike>₹<%= products[i].regularPrice.toLocaleString('en-IN') %></strike></span></p>
             </a>
-            <button class="add-to-cart-btn" onclick="">Add to Cart</button>
+            <button class="add-to-cart-btn" onclick="handleAddToCart('<%= products[i]._id %>')">Add to Cart</button>
+
           </div>
         <% } %>
       </main>
@@ -343,3 +353,44 @@
    </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
 <%- include("../../views/partials/user/footer") %>
+<script>
+
+function handleAddToCart(productId) {
+  $.ajax({
+    url: '/addToCart',
+    method: 'POST',
+    data: {
+      productId: productId,
+      quantity: 1
+    },
+    success: function (response) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Added to Cart!',
+        text: 'Product has been added to your cart.',
+        timer: 2000,
+        showConfirmButton: false
+      });
+    },
+    error: function (xhr) {
+      if (xhr.status === 401) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Login Required',
+          text: 'Please login to add items to your cart.',
+          confirmButtonText: 'Login'
+        }).then(() => {
+          window.location.href = '/login';
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Something went wrong. Please try again later.'
+        });
+      }
+    }
+  });
+}
+
+</script>

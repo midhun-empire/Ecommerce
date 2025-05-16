@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brighton Invoice</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f7fa;
+            color: #333;
+            padding: 30px;
+            line-height: 1.6;
+        }
+
+        .invoice-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid #e6ecef;
+            padding-bottom: 20px;
+        }
+
+        .header img {
+            max-width: 120px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            color: #088178;
+            font-size: 28px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .invoice-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            font-size: 14px;
+            color: #444;
+        }
+
+        .invoice-details div {
+            flex: 1;
+        }
+
+        .invoice-details .right {
+            text-align: right;
+        }
+
+        .shipping-address {
+            margin-bottom: 30px;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .shipping-address h3 {
+            font-size: 16px;
+            color: #088178;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .shipping-address p {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .order-details h3 {
+            font-size: 16px;
+            color: #088178;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .product-table th,
+        .product-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e6ecef;
+        }
+
+        .product-table th {
+            background-color: #088178;
+            color: #fff;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 13px;
+        }
+
+        .product-table td.text-right {
+            text-align: right;
+        }
+
+        .product-table tbody tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .total-section {
+            float: right;
+            width: 350px;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        .total-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .total-table td {
+            padding: 8px 0;
+            border-bottom: 1px solid #e6ecef;
+        }
+
+        .total-table td.text-right {
+            text-align: right;
+        }
+
+        .total-table .grand-total td {
+            font-weight: 600;
+            font-size: 16px;
+            color: #088178;
+            border-top: 2px solid #088178;
+            padding-top: 12px;
+        }
+
+        .total-table .discount {
+            color: #28a745;
+        }
+
+        .footer {
+    margin-top: auto; /* Push footer to the bottom */
+}
+
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+            .invoice-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;  /* Full viewport height */
+    padding: 40px;
+}
+
+            .total-section {
+                float: none;
+                width: 100%;
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <div class="header">
+            <img src="/images/brighton.png" alt="Brighton">
+            <h1>Brighton</h1>
+            <p>Thank you for shopping with us!</p>
+        </div>
+
+        <div class="invoice-details">
+            <div class="left">
+                <p><strong>Invoice</strong></p>
+                <p>Order Date: <%= new Date(order.createOn).toLocaleDateString() %></p>
+            </div>
+            <div class="right">
+                <p><strong>Order ID:</strong> <%= order.orderId %></p>
+                <p>Invoice Date: <%= new Date().toLocaleDateString() %></p>
+            </div>
+        </div>
+
+        <div class="shipping-address">
+            <h3>Shipping Address</h3>
+            <p>
+                <%= order.address.name %><br>
+                <%= order.address.landMark %><br>
+                <%= order.address.city %>, <%= order.address.state %><br>
+                <%= order.address.pincode %><br>
+                Phone: <%= order.address.phone %>
+            </p>
+        </div>
+
+        <div class="order-details">
+            <h3>Order Details</h3>
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% order.orderedItems.forEach(function(item) { %>
+                    <tr>
+                        <td><%= item.product.productName %></td>
+                        <td><%= item.quantity %></td>
+                        <td class="text-right">₹<%= item.price.toFixed(2) %></td>
+                        <td class="text-right">₹<%= (item.price * item.quantity).toFixed(2) %></td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="total-section">
+            <table class="total-table">
+                <tr>
+                    <td>Total Products:</td>
+                    <td class="text-right">₹<%= order.totalPrice.toFixed(2) %></td>
+                </tr>
+                <% if (order.discount > 0) { %>
+                <tr>
+                    <td>Discount:</td>
+                    <td class="text-right discount">-₹<%= order.discount.toFixed(2) %></td>
+                </tr>
+                <% } %>
+                <tr>
+                    <td>Shipping Charge:</td>
+                    <td class="text-right">₹<%= order.shipping.toFixed(2) %></td>
+                </tr>
+                <tr class="grand-total">
+                    <td>Grand Total:</td>
+                    <td class="text-right">₹<%= order.finalAmount.toFixed(2) %></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="footer">
+            <p>Thank you for choosing Brighton! For support, contact us at support@brighton.com</p>
+        </div>
+    </div>
+</body>
+</html>

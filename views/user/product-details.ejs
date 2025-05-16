@@ -1105,6 +1105,12 @@
                 <p>Discover our curated selection of premium products</p>
             </div>
         </div>
+
+        <div class="breadcrumb">
+            <a href="/">Home &nbsp; </a>
+            <span> / </span>
+            <a href="/shop">&nbsp; Shop</a>
+        </div>
     
         <div class="main-content">
             <div class="row">
@@ -1294,7 +1300,44 @@
 
      });
      
-
+     
+     function handleAddToCart(productId) {
+    $.ajax({
+      url: '/cart/add',
+      method: 'POST',
+      data: {
+        productId: productId,
+        quantity: 1  // You can modify this to allow the user to select the quantity
+      },
+      success: function (response) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Added to Cart!',
+          text: 'Product has been added to your cart.',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      },
+      error: function (xhr) {
+        if (xhr.status === 401) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Login Required',
+            text: 'Please login to add items to your cart.',
+            showConfirmButton: true
+          }).then(() => {
+            window.location.href = '/login';  // Redirect user to login page
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Something went wrong. Please try again later.'
+          });
+        }
+      }
+    });
+  }
  </script>
 </script>
   

@@ -1,0 +1,481 @@
+<%- include("../../views/partials/user/header") %>
+
+<style>
+    .breadcrumb a {
+  color: #088178;
+  text-decoration: none;
+}
+
+.breadcrumb span {
+  margin: 0 10px;
+  color: #666;
+}
+
+.success-banner {
+  background: linear-gradient(rgba(17, 18, 18, 0.9), rgba(8, 129, 120, 0.8)),
+    url('/api/placeholder/1200/300') center/cover;
+  padding: 60px 0;
+  margin-bottom: 40px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.banner-content {
+  color: #ffffff;
+  position: relative;
+  z-index: 2;
+}
+
+.banner-content h1 {
+  font-size: 42px;
+  font-weight: 700;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0;
+  transform: translateY(-30px);
+  animation: fadeInDown 1s ease-out forwards;
+}
+
+.banner-content p.lead {
+  font-size: 18px;
+  color: #e6f3f2;
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeInUp 1s ease-out 0.5s forwards;
+}
+
+.success-icon {
+  font-size: 80px;
+  color: #ffffff;
+  margin-bottom: 20px;
+  animation: successIconAnimation 2s ease-in-out infinite;
+  position: relative;
+}
+
+.success-icon i {
+  position: relative;
+  z-index: 2;
+}
+
+.checkout-section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+  opacity: 0;
+  transform: translateY(40px);
+  animation: fadeInUp 0.8s ease-out 1.2s forwards;
+}
+
+.section-title {
+  color: #2c3e50;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.order-details p {
+  margin-bottom: 15px;
+  color: #6c757d;
+  font-size: 16px;
+  opacity: 0;
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.detail-item:nth-child(1) { animation-delay: 1.5s; }
+.detail-item:nth-child(2) { animation-delay: 1.7s; }
+.detail-item:nth-child(3) { animation-delay: 1.9s; }
+.detail-item:nth-child(4) { animation-delay: 2.1s; }
+.detail-item:nth-child(5) { animation-delay: 2.3s; }
+
+.order-details p strong {
+  color: #2c3e50;
+}
+
+.btn-primary {
+  background-color: #088178;
+  border-color: #088178;
+  padding: 12px 24px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: #066661;
+  border-color: #066661;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(8, 129, 120, 0.3);
+}
+
+.btn-outline-primary {
+  border-color: #088178;
+  color: #088178;
+  padding: 12px 24px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-primary:hover {
+  background-color: #088178;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(8, 129, 120, 0.2);
+}
+
+.my-orders-btn {
+  opacity: 0;
+  animation: bounceIn 0.6s ease-out 2.5s forwards;
+}
+
+.continue-shopping-btn {
+    color: #ffffff; /* New text color */
+  opacity: 0;
+  animation: bounceIn 0.6s ease-out 2.8s forwards;
+}
+
+/* Confetti styles */
+.confetti-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: transparent;
+  opacity: 0.7;
+  animation: confetti-fall 5s linear forwards;
+}
+
+/* Animations */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes successIconAnimation {
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.6));
+  }
+  50% {
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.8));
+  }
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.6));
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  70% {
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-100px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(calc(100vh + 100px)) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: 200px 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .success-banner {
+    padding: 40px 0;
+  }
+
+  .banner-content h1 {
+    font-size: 32px;
+  }
+
+  .success-icon {
+    font-size: 60px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .btn-primary, .btn-outline-primary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+</style>
+
+
+<div class="container my-4">
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="/">Home</a>
+    <span>/</span>
+    <a href="/cart">Cart</a>
+    <span>/</span>
+    <a href="/checkout">Checkout</a>
+    <span>/</span>
+    <span>Order Success</span>
+  </div>
+
+  <!-- Success Banner -->
+  <div class="success-banner">
+    <div class="container">
+      <div class="banner-content text-center">
+        <div class="success-icon">
+          <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <h1 class="animate-title">Order Placed Successfully!</h1>
+        <p class="lead animate-text">Thank you for your purchase. Your order has been confirmed.</p>
+      </div>
+    </div>
+  </div>
+
+    <div class="breadcrumb">
+    <a href="/">Home</a>
+    <span>/</span>
+    <a href="/cart">Cart</a>
+    <span>/</span>
+    <a href="/checkout">Checkout</a>
+    <span>/</span>
+    <span>Order Success</span>
+  </div>
+
+  <!-- Order Details -->
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="checkout-section">
+        <h4 class="section-title">Order Details</h4>
+        <div class="order-details">
+          <p class="detail-item"><strong>Order ID:</strong> <%= orderId %></p>
+          <p class="detail-item"><strong>Order Date:</strong> <%= orderDate %></p>
+          <p class="detail-item"><strong>Payment Method:</strong> <%= paymentMethod %></p>
+          <p class="detail-item"><strong>Shipping Address:</strong><br>
+            <%= address.name %><br>
+            <%= address.landMark %><br>
+            <%= address.city %>, <%= address.state %>, <%= address.pincode %>
+          </p>
+          <p class="detail-item"><strong>Total Amount:</strong> ₹<%= totalAmount.toFixed(2) %></p>
+        </div>
+        <div class="action-buttons mt-4 d-flex gap-3">
+          <a href="/order-details/<%= orderId %>" class="btn btn-primary my-orders-btn">
+            <i class="bi bi-list-ul"></i> My Orders
+          </a>
+          <a href="/shop" class="btn btn-outline-primary continue-shopping-btn" aria-label="Continue Shopping with Cart Icon">
+            <i class="bi bi-cart3" aria-hidden="true"></i> Continue Shopping
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confetti Container -->
+  <div class="confetti-container"></div>
+</div>
+
+<%- include("../../views/partials/user/footer") %>
+
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+  // Animate order details items sequentially
+  const detailItems = document.querySelectorAll('.detail-item');
+  detailItems.forEach((item, index) => {
+    item.style.opacity = '0';
+    setTimeout(() => {
+      item.style.opacity = '1';
+    }, 1500 + (index * 200));
+  });
+
+  // Create and animate confetti
+  createConfetti();
+
+  // Add ripple effect to success icon
+  addRippleEffect();
+
+  // Add shimmer effect to order ID
+  addShimmerToOrderId();
+});
+
+// Function to create confetti
+function createConfetti() {
+  const container = document.querySelector('.confetti-container');
+  const colors = ['#088178', '#2c3e50', '#e74c3c', '#f1c40f', '#9b59b6', '#3498db'];
+  const shapes = ['circle', 'square', 'triangle'];
+  const confettiCount = 150;
+
+  for (let i = 0; i < confettiCount; i++) {
+    setTimeout(() => {
+      const confetti = document.createElement('div');
+      confetti.classList.add('confetti');
+      
+      // Random positioning and properties
+      const size = Math.random() * 10 + 5;
+      const shape = shapes[Math.floor(Math.random() * shapes.length)];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const left = Math.random() * 100;
+      const duration = Math.random() * 3 + 2;
+      const delay = Math.random() * 2;
+      
+      // Apply styles
+      confetti.style.width = `${size}px`;
+      confetti.style.height = `${size}px`;
+      confetti.style.left = `${left}%`;
+      confetti.style.backgroundColor = color;
+      confetti.style.animationDuration = `${duration}s`;
+      confetti.style.animationDelay = `${delay}s`;
+      
+      // Apply shape
+      if (shape === 'circle') {
+        confetti.style.borderRadius = '50%';
+      } else if (shape === 'triangle') {
+        confetti.style.width = '0';
+        confetti.style.height = '0';
+        confetti.style.backgroundColor = 'transparent';
+        confetti.style.borderLeft = `${size/2}px solid transparent`;
+        confetti.style.borderRight = `${size/2}px solid transparent`;
+        confetti.style.borderBottom = `${size}px solid ${color}`;
+      }
+      
+      // Add to container
+      container.appendChild(confetti);
+      
+      // Remove after animation completes
+      setTimeout(() => {
+        confetti.remove();
+      }, (duration + delay) * 1000);
+    }, i * 20);
+  }
+}
+
+// Function to add ripple effect to success icon
+function addRippleEffect() {
+  const successIcon = document.querySelector('.success-icon');
+  
+  // Create ripple elements
+  for (let i = 0; i < 3; i++) {
+    const ripple = document.createElement('div');
+    ripple.style.position = 'absolute';
+    ripple.style.top = '50%';
+    ripple.style.left = '50%';
+    ripple.style.transform = 'translate(-50%, -50%)';
+    ripple.style.width = '80px';
+    ripple.style.height = '80px';
+    ripple.style.borderRadius = '50%';
+    ripple.style.border = '2px solid #ffffff';
+    ripple.style.opacity = '0';
+    ripple.style.animation = `ripple 2s ease-out ${i * 0.6}s infinite`;
+    
+    // Add keyframes for ripple animation if not already added
+    if (!document.querySelector('#ripple-keyframes')) {
+      const style = document.createElement('style');
+      style.id = 'ripple-keyframes';
+      style.textContent = `
+        @keyframes ripple {
+          0% {
+            transform: translate(-50%, -50%) scale(0.5);
+            opacity: 0.8;
+          }
+          100% {
+            transform: translate(-50%, -50%) scale(2);
+            opacity: 0;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    successIcon.appendChild(ripple);
+  }
+}
+
+// Function to add shimmer effect to order ID
+function addShimmerToOrderId() {
+  const orderIdElem = document.querySelector('.order-details p:first-child');
+  
+  if (orderIdElem) {
+    orderIdElem.style.position = 'relative';
+    orderIdElem.style.overflow = 'hidden';
+    
+    const shimmer = document.createElement('div');
+    shimmer.style.position = 'absolute';
+    shimmer.style.top = '0';
+    shimmer.style.left = '0';
+    shimmer.style.width = '100%';
+    shimmer.style.height = '100%';
+    shimmer.style.background = 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)';
+    shimmer.style.animation = 'shimmer 2s infinite';
+    
+    orderIdElem.appendChild(shimmer);
+  }
+}
+</script>

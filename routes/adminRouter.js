@@ -9,7 +9,7 @@ const {adminAuth} =require('../middlewares/auth')
 const multer = require('multer')
 const storage = require('../helpers/multer')
 const uploads = multer({storage:storage})
-
+const orderController = require('../controllers/admin/orderController')
 
 router.get('/pageerror',adminControler.pageerror)
 //Login Management
@@ -50,5 +50,12 @@ router.post('/editProduct/:id',adminAuth,uploads.array('images',4),productContro
 router.post('/deleteImage',adminAuth,productController.deleteSingleImage)
 router.get('/deleteProduct',adminAuth,productController.deleteProduct)
 
+
+//order management 
+
+router.get("/orderList", adminAuth, orderController.getOrderListPageAdmin)
+router.post("/changeStatus", adminAuth, orderController.changeOrderStatus);
+router.post('/filter-orders', adminAuth, orderController.filterOrders);
+router.get("/orderDetailsAdmin", adminAuth, orderController.getOrderDetailsPageAdmin)
 
 module.exports = router

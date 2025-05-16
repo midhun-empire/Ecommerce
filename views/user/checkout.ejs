@@ -1,0 +1,977 @@
+!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="images/store-logo.png"> 
+  <title>checkout</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+  <style>
+    .breadcrumb a {
+      color: #088178;
+      text-decoration: none;
+    }
+
+    .breadcrumb span {
+      margin: 0 10px;
+      color: #666;
+    }
+
+    .checkout-banner {
+      background: linear-gradient(rgba(17, 18, 18, 0.9), rgba(8, 129, 120, 0.8)),
+        url('/api/placeholder/1200/300') center/cover;
+      padding: 60px 0;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .banner-content {
+      text-align: center;
+      color: #ffffff;
+    }
+
+    .banner-content h1 {
+      font-size: 42px;
+      font-weight: 700;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .checkout-section {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .section-title {
+      color: #2c3e50;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e9ecef;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Address Section Styles */
+    .add-address-btn {
+      background-color: #088178;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 20px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .add-address-btn:hover {
+      background-color: #066661;
+      color: white;
+    }
+
+    .saved-address {
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .saved-address:hover {
+      border-color: #088178;
+      transform: translateY(-2px);
+    }
+
+    .saved-address.selected {
+      border-color: #088178;
+      background-color: #f8fffe;
+    }
+
+    .address-type {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 15px;
+    }
+
+    .address-type i {
+      margin-right: 6px;
+      font-size: 14px;
+    }
+
+    .address-type.home {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .address-type.work {
+      background-color: #e3f2fd;
+      color: #1976d2;
+    }
+
+    .address-type.other {
+      background-color: #f3e5f5;
+      color: #7b1fa2;
+    }
+
+    .address-content {
+      display: flex;
+      gap: 15px;
+    }
+
+    .address-icon {
+      flex-shrink: 0;
+      color: #6c757d;
+      font-size: 20px;
+      margin-top: 3px;
+    }
+
+    .address-details h6 {
+      margin-bottom: 8px;
+      color: #2c3e50;
+      font-weight: 600;
+    }
+
+    .address-details p {
+      margin-bottom: 5px;
+      color: #6c757d;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .address-actions {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .action-btn {
+      background: none;
+      border: none;
+      padding: 5px;
+      color: #6c757d;
+      transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+      color: #088178;
+    }
+
+    /* Payment Method Styles */
+    .payment-method {
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .payment-method:hover {
+      border-color: #088178;
+      transform: translateY(-2px);
+    }
+
+    .payment-method.selected {
+      border-color: #088178;
+      background-color: #f8fffe;
+    }
+
+    .payment-method-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .payment-method img {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+    }
+
+    .payment-info {
+      flex-grow: 1;
+    }
+
+    .payment-label {
+      font-weight: 600;
+      color: #2c3e50;
+      margin: 0;
+    }
+
+    .payment-description {
+      font-size: 13px;
+      color: #6c757d;
+      margin: 0;
+    }
+
+    /* Order Summary Styles */
+    .order-summary {
+      position: sticky;
+      top: 100px;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e9ecef;
+      color: #2c3e50;
+    }
+
+    .summary-item.total {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #088178;
+      border-top: 2px solid #e9ecef;
+      border-bottom: none;
+      padding-top: 15px;
+    }
+
+    .place-order-btn {
+      background-color: #088178;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 15px 30px;
+      width: 100%;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .place-order-btn:hover {
+      background-color: #066661;
+      transform: translateY(-2px);
+    }
+
+    .form-check-input {
+      width: 20px;
+      height: 20px;
+      margin-top: 0;
+      cursor: pointer;
+    }
+
+    .form-check-input:checked {
+      background-color: #088178;
+      border-color: #088178;
+    }
+
+    /* Modal Styles */
+    .modal-header {
+      border-bottom: 2px solid #e9ecef;
+    }
+
+    .modal-footer {
+      border-top: 2px solid #e9ecef;
+    }
+
+    .form-label {
+      color: #2c3e50;
+      font-weight: 500;
+    }
+
+    .form-control,
+    .form-select {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #e9ecef;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+      border-color: #088178;
+      box-shadow: 0 0 0 0.2rem rgba(8, 129, 120, 0.25);
+    }
+
+    @media (max-width: 991px) {
+      .order-summary {
+        position: static;
+        margin-top: 50px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .checkout-banner {
+        padding: 40px 0;
+      }
+
+      .banner-content h1 {
+        font-size: 32px;
+      }
+
+      .section-title {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+      }
+
+      .add-address-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    .place-order-btn {
+      background-color: #088178;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 15px 30px;
+      width: 100%;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .place-order-btn:hover {
+      background-color: #066661;
+      transform: translateY(-2px);
+    }
+
+    .place-order-btn i {
+      font-size: 16px;
+    }
+
+    .payment-section {
+      border: none;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .payment-option {
+      position: relative;
+    }
+
+    .payment-option .form-check-input {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 1;
+      cursor: pointer;
+    }
+
+    .payment-option label {
+      padding-left: 3rem !important;
+      margin: 0;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .payment-option label:hover {
+      background-color: #f8f9fa;
+    }
+
+    .card-header {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-primary {
+      background-color: #088178;
+      border-color: #088178;
+    }
+
+    .btn-primary:hover {
+      background-color: #066661;
+      border-color: #066661;
+    }
+
+    .form-check-input:checked {
+      background-color: #088178;
+      border-color: #088178;
+    }
+
+    .collapse {
+      transition: all 0.3s ease;
+    }
+
+    .card {
+      overflow: hidden;
+    }
+
+    .bg-light {
+      background-color: #f8f9fa !important;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .payment-option label {
+        padding: 1rem !important;
+        padding-left: 3rem !important;
+      }
+
+      .row-cols-md-4>* {
+        flex: 0 0 auto;
+        width: 50%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .payment-option label {
+        padding: 1rem !important;
+        padding-left: 3rem !important;
+      }
+    }
+
+    .add-address-btn {
+      padding: 8px 16px;
+    }
+
+    .section-title {
+      margin-bottom: 1rem;
+    }
+    .coupon-card {
+  border: 2px dashed #088178;
+  border-radius: 8px;
+  padding: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #fff;
+}
+
+.coupon-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(8, 129, 120, 0.15);
+}
+
+.coupon-code {
+  font-weight: 600;
+  color: #088178;
+  font-size: 1.1em;
+}
+
+.coupon-discount {
+  background: #e8f6f6;
+  color: #088178;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.coupon-details {
+  border-top: 1px dashed #ddd;
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
+.coupon-expiry {
+  font-size: 0.85em;
+  color: #666;
+}
+
+.copy-instruction {
+  font-size: 0.8em;
+  color: #088178;
+  margin-top: 5px;
+}
+
+.applied-coupon {
+  background: #e8f6f6;
+  border-color: #088178;
+}
+  </style>
+</head>
+
+<body>
+  <%-include("../../views/partials/user/header")%>
+
+    <div class="container my-4">
+      <!-- Breadcrumb -->
+      <div class="breadcrumb">
+        <a href="/">Home</a>
+        <span>/</span>
+        <a href="/cart">Cart</a>
+        <span>/</span>
+        <a href="/checkout">Checkout</a>
+      </div>
+
+      <!-- Checkout Banner -->
+      <div class="checkout-banner">
+        <div class="container">
+          <div class="banner-content">
+            <h1>Checkout</h1>
+          </div>
+        </div>
+      </div>
+
+      <div class="breadcrumb">
+        <a href="/">Home</a>
+        <span>/</span>
+        <a href="/cart">Cart</a>
+        <span>/</span>
+        <a href="/checkout">Checkout</a>
+      </div>
+      
+          <div class="row">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+              <!-- Address Section -->
+              <div class="checkout-section">
+                <div class="section-title">
+                  <h4 class="mb-0">Shipping Address</h4>
+                  <button class="add-address-btn" data-bs-toggle="modal" data-bs-target="#addAddressModal"> <i
+                      class="bi bi-plus-lg"></i> Add New Address
+                  </button>
+                </div>
+
+                <% if (addresses && addresses.length> 0) { %>
+                  <% addresses.forEach((address, index)=> { %>
+                    <div class="saved-address <%= index === 0 ? 'selected' : '' %>" data-address-id="<%= address._id %>"
+                      onclick="selectAddress('<%= address._id %>')">
+                      <span class="address-type <%= address.addressType.toLowerCase() %>">
+                        <i
+                          class="bi bi-<%= address.addressType.toLowerCase() === 'home' ? 'house-fill' : 
+                                   address.addressType.toLowerCase() === 'work' ? 'briefcase-fill' : 'geo-alt-fill' %>"></i>
+                        <%= address.addressType.toUpperCase() %>
+                      </span>
+                      <div class="address-actions">
+                        <button class="action-btn"
+                          onclick="handleEditClick('<%= address._id %>', '<%= address.addressType %>', '<%= address.name %>', '<%= address.phone %>', '<%= address.altPhone %>', '<%= address.landMark %>', '<%= address.city %>', '<%= address.state %>', '<%= address.pincode %>')">
+                          <i class="bi bi-pencil"></i>
+                        </button>
+                        <div class="form-check">
+                          <input class="form-check-input" type="radio" name="address" value="<%= address._id %>"
+                            <%=index===0 ? 'checked' : '' %>>
+                        </div>
+                      </div>
+                      <div class="address-content">
+                        <i class="bi bi-geo-alt address-icon"></i>
+                        <div class="address-details">
+                          <h6>
+                            <%= address.name %>
+                          </h6>
+                          <p>
+                            <%= address.landMark %><br>
+                              <%= address.city %>, <%= address.state %><br>
+                                  <%= address.pincode %>
+                          </p>
+                          <p>Phone: <%= address.phone %><br>
+                              Alt Phone: <%= address.altPhone %>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <% }); %>
+                      <% } %>
+              </div>
+              <!--  -->
+   <!-- Coupon Form -->
+   <form class="checkout-section" id="couponForm" onsubmit="CouponForm(event)">
+    <h4 class="section-title">Apply Coupon</h4>
+    <div class="d-flex gap-2">
+      <div class="coupon-input-wrapper" style="position: relative; flex-grow: 1; max-width: 300px;">
+        <input type="text" class="form-control" id="couponCode" name="couponcode" placeholder="Enter coupon code" required>
+        <input type="hidden" id="appliedDiscount" name="appliedDiscount" value="0">
+        <input type="hidden" id="totalAmount" name="totalAmount" value="<%= total %>">
+        <a href="#" class="view-coupons-link" onclick="toggleCouponsModal(event)" style="position: absolute; bottom: -20px; left: 0; font-size: 12px; color: #088178; text-decoration: none;">View Coupons</a>
+      </div>
+      <button type="submit" id="couponButton" class="add-address-btn btn btn-primary" style="white-space: nowrap;">
+        <i class="bi bi-tag-fill"></i>
+        Apply Coupon
+      </button>
+      <button type="button" id="removeCouponBtn" class="btn btn-outline-danger" style="display: none; white-space: nowrap;" onclick="removeCoupon()">
+        <i class="bi bi-x-circle"></i>
+        Remove Coupon
+      </button>
+    </div>
+  </form>
+  <div class="modal fade" id="couponsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Available Coupons</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="availableCoupons" class="row g-3">
+            <!-- Coupons will be dynamically inserted here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+              <div class="payment-section card mb-4">
+                <div class="card-header bg-white">
+                  <h5 class="mb-0">Select Payment Method</h5>
+                </div>
+                <div class="card-body">
+                  <div class="accordion" id="paymentAccordion">
+                    <!-- Cash on Delivery -->
+                    <div class="card border mb-2">
+                      <div class="card-header bg-white p-0">
+                        <div class="payment-option">
+                          <input class="form-check-input" type="radio" name="paymentMethod" id="cod" value="COD"
+                            checked>
+                          <label class="form-check-label w-100 p-3" for="cod" data-bs-toggle="collapse"
+                            data-bs-target="#codCollapse">
+                            <div class="d-flex align-items-center">
+                              <i class="bi bi-cash-coin me-3 fs-4"></i>
+                              <div>
+                                <span class="fw-bold">Cash on Delivery</span>
+                                <p class="mb-0 text-muted small">Pay when you receive your order</p>
+                              </div>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                      <div id="codCollapse" class="collapse show" data-bs-parent="#paymentAccordion">
+                        <div class="card-body bg-light">
+                          <p class="mb-0 text-muted">Cash payment will be collected at the time of delivery.</p>
+                        </div>
+                      </div>
+                    </div>
+
+              
+                   <!-- Razorpay -->
+      <div class="card border mb-2">
+        <div class="card-header bg-white p-0">
+          <div class="payment-option">
+            <input class="form-check-input" type="radio" name="paymentMethod" id="razorpay" value="RAZORPAY">
+            <label class="form-check-label w-100 p-3" for="razorpay" data-bs-toggle="collapse" data-bs-target="#razorpayCollapse">
+              <div class="d-flex align-items-center">
+                <i class="bi bi-credit-card me-3 fs-4"></i>
+                <div>
+                  <span class="fw-bold">Pay Online</span>
+                  <p class="mb-0 text-muted small">Cards, UPI, NetBanking & More</p>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+        <div id="razorpayCollapse" class="collapse" data-bs-parent="#paymentAccordion">
+          <div class="card-body bg-light">
+            <div class="text-center">
+              <button class="btn btn-primary px-4" onclick="initiateRazorpay()">
+                <i class="bi bi-lock-fill"></i> Pay Securely
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+<!-- Wallet Payment -->
+<div class="card border mb-2">
+  <div class="card-header bg-white p-0">
+    <div class="payment-option">
+      <input class="form-check-input" type="radio" name="paymentMethod" id="wallet" value="WALLET">
+      <label class="form-check-label w-100 p-3" for="wallet" data-bs-toggle="collapse" data-bs-target="#walletCollapse">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-wallet2 me-3 fs-4"></i>
+          <div>
+            <span class="fw-bold">Wallet Payment</span>
+            <p class="mb-0 text-muted small">Pay using your wallet balance</p>
+          </div>
+        </div>
+      </label>
+    </div>
+  </div>
+  <div id="walletCollapse" class="collapse" data-bs-parent="#paymentAccordion">
+    <div class="card-body bg-light">
+      <div class="text-center">
+        <button class="btn btn-primary px-4" onclick="initiateWalletPayment()">
+          <i class="bi bi-wallet2"></i> Pay with Wallet
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+      
+    </div>
+  </div>
+</div>
+</div>
+
+
+                <!-- Order Summary -->
+<div class="col-lg-4">
+  <div class="checkout-section order-summary">
+      <h4 class="section-title">Order Summary</h4>
+      <div class="summary-item">
+          <span>Subtotal</span>
+          <span>₹<%= subtotal.toFixed(2) %></span>
+      </div>
+      
+      <% if (subtotal < 50000) { %>
+          <div class="summary-item">
+              <span>Delivery Charges</span>
+              <span>₹140.00</span>
+          </div>
+      
+      <% } else { %>
+          <div class="summary-item">
+              <span>Delivery Charges</span>
+              <span class="text-success">FREE</span>
+          </div>
+      <% } %>
+
+      <div class="summary-item">
+          <span>Tax (2%)</span>
+          <span>₹<%= tax.toFixed(2) %></span>
+      </div>
+
+      <% if (discount > 0) { %>
+          <div class="summary-item discount">
+              <span>Coupon Discount 
+                  <% if (couponCode) { %>
+                      <small>(<%= couponCode %>)</small>
+                  <% } %>
+              </span>
+              <span class="text-success">-₹<%= discount.toFixed(2) %></span>
+          </div>
+      <% } %>
+
+      <div class="summary-item total">
+          <span>Total</span>
+          <span id="totalPrice">₹<%= total.toFixed(2) %></span>
+      </div>
+      <button class="place-order-btn" onclick="placeOrder()">
+          <i class="bi bi-lock-fill"></i>
+          Place Order
+      </button>
+  </div>
+</div>
+          </div>
+          </div>
+   
+
+    <!-- Add Address Modal -->
+    <div class="modal fade" id="addAddressModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Add New Address</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="addressForm" action="/checkout-addAddress" method="post">
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label">Address Type *</label>
+                  <select class="form-select" name="addressType" required>
+                    <option value="">Select Address Type</option>
+                    <option value="home">Home</option>
+                    <option value="work">Work</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">Full Name *</label>
+                  <input type="text" class="form-control" name="name" required>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Phone Number *</label>
+                  <input type="tel" class="form-control" name="phone" required>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Alternate Phone Number *</label>
+                  <input type="tel" class="form-control" name="altPhone" required>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">Landmark *</label>
+                  <input type="text" class="form-control" name="landMark" required>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">City *</label>
+                  <input type="text" class="form-control" name="city" required>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">State *</label>
+                  <input type="text" class="form-control" name="state" required>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">PIN Code *</label>
+                  <input type="number" class="form-control" name="pincode" required>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" form="addressForm" class="btn add-address-btn">Save Address</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Address Modal -->
+    <div class="modal fade" id="editAddressModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Edit Address</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="editAddressForm" action="/checkout-editAddress" method="post">
+              <input type="hidden" name="addressId" id="editAddressId">
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label">Address Type *</label>
+                  <select class="form-select" name="addressType" id="editAddressType" required>
+                    <option value="">Select Address Type</option>
+                    <option value="home">Home</option>
+                    <option value="work">Work</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">Full Name *</label>
+                  <input type="text" class="form-control" name="name" id="editName" required>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Phone Number *</label>
+                  <input type="tel" class="form-control" name="phone" id="editPhone" required>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Alternate Phone Number *</label>
+                  <input type="tel" class="form-control" name="altPhone" id="editAltPhone" required>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">Landmark *</label>
+                  <input type="text" class="form-control" name="landMark" id="editLandmark" required>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">City *</label>
+                  <input type="text" class="form-control" name="city" id="editCity" required>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">State *</label>
+                  <input type="text" class="form-control" name="state" id="editState" required>
+                </div>
+
+                <div class="col-md-4">
+                  <label class="form-label">PIN Code *</label>
+                  <input type="number" class="form-control" name="pincode" id="editPincode" required>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" form="editAddressForm" class="btn add-address-btn">Update Address</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <%-include("../../views/partials/user/footer")%>
+
+
+
+
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+      <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+      <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+      <script>
+        function handleEditClick(id, type, name, phone, altPhone, landmark, city, state, pincode) {
+          document.getElementById('editAddressId').value = id;
+          document.getElementById('editAddressType').value = type;
+          document.getElementById('editName').value = name;
+          document.getElementById('editPhone').value = phone;
+          document.getElementById('editAltPhone').value = altPhone;
+          document.getElementById('editLandmark').value = landmark;
+          document.getElementById('editCity').value = city;
+          document.getElementById('editState').value = state;
+          document.getElementById('editPincode').value = pincode;
+      
+          const editModal = new bootstrap.Modal(document.getElementById('editAddressModal'));
+          editModal.show();
+        }
+
+       
+        function placeOrder() {
+    const selectedAddress = document.querySelector('input[name="address"]:checked');
+    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+
+    if (!selectedAddress) {
+      alert("Please select a shipping address.");
+      return;
+    }
+
+    if (!paymentMethod || paymentMethod.value !== "COD") {
+      alert("Only Cash on Delivery is supported at the moment.");
+      return;
+    }
+
+    const addressId = selectedAddress.value;
+
+    // Optional: disable button to prevent multiple clicks
+    const placeOrderBtn = document.querySelector('.place-order-btn');
+    placeOrderBtn.disabled = true;
+    placeOrderBtn.innerHTML = '<i class="bi bi-lock-fill"></i> Placing...';
+
+    fetch('/place-order', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        addressId: addressId,
+        paymentMethod: "COD"
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Redirect to success page
+        window.location.href = `/order-success/${data.orderId}`;
+      } else {
+        alert(data.message || "Order failed. Try again.");
+        placeOrderBtn.disabled = false;
+        placeOrderBtn.innerHTML = '<i class="bi bi-lock-fill"></i> Place Order';
+      }
+    })
+    .catch(error => {
+      console.error("Error placing order:", error);
+      alert("Something went wrong. Please try again.");
+      placeOrderBtn.disabled = false;
+      placeOrderBtn.innerHTML = '<i class="bi bi-lock-fill"></i> Place Order';
+    });
+  }
+
+
+        
+      </script>
+      

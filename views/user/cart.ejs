@@ -1,111 +1,626 @@
-<%-include("../../views/partials/user/header.ejs")%>
+<%- include('../../views/partials/user/header') %>
 
-<!-- Start Hero Section -->
-<div class="hero">
-    <div class="container">
-        <div class="row justify-content-between">
-            <div class="col-lg-5">
-                <div class="intro-excerpt">
-                    <h1>Cart</h1>
+<section class="cart-section py-5">
+  <div class="container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb bg-light p-2 rounded">
+        <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Shopping Cart</li>
+      </ol>
+    </nav>
+
+    <!-- Cart Banner - Kept Unchanged as Requested -->
+    <div class="cart-banner mb-4">
+      <div class="banner-content text-center">
+        <h1 class="display-4 fw-bold text-white">Your Shopping Cart</h1>
+      </div>
+    </div>
+
+
+    <ol class="breadcrumb bg-light p-2 rounded">
+      <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Shopping Cart</li>
+    </ol>
+
+
+    
+    <div class="row g-4">
+      <!-- Cart Items -->
+     <!-- Cart Items -->
+<div class="col-lg-8">
+  <% if (cart && cart.length > 0) { %>
+    <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+      <div class="card-header bg-light p-3">
+        <div class="row align-items-center text-center">
+          <div class="col-md-6 text-md-start">
+            <h5 class="mb-0">Product Details</h5>
+          </div>
+          <div class="col-md-2">
+            <h5 class="mb-0">Quantity</h5>
+          </div>
+          <div class="col-md-2">
+            <h5 class="mb-0">Price</h5>
+          </div>
+          <div class="col-md-2">
+            <h5 class="mb-0">Actions</h5>
+          </div>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <% cart.forEach(item => { 
+             const unitPrice = item.totalPrice / item.quantity;
+        %>
+          <div class="cart-item p-3 border-bottom" data-product-id="<%= item.productId %>">
+            <div class="row align-items-center">
+              <div class="col-md-6 mb-3 mb-md-0">
+                <div class="d-flex align-items-center">
+                  <div class="item-image me-3">
+                    <img src="/Uploads/re-image/<%= item.productImage[0] || 'default.jpg' %>" alt="<%= item.productName %>" class="img-fluid rounded" style="width: 80px; height: 80px; object-fit: cover;">
+                  </div>
+                  <div class="item-details">
+                    <h6 class="fw-bold mb-1"><%= item.productName || 'Unknown Product' %></h6>
+                    <% if (item.brand) { %>
+                      <span class="badge bg-light text-dark">Brand: <%= item.brand %></span>
+                    <% } %>
+                    
+                  </div>
                 </div>
-            </div>
-            <div class="col-lg-7">
+              </div>
+              
+              <div class="col-md-2 mb-3 mb-md-0">
+                <div class="quantity-control d-flex align-items-center justify-content-center">
+                  <form class="quantity-form d-flex align-items-center" data-price="<%= unitPrice %>">
+                    <input type="hidden" name="productId" value="<%= item.productId %>">
+                    <input type="hidden" name="size" value="<%= item.size || 'N/A' %>">
+                    <button type="button" class="btn btn-quantity decrease-btn rounded-circle">-</button>
+                    <span class="quantity-value mx-2"><%= item.quantity %></span>
+                    <button type="button" class="btn btn-quantity increase-btn rounded-circle">+</button>
+                  </form>
+                </div>
+              </div>
+              <div class="col-md-2 mb-3 mb-md-0 text-center">
+                <p class="mb-0 fw-bold price-tag">₹<%= item.totalPrice.toFixed(2) %></p>
+              </div>
+              <div class="col-md-2 text-center">
+                <form action="/remove-product" method="POST" class="d-inline">
+                  <input type="hidden" name="productId" value="<%= item.productId %>">
+                  <button type="submit" class="btn remove-btn">
+                    <i class="bi bi-trash-fill"></i>
+                  </button>
+                </form>
                 
+              </div>
             </div>
-        </div>
-    </div>
-</div>
-<!-- End Hero Section -->
-
-
-
-<div class="untree_co-section before-footer-section">
-<div class="container">
-  <div class="row mb-5">
-    <form class="col-md-12" method="post">
-      <div class="site-blocks-table">
-        <table class="table">
-          <thead>
-            <tr>
-              <th class="product-thumbnail">Image</th>
-              <th class="product-name">Product</th>
-              <th class="product-price">Price</th>
-              <th class="product-quantity">Quantity</th>
-              <th class="product-total">Total</th>
-              <th class="product-remove">Remove</th>
-            </tr>
-          </thead>
-        
-        </table>
+          </div>
+        <% }); %>
       </div>
-    </form>
+    </div>
+  <% } else { %>
+    <div class="empty-cart text-center p-5 bg-white rounded-3 shadow-sm">
+      <div class="empty-cart-icon mb-4">
+        <i class="bi bi-cart-x" style="font-size: 4rem; color: #ccc;"></i>
+      </div>
+      <h4 class="text-muted">Your cart is empty</h4>
+      <p class="mb-4">Looks like you haven't added anything to your cart yet.</p>
+      <a href="/shop" class="btn btn-primary btn-lg continue-shopping">
+        <i class="bi bi-arrow-left me-2"></i>Continue Shopping
+      </a>
+    </div>
+  <% } %>
+
+   
+  <% if (cart && cart.length > 0) { %>
+    <div class="cart-actions d-flex justify-content-between mt-4">
+      <a href="/shop" class="btn btn-outline-secondary continue-shopping-btn">
+        <i class="bi bi-arrow-left me-2"></i>Continue Shopping
+      </a>
+      
+    </div>
+  <% } %>
+</div>
+
+
+
+
+      <!-- Cart Summary -->
+      <div class="col-lg-4">
+        <div class="cart-summary card border-0 shadow-sm rounded-3 sticky-top" style="top: 20px;">
+          <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Order Summary</h5>
+          </div>
+          <div class="card-body">
+            <div class="summary-items">
+              <div class="summary-item d-flex justify-content-between mb-3">
+                <span>Subtotal</span>
+                <span class="fw-bold" id="subtotal">₹<%= grandTotal %></span>
+              </div>
+              
+              <div class="summary-item d-flex justify-content-between mb-3">
+                <span>Delivery Charges</span>
+                <span>
+                  <% if (deliveryCharge > 0) { %>
+                    ₹<%= deliveryCharge %>
+                  <% } else { %>
+                    <span class="text-success fw-bold">140</span>
+                  <% } %>
+                </span>
+              </div>
+              
+              <% if (grandTotal < 2000 && cart && cart.length > 0) { %>
+                <div class="free-shipping-progress mt-3 mb-4">
+                  <div class="d-flex justify-content-between mb-2">
+                    <small>Progress to free shipping</small>
+                    <small class="text-primary fw-bold">
+                      <% 
+                        let progressPercent = 0;
+                        if (grandTotal > 0) {
+                          progressPercent = Math.min(Math.round((grandTotal/2000) * 100), 100);
+                        }
+                      %>
+                      <%= progressPercent %>%
+                    </small>
+                  </div>
+                  
+                  <div class="shipping-info text-center mt-2">
+                    <span class="badge bg-light text-dark p-2">Add ₹<%= (2000 - grandTotal).toFixed(2) %> more for FREE delivery!</span>
+                  </div>
+                </div>
+              <% } else if (cart && cart.length > 0) { %>
+                <div class="free-shipping-achieved alert alert-success py-2 text-center mt-3 mb-4">
+                  <i class="bi bi-check-circle-fill me-2"></i>
+                  <small class="fw-bold">Congratulations! You've got SPEED delivery!</small>
+                </div>
+              <% } %>
+            </div>
+            
+            <hr class="my-4">
+            
+            <div class="summary-total d-flex justify-content-between align-items-center mb-4">
+              <span class="fs-5">Total</span>
+              <span class="fs-4 fw-bold text-primary" id="cart-total">₹<%= totalWithDelivery %></span>
+
+            </div>
+            
+            <% if (cart && cart.length > 0) { %>
+              <button class="btn btn-primary w-100 py-3 fw-bold checkout-btn" onclick="window.location.href='/checkout'">
+                <i class="bi bi-credit-card me-2"></i>Proceed to Checkout
+              </button>
+              
+              <div class="payment-methods mt-4">
+                <div class="text-center mb-2">
+                  <small class="text-muted">SECURE PAYMENT OPTIONS</small>
+                </div>
+                <div class="d-flex justify-content-center gap-3">
+                  <i class="bi bi-credit-card" data-bs-toggle="tooltip" title="Credit Card"></i>
+                  <i class="bi bi-wallet2" data-bs-toggle="tooltip" title="Digital Wallet"></i>
+                  <i class="bi bi-cash-coin" data-bs-toggle="tooltip" title="Cash on Delivery"></i>
+                  <i class="bi bi-bank" data-bs-toggle="tooltip" title="Net Banking"></i>
+                </div>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <% if (totalPages > 1) { %>
+      <div class="pagination-container mt-5">
+        <nav aria-label="Cart pagination">
+          <ul class="pagination justify-content-center">
+            <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+              <a class="page-link" href="/cart?page=<%= currentPage - 1 %>" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+            <% for(let i = 1; i <= totalPages; i++) { %>
+              <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                <a class="page-link" href="/cart?page=<%= i %>"><%= i %></a>
+              </li>
+            <% } %>
+            <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+              <a class="page-link" href="/cart?page=<%= currentPage + 1 %>" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <div class="text-center text-muted mb-4">
+          <small>Showing <%= ((currentPage - 1) * itemsPerPage) + 1 %>-<%= Math.min(currentPage * itemsPerPage, totalItems) %> of <%= totalItems %> items</small>
+        </div>
+      </div>
+    <% } %>
+
   </div>
+</section>
 
-  <div class="row">
-    <div class="col-md-6">
-      <div class="row mb-5">
-        <div class="col-md-6 mb-3 mb-md-0">
-          <button class="btn btn-black btn-sm btn-block">Update Cart</button>
-        </div>
-        <div class="col-md-6">
-            <a href="/shop">
-              <button type="button" class="btn btn-outline-black btn-sm btn-block">Continue Shopping</button>
-            </a>
-          </div>
-          
-      </div>
-      <div class="row">
-        <div class="col-md-12">
-          <label class="text-black h4" for="coupon">Coupon</label>
-          <p>Enter your coupon code if you have one.</p>
-        </div>
-        <div class="col-md-8 mb-3 mb-md-0">
-          <input type="text" class="form-control py-3" id="coupon" placeholder="Coupon Code">
-        </div>
-        <div class="col-md-4">
-          <button class="btn btn-black">Apply Coupon</button>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-6 pl-5">
-      <div class="row justify-content-end">
-        <div class="col-md-7">
-          <div class="row">
-            <div class="col-md-12 text-right border-bottom mb-5">
-              <h3 class="text-black h4 text-uppercase">Cart Totals</h3>
-            </div>
-          </div>
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <span class="text-black">Subtotal</span>
-            </div>
-            <div class="col-md-6 text-right">
-              <strong class="text-black">$230.00</strong>
-            </div>
-          </div>
-          <div class="row mb-5">
-            <div class="col-md-6">
-              <span class="text-black">Total</span>
-            </div>
-            <div class="col-md-6 text-right">
-              <strong class="text-black">$230.00</strong>
-            </div>
-          </div>
+<%- include('../../views/partials/user/footer') %>
 
-          <div class="row">
-            <div class="col-md-12">
-              <button class="btn btn-black btn-lg py-3 btn-block" onclick="window.location='checkout.html'">Proceed To Checkout</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-</div>
+<!-- Bootstrap JS and Dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
 
-<script src="js/bootstrap.bundle.min.js"></script>
-<script src="js/tiny-slider.js"></script>
-<script src="js/custom.js"></script>
+<style>
+  /* Main Colors */
+  :root {
+    --primary-color: #088178;
+    --primary-dark: #066661;
+    --primary-light: #e6f1f0;
+    --secondary-color: #ff6b6b;
+    --text-color: #333;
+    --light-gray: #f8f9fa;
+    --border-color: #e9ecef;
+  }
 
-<%-include("../../views/partials/user/footer.ejs")%>
+  body {
+    color: var(--text-color);
+    background-color: #f9fafb;
+  }
+
+  /* Cart Banner - KEPT UNCHANGED as requested */
+  .cart-banner {
+    background: linear-gradient(135deg, rgba(8, 129, 120, 0.9), rgba(6, 102, 97, 0.9)), url('/api/placeholder/1200/300') center/cover no-repeat;
+    padding: 60px 0;
+    border-radius: 12px;
+    margin-bottom: a30px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  .cart-banner .banner-content h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Breadcrumb */
+  .breadcrumb {
+    border-radius: 8px;
+    font-size: 0.9rem;
+  }
+  
+  .breadcrumb-item a {
+    color: var(--primary-color);
+    font-weight: 500;
+  }
+
+  /* Cart Items */
+  .cart-item {
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  
+  .cart-item:hover {
+    background-color: var(--primary-light);
+  }
+  
+  .item-details h6 {
+    color: var(--text-color);
+    margin-bottom: 5px;
+  }
+
+  /* Quantity Controls */
+  .btn-quantity {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    border: 1px solid var(--border-color);
+    font-size: 14px;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-quantity:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+  }
+  
+  .quantity-value {
+    font-weight: 600;
+    min-width: 30px;
+    text-align: center;
+  }
+
+  /* Remove Button */
+  .remove-btn {
+    color: #dc3545;
+    transition: all 0.3s ease;
+    background: none;
+    border: none;
+  }
+  
+  .remove-btn:hover {
+    color: #b02a37;
+    transform: scale(1.2);
+  }
+
+  /* Price Tag */
+  .price-tag {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+  }
+
+  /* Empty Cart */
+  .empty-cart {
+    border-radius: 12px;
+    padding: 3rem !important;
+  }
+
+  /* Cart Summary */
+  .cart-summary {
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  
+  .cart-summary .card-header {
+    background-color: var(--primary-color) !important;
+  }
+  
+  .summary-item {
+    font-size: 1rem;
+  }
+  
+  .checkout-btn {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    font-size: 1.1rem;
+  }
+  
+  .checkout-btn:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Continue Shopping Button */
+  .continue-shopping-btn {
+  
+    border-color: var(--primary-color);
+    transition: all 0.3s ease;
+  }
+  
+  .continue-shopping-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+  }
+
+  /* Clear Cart Button */
+  .clear-cart-btn {
+    transition: all 0.3s ease;
+  }
+  
+  .clear-cart-btn:hover {
+    background-color: #dc3545;
+    color: white;
+    border-color: #dc3545;
+  }
+
+  /* Payment Methods */
+  .payment-methods i {
+    font-size: 1.5rem;
+    color: #6c757d;
+    transition: all 0.3s ease;
+  }
+  
+  .payment-methods i:hover {
+    color: var(--primary-color);
+    transform: translateY(-2px);
+  }
+
+  /* Progress Bar */
+  .progress {
+    border-radius: 10px;
+    background-color: #e9ecef;
+    overflow: hidden;
+  }
+  
+  .progress-bar {
+    background-color: var(--primary-color);
+    transition: width 0.5s ease;
+  }
+
+  /* Pagination */
+  .pagination {
+    margin-top: 2rem;
+  }
+  
+  .pagination .page-link {
+    color: var(--primary-color);
+    border-radius: 4px;
+    margin: 0 2px;
+  }
+  
+  .pagination .page-item.active .page-link {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+  
+  .pagination .page-link:hover {
+    background-color: var(--primary-light);
+    color: var(--primary-dark);
+  }
+
+  /* Responsive Styling */
+  @media (max-width: 768px) {
+    .cart-banner {
+      padding: 40px 0;
+    }
+    
+    .cart-banner .banner-content h1 {
+      font-size: 1.75rem;
+    }
+    
+    .card-header h5 {
+      font-size: 1rem;
+    }
+    
+    .cart-item {
+      padding: 15px 10px;
+    }
+    
+    .item-details h6 {
+      font-size: 0.9rem;
+    }
+    
+    .checkout-btn {
+      font-size: 0.95rem;
+      padding: 10px;
+    }
+  }
+</style>
+
+<script>
+
+
+$(document).ready(function () {
+  // Tooltip init
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+
+  // Increase quantity
+  $('.increase-btn').click(function () {
+    const form = $(this).closest('form');
+    const quantitySpan = form.find('.quantity-value');
+    let quantity = parseInt(quantitySpan.text());
+
+    if (quantity < 3) {
+      quantity++;
+      quantitySpan.text(quantity);
+      updatePrice(form, quantity);
+      updateCartItem(form, quantity);
+      updateCartTotal();
+    } else {
+      // Optional: alert user or show tooltip
+      console.log('Maximum quantity reached');
+    }
+  });
+
+  // Decrease quantity
+  $('.decrease-btn').click(function () {
+    const form = $(this).closest('form');
+    const quantitySpan = form.find('.quantity-value');
+    let quantity = parseInt(quantitySpan.text());
+
+    if (quantity > 1) {
+      quantity--;
+      quantitySpan.text(quantity);
+      updatePrice(form, quantity);
+      updateCartItem(form, quantity);
+      updateCartTotal();
+    }
+  });
+
+  // Update product price based on quantity
+  function updatePrice(form, quantity) {
+    const unitPrice = parseFloat(form.data('price'));
+    const priceContainer = form.closest('.cart-item').find('.price-tag');
+    const newTotal = (unitPrice * quantity).toFixed(2);
+    priceContainer.text('₹' + newTotal);
+  }
+
+  // Send updated quantity to server
+  function updateCartItem(form, quantity) {
+    const productId = form.find('input[name="productId"]').val();
+    const size = form.find('input[name="size"]').val();
+
+    $.ajax({
+      url: '/cart/update',
+      type: 'POST',
+      data: {
+        productId,
+        size,
+        quantity
+      },
+      success: function (response) {
+        console.log('Cart updated successfully:', response);
+      },
+      error: function (xhr, status, error) {
+        console.error('Error updating cart:', error);
+      }
+    });
+  }
+
+  // Update subtotal and total
+  function updateCartTotal() {
+    let subtotal = 0;
+    $('.quantity-form').each(function () {
+      const quantity = parseInt($(this).find('.quantity-value').text());
+      const price = parseFloat($(this).data('price'));
+      subtotal += quantity * price;
+    });
+
+    const deliveryCharge = subtotal < 50000 ? 140 : 0;
+    const total = subtotal + deliveryCharge;
+
+    $('#subtotal').text('₹' + subtotal.toFixed(2));
+    $('#cart-total').text('₹' + total.toFixed(2));
+  }
+
+  // Remove item
+  $('.remove-btn').click(function (e) {
+    e.preventDefault();
+    Swal.fire({
+      title: 'Remove item?',
+      text: "This item will be removed from your cart.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#088178',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Yes, remove it!'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        $(this).closest('form').submit();
+      }
+    });
+  });
+});
+
+
+
+document.querySelectorAll('.btn-quantity').forEach(button => {
+  button.addEventListener('click', async () => {
+    const form = button.closest('.quantity-form');
+    const productId = form.querySelector('input[name="productId"]').value;
+    const size = form.querySelector('input[name="size"]').value;
+    const action = button.classList.contains('increase-btn') ? 'increase' : 'decrease';
+
+    try {
+      const res = await fetch('/update-quantity', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ productId, size, action })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        form.querySelector('.quantity-value').textContent = data.quantity;
+        // Optionally update subtotal/total price here
+      } else {
+        console.warn(data.message || 'Failed to update quantity');
+      }
+    } catch (err) {
+      console.error('Request failed:', err);
+    }
+  });
+});
+
+
+
+  
+</script>
