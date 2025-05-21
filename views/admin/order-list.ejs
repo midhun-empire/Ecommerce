@@ -39,7 +39,6 @@
                 <th>User Name</th>
                 <th>Date</th>
                 <th>Total Amount</th>
-                <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -50,15 +49,7 @@
                   <td><%= order.userId?.name || 'N/A' %></td>
                   <td><%= order.createdAt.toLocaleDateString() %></td>
                   <td><%= order.finalAmount?.toFixed(2) || '0.00' %></td>
-                  <td>
-                    <select class="form-select status-select" data-order-id="<%= order._id %>">
-                      <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
-                      <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
-                      <option value="out_for_delivery" <%= order.status === 'out_for_delivery' ? 'selected' : '' %>>Out for Delivery</option>
-                      <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
-                      <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
-                    </select>
-                  </td>
+                 
                   <td>
                     <div class="btn-group" role="group">
                       <button class="btn btn-info btn-sm view-order" data-order-id="<%= order._id %>">

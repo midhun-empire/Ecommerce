@@ -70,9 +70,8 @@
               
               <div class="col-md-2 mb-3 mb-md-0">
                 <div class="quantity-control d-flex align-items-center justify-content-center">
-                  <form class="quantity-form d-flex align-items-center" data-price="<%= unitPrice %>">
+                  <form class="quantity-form d-flex align-items-center" data-price="<%= unitPrice %>" data-stock="<%= item.quantityAvailable %>">
                     <input type="hidden" name="productId" value="<%= item.productId %>">
-                    <input type="hidden" name="size" value="<%= item.size || 'N/A' %>">
                     <button type="button" class="btn btn-quantity decrease-btn rounded-circle">-</button>
                     <span class="quantity-value mx-2"><%= item.quantity %></span>
                     <button type="button" class="btn btn-quantity increase-btn rounded-circle">+</button>
@@ -488,139 +487,141 @@
 $(document).ready(function () {
   // Tooltip init
   const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-  tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+  tooltipTriggerList.map((el) => new bootstrap.Tooltip(el));
 
-  // Increase quantity
-  $('.increase-btn').click(function () {
-    const form = $(this).closest('form');
-    const quantitySpan = form.find('.quantity-value');
-    let quantity = parseInt(quantitySpan.text());
+  // Handle quantity buttons
+  document.querySelectorAll(".btn-quantity").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const form = button.closest(".quantity-form");
+      const productId = form.querySelector('input[name="productId"]').value;
+      const action = button.classList.contains("increase-btn") ? "increase" : "decrease";
+      const quantitySpan = form.querySelector(".quantity-value");
+      const availableStock = parseInt(form.dataset.stock);
+      let quantity = parseInt(quantitySpan.textContent);
 
-    if (quantity < 3) {
-      quantity++;
-      quantitySpan.text(quantity);
-      updatePrice(form, quantity);
-      updateCartItem(form, quantity);
-      updateCartTotal();
-    } else {
-      // Optional: alert user or show tooltip
-      console.log('Maximum quantity reached');
-    }
-  });
+      // Log productId for debugging
+      console.log("Updating quantity for productId:", productId, "Action:", action);
 
-  // Decrease quantity
-  $('.decrease-btn').click(function () {
-    const form = $(this).closest('form');
-    const quantitySpan = form.find('.quantity-value');
-    let quantity = parseInt(quantitySpan.text());
+      // Client-side validation
+      if (action === "increase" && quantity >= availableStock) {
+        Swal.fire({
+          title: "Out of Stock",
+          text: `Only ${availableStock} units available in stock.`,
+          icon: "error",
+          confirmButtonColor: "#088178",
+          confirmButtonText: "OK",
+        });
+        return;
+      }
 
-    if (quantity > 1) {
-      quantity--;
-      quantitySpan.text(quantity);
-      updatePrice(form, quantity);
-      updateCartItem(form, quantity);
-      updateCartTotal();
-    }
-  });
+      if (action === "increase" && quantity >= 3) {
+        Swal.fire({
+          title: "Maximum Quantity Reached",
+          text: "You cannot add more than 3 items of this product.",
+          icon: "warning",
+          confirmButtonColor: "#088178",
+          confirmButtonText: "OK",
+        });
+        return;
+      }
 
-  // Update product price based on quantity
-  function updatePrice(form, quantity) {
-    const unitPrice = parseFloat(form.data('price'));
-    const priceContainer = form.closest('.cart-item').find('.price-tag');
-    const newTotal = (unitPrice * quantity).toFixed(2);
-    priceContainer.text('₹' + newTotal);
-  }
+      if (action === "decrease" && quantity <= 1) {
+        Swal.fire({
+          title: "Minimum Quantity Required",
+          text: "At least 1 item is required in the cart.",
+          icon: "warning",
+          confirmButtonColor: "#088178",
+          confirmButtonText: "OK",
+        });
+        return;
+      }
 
-  // Send updated quantity to server
-  function updateCartItem(form, quantity) {
-    const productId = form.find('input[name="productId"]').val();
-    const size = form.find('input[name="size"]').val();
+      try {
+        const res = await fetch("/update-quantity", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ productId, action }),
+        });
 
-    $.ajax({
-      url: '/cart/update',
-      type: 'POST',
-      data: {
-        productId,
-        size,
-        quantity
-      },
-      success: function (response) {
-        console.log('Cart updated successfully:', response);
-      },
-      error: function (xhr, status, error) {
-        console.error('Error updating cart:', error);
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          // Update quantity and price in UI
+          quantitySpan.textContent = data.quantity;
+          const unitPrice = parseFloat(form.dataset.price);
+          const priceContainer = form.closest(".cart-item").querySelector(".price-tag");
+          priceContainer.textContent = `₹${(data.quantity * unitPrice).toFixed(2)}`;
+
+          // Update cart totals
+          updateCartTotal();
+        } else {
+          console.error("Update failed:", data.message);
+          Swal.fire({
+            title: "Error",
+            text: data.message || "Failed to update quantity",
+            icon: "error",
+            confirmButtonColor: "#088178",
+            confirmButtonText: "OK",
+          });
+        }
+      } catch (err) {
+        console.error("Request failed:", err);
+        Swal.fire({
+          title: "Error",
+          text: "An error occurred while updating the cart.",
+          icon: "error",
+          confirmButtonColor: "#088178",
+          confirmButtonText: "OK",
+        });
       }
     });
-  }
+  });
 
   // Update subtotal and total
   function updateCartTotal() {
     let subtotal = 0;
-    $('.quantity-form').each(function () {
-      const quantity = parseInt($(this).find('.quantity-value').text());
-      const price = parseFloat($(this).data('price'));
+    $(".quantity-form").each(function () {
+      const quantity = parseInt($(this).find(".quantity-value").text());
+      const price = parseFloat($(this).data("price"));
       subtotal += quantity * price;
     });
 
     const deliveryCharge = subtotal < 50000 ? 140 : 0;
     const total = subtotal + deliveryCharge;
 
-    $('#subtotal').text('₹' + subtotal.toFixed(2));
-    $('#cart-total').text('₹' + total.toFixed(2));
+    $("#subtotal").text(`₹${subtotal.toFixed(2)}`);
+    $("#cart-total").text(`₹${total.toFixed(2)}`);
+
+    // Update free shipping progress
+    const progressPercent = subtotal > 0 ? Math.min(Math.round((subtotal / 50000) * 100), 100) : 0;
+    $(".free-shipping-progress .text-primary").text(`${progressPercent}%`);
+    if (subtotal < 50000) {
+      $(".shipping-info .badge").text(`Add ₹${(50000 - subtotal).toFixed(2)} more for FREE delivery!`);
+    } else {
+      $(".free-shipping-progress").hide();
+      $(".free-shipping-achieved").show();
+    }
   }
 
   // Remove item
-  $('.remove-btn').click(function (e) {
+  $(".remove-btn").click(function (e) {
     e.preventDefault();
     Swal.fire({
-      title: 'Remove item?',
+      title: "Remove item?",
       text: "This item will be removed from your cart.",
-      icon: 'warning',
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#088178',
-      cancelButtonColor: '#6c757d',
-      confirmButtonText: 'Yes, remove it!'
+      confirmButtonColor: "#088178",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Yes, remove it!",
     }).then((result) => {
       if (result.isConfirmed) {
-        $(this).closest('form').submit();
+        $(this).closest("form").submit();
       }
     });
   });
 });
-
-
-
-document.querySelectorAll('.btn-quantity').forEach(button => {
-  button.addEventListener('click', async () => {
-    const form = button.closest('.quantity-form');
-    const productId = form.querySelector('input[name="productId"]').value;
-    const size = form.querySelector('input[name="size"]').value;
-    const action = button.classList.contains('increase-btn') ? 'increase' : 'decrease';
-
-    try {
-      const res = await fetch('/update-quantity', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ productId, size, action })
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        form.querySelector('.quantity-value').textContent = data.quantity;
-        // Optionally update subtotal/total price here
-      } else {
-        console.warn(data.message || 'Failed to update quantity');
-      }
-    } catch (err) {
-      console.error('Request failed:', err);
-    }
-  });
-});
-
-
-
   
 </script>

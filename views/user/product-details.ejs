@@ -1082,10 +1082,35 @@
     padding: 15px 0;
     margin-bottom: 30px;
 }
+.out-of-stock-btn {
+  background-color: #e41313d8;
+  color: #fff;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  width: 100%;
+  margin-top: 10px;
+  opacity: 0.7;
+}
 
 
+.star-rating {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 16px;
+}
 
+.star-rating i {
+  color: #ffd700; /* Gold color for stars, matching existing rating styles */
+}
 
+.star-rating .rating-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--primary-color);
+  margin-left: 5px;
+}
 
 </style>
 </head>
@@ -1137,14 +1162,22 @@
                         
                         <div class="product-meta">
                             <div class="product-rating">
-                                <span>( reviews)</span>
+                              <div class="star-rating">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                                <span class="rating-value">4.5</span>
+                              </div>
+                              <span>(10 reviews)</span>
                             </div>
-                        </div>
+                          </div>
     
                         <div class="product-price">
                             <span class="current-price">₹<%=product.salePrice%></span>
                             <span class="old-price">₹<%=product.regularPrice%></span>
-                            <span class="save-price"></span>
+                            
                         </div>
     
                         <div class="product-description">
@@ -1164,18 +1197,24 @@
                    
                     
                         
-                            <div class="product-extra-link2 mt-3">
-                                <button type="button" 
-                                        onclick="handleAddToCart('<%=product._id%>')" 
-                                        class="button-add-to-cart w-100">
-                                    <i class="fas fa-shopping-cart"></i> Add to Cart
-                                </button>
-    
-                                <span onclick="addToWishlist('<%=product._id%>')" class="action-btn">
-                                    <i class="far fa-heart"></i>
-                                </span>
-                            </div>
-                        </div>
+                        <div class="product-extra-link2 mt-3">
+                            <% if (quantity > 0) { %>
+                              <button type="button" 
+                                      onclick="handleAddToCart('<%=product._id%>')" 
+                                      class="button-add-to-cart w-100">
+                                <i class="fas fa-shopping-cart"></i> Add to Cart
+                              </button>
+                            <% } else { %>
+                              <button type="button" class="out-of-stock-btn w-100" disabled>Out of Stock</button>
+                            <% } %>
+                          
+                            <span onclick="addToWishlist('<%=product._id%>')" class="action-btn">
+                              <i class="far fa-heart"></i>
+                            </span>
+                          </div>
+
+
+
     
                         <div class="product-detail-meta">
                             <ul>

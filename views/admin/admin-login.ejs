@@ -80,9 +80,7 @@
   <div class="login-container">
     <h2>Admin Login</h2>
 
-    <% if (message) { %>
-      <div class="alert alert-danger text-center"><%= message %></div>
-    <% } %>
+ 
 
     <form id="adminLoginForm" method="POST" action="/admin/login">
       <div class="mb-3">
@@ -94,13 +92,18 @@
         <label for="adminPassword" class="form-label">Password</label>
         <input type="password" class="form-control" id="adminPassword" name="password" required>
         <div id="passwordError" class="error-message"></div>
+        <% if (message) { %>
+          <div class="alert alert-danger text-center"><%= message %></div>
+        <% } %>
       </div>
       <button type="submit" class="btn btn-primary">Log In</button>
     </form>
   </div>
   <script src="/js/jquery.min.js"></script>
   <script src="/js/bootstrap.bundle.min.js"></script>
+
   <script>
+    
     document.addEventListener("DOMContentLoaded", function () {
       const adminLoginForm = document.getElementById("adminLoginForm");
       const emailField = document.getElementById("adminEmail");

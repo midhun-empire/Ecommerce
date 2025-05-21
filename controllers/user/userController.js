@@ -52,9 +52,7 @@ const loadHomepage = async (req, res) => {
       
 
         const user = req.session.user;
-      
         const userData = await User.findById(user);
-        
         const categories = await Category.find({ isListed: true });
         const categoryIds = categories.map(c => c._id.toString());
 
@@ -65,18 +63,18 @@ const loadHomepage = async (req, res) => {
         const products = await Product.find({
             isBlocked: false,
             category: { $in: categoryIds },
-            quantity: { $gt: 0 },
+          
         })
             .populate('brand')
             .populate('category')
-            .sort({ createdOn: -1 })
+            .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
 
         const totalProducts = await Product.countDocuments({
             isBlocked: false,
             category: { $in: categoryIds },
-            quantity: { $gt: 0 },
+           
         });
 
         const totalPages = Math.ceil(totalProducts / limit);
@@ -84,7 +82,7 @@ const loadHomepage = async (req, res) => {
 
         return res.render('shop', {
             currentPage: 'shop',
-            user: userData,
+            user: userData, 
             products: products,
             brand: brands,
             totalProducts: totalProducts,

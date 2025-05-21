@@ -57,5 +57,8 @@ router.get("/orderList", adminAuth, orderController.getOrderListPageAdmin)
 router.post("/changeStatus", adminAuth, orderController.changeOrderStatus);
 router.post('/filter-orders', adminAuth, orderController.filterOrders);
 router.get("/orderDetailsAdmin", adminAuth, orderController.getOrderDetailsPageAdmin)
+router.post('/handleReturn',adminAuth,orderController.handleReturn)
+
+
 
 module.exports = router

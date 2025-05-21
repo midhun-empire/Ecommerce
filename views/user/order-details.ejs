@@ -401,60 +401,64 @@
                                 <h6 class="fw-bold"><%= item.product.productName %></h6>
                                 <p class="mb-1"><strong>Quantity:</strong> <%= item.quantity %></p>
                                 <p class="mb-1"><strong>Price:</strong> ₹<%= item.price %></p>
-                                <p class="mb-0"><strong>Status:</strong> <%= order.status %></p>
+                                <p class="mb-0"><strong>Status:</strong> <%= item.status %></p>
                             </div>
-    
-                            <!-- Cancel / Return -->
-                            <div class="col-md-4 text-end">
-                                <% if (['Pending', 'Processing', 'Shipped', 'Out for Delivery'].includes(item.status)) { %>
-                                    <div class="d-flex flex-column align-items-end">
-                                        <select class="form-select mb-2 cancel-reason"
-                                                data-order-id="<%= order._id %>"
-                                                data-product-id="<%= item.product._id %>">
-                                            <option value="">Select Cancellation Reason</option>
-                                            <option value="Changed My Mind">Changed My Mind</option>
-                                            <option value="Found a Cheaper Alternative">Found a Cheaper Alternative</option>
-                                            <option value="Incorrect Item Ordered">Incorrect Item Ordered</option>
-                                            <option value="Delivery Taking Too Long">Delivery Taking Too Long</option>
-                                            <option value="Product Quality Concern">Product Quality Concern</option>
-                                            <option value="Other Reason">Other Reason</option>
-                                        </select>
-                                        <button class="btn btn-danger btn-sm cancel-product"
-                                                data-order-id="<%= order._id %>"
-                                                data-product-id="<%= item.product._id %>">
-                                            Cancel Order
-                                        </button>
-                                    </div>
-                                <% } else if (item.status === 'Delivered') { %>
-                                    <% if (item.returnDeclinedReason) { %>
-                                        <button class="btn btn-danger btn-sm" disabled>Return Declined</button>
-                                        <small class="text-muted d-block mt-1">Reason: <%= item.returnDeclinedReason %></small>
-                                    <% } else { %>
-                                        <div class="d-flex flex-column align-items-end">
-                                            <select class="form-select mb-2 return-reason"
-                                                    data-order-id="<%= order._id %>"
-                                                    data-product-id="<%= item.product._id %>">
-                                                <option value="">Select Return Reason</option>
-                                                <option value="Wrong Size">Dislike</option>
-                                                <option value="Defective Product">Defective Product</option>
-                                                <option value="Not as Described">Not as Described</option>
-                                                <option value="Better Alternative Found">Better Alternative Found</option>
-                                                <option value="Quality Issues">Quality Issues</option>
-                                                <option value="Other">Other</option>
-                                            </select>
-                                            <button class="btn btn-warning btn-sm return-product"
-                                                    data-order-id="<%= order._id %>"
-                                                    data-product-id="<%= item.product._id %>">
-                                                Return
-                                            </button>
-                                        </div>
-                                    <% } %>
-                                <% } else { %>
-                                    <button class="btn btn-secondary btn-sm" disabled>
-                                        <%= item.status %>
-                                    </button>
-                                <% } %>
-                            </div>
+
+
+    <!-- Cancel / Return -->
+    <div class="col-md-4 text-end">
+        <% console.log('Item Status:', item.status, 'Item ID:', item._id.toString()); %>
+        <% if (item.status && item.status.toLowerCase() === 'cancelled') { %>
+          <button class="btn btn-danger btn-sm" disabled>Order Cancelled</button>
+        <% } else if (['pending', 'processing', 'shipped', 'out for delivery'].map(s => s.toLowerCase()).includes(item.status.toLowerCase())) { %>
+          <div class="d-flex flex-column align-items-end">
+            <select class="form-select mb-2 cancel-reason"
+                    data-order-id="<%= order._id %>"
+                    data-item-id="<%= item._id %>">
+              <option value="">Select Cancellation Reason</option>
+              <option value="Changed My Mind">Changed My Mind</option>
+              <option value="Found a Cheaper Alternative">Found a Cheaper Alternative</option>
+              <option value="Incorrect Item Ordered">Incorrect Item Ordered</option>
+              <option value="Delivery Taking Too Long">Delivery Taking Too Long</option>
+              <option value="Product Quality Concern">Product Quality Concern</option>
+              <option value="Other Reason">Other Reason</option>
+            </select>
+            <button class="btn btn-danger btn-sm cancel-product"
+                    data-order-id="<%= order._id %>"
+                    data-item-id="<%= item._id %>">
+              Cancel Order
+            </button>
+          </div>
+        <% } else if (item.status && item.status.toLowerCase() === 'delivered') { %>
+          <% if (item.returnDeclinedReason) { %>
+            <button class="btn btn-danger btn-sm" disabled>Return Declined</button>
+            <small class="text-muted d-block mt-1">Reason: <%= item.returnDeclinedReason %></small>
+          <% } else { %>
+            <div class="d-flex flex-column align-items-end">
+              <select class="form-select mb-2 return-reason"
+                      data-order-id="<%= order._id %>"
+                      data-item-id="<%= item._id %>">
+                <option value="">Select Return Reason</option>
+                <option value="Wrong Size">Dislike</option>
+                <option value="Defective Product">Defective Product</option>
+                <option value="Not as Described">Not as Described</option>
+                <option value="Better Alternative Found">Better Alternative Found</option>
+                <option value="Quality Issues">Quality Issues</option>
+                <option value="Other">Other</option>
+              </select>
+              <button class="btn btn-warning btn-sm return-product"
+                      data-order-id="<%= order._id %>"
+                      data-item-id="<%= item._id %>">
+                Return
+              </button>
+            </div>
+          <% } %>
+        <% } else { %>
+          <button class="btn btn-secondary btn-sm" disabled>
+            <%= item.status %>
+          </button>
+        <% } %>
+      </div>
                         </div>
                     </div>
     
@@ -535,169 +539,160 @@
     <!-- Include SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        document.querySelectorAll('.cancel-product').forEach(button => {
-            button.addEventListener('click', async () => {
-                const orderId = button.getAttribute('data-order-id');
-                const productId = button.getAttribute('data-product-id');
 
-                // Find the corresponding reason dropdown
-                const reasonDropdown = document.querySelector(`.cancel-reason[data-order-id="${orderId}"][data-product-id="${productId}"]`);
-                const cancellationReason = reasonDropdown.value;
+document.querySelectorAll('.cancel-product').forEach(button => {
+  button.addEventListener('click', async () => {
+    const orderId = button.getAttribute('data-order-id');
+    const itemId = button.getAttribute('data-item-id'); // Changed from productId
+    const reasonDropdown = document.querySelector(`.cancel-reason[data-order-id="${orderId}"][data-item-id="${itemId}"]`);
+    const cancellationReason = reasonDropdown.value;
 
-                // Validate that a reason is selected
-                if (!cancellationReason) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Oops...',
-                        text: 'Please select a cancellation reason',
-                        confirmButtonText: 'OK'
-                    });
-                    return;
-                }
+    if (!cancellationReason) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Oops...',
+        text: 'Please select a cancellation reason',
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
 
-                // SweetAlert2 confirmation dialog
-                const result = await Swal.fire({
-                    title: 'Are you sure?',
-                    text: "You won't be able to revert this cancellation!",
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this cancellation!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, cancel it!'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch('/cancel-product', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            orderId,
+            itemId, // Changed from productId
+            cancellationReason
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: result.message,
+            confirmButtonText: 'OK',
+          }).then(() => {
+            location.reload();
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: result.message,
+            confirmButtonText: 'OK',
+          });
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: 'An error occurred while canceling the product.',
+          confirmButtonText: 'OK',
+        });
+      }
+    }
+  });
+});
+
+document.querySelectorAll('.return-product').forEach(button => {
+    button.addEventListener('click', async () => {
+        try {
+            const orderId = button.getAttribute('data-order-id');
+            const itemId = button.getAttribute('data-item-id');
+
+            // Find the corresponding reason dropdown for this specific product
+            const reasonDropdown = button.closest('.d-flex').querySelector('.return-reason');
+            
+            if (!reasonDropdown) {
+                throw new Error('Return reason dropdown not found');
+            }
+
+            const returnReason = reasonDropdown.value;
+
+            // Validate return reason
+            if (!returnReason) {
+                await Swal.fire({
                     icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Yes, cancel it!'
+                    title: 'Return Reason Required',
+                    text: 'Please select a reason for returning this product',
+                    confirmButtonText: 'OK'
                 });
+                return;
+            }
 
-                // If user confirms, proceed with the cancellation
-                if (result.isConfirmed) {
-                    try {
-                        const response = await fetch('/cancel-product', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                orderId,
-                                productId,
-                                cancellationReason
-                            }),
-                        });
-
-                        const result = await response.json();
-
-                        if (result.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Success!',
-                                text: result.message,
-                                confirmButtonText: 'OK',
-                            }).then(() => {
-                                location.reload(); // Refresh the page to reflect changes
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error!',
-                                text: result.message,
-                                confirmButtonText: 'OK',
-                            });
-                        }
-                    } catch (error) {
-                        console.error('Error:', error);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error!',
-                            text: 'An error occurred while canceling the product.',
-                            confirmButtonText: 'OK',
-                        });
-                    }
-                }
+            // Confirmation dialog
+            const confirmResult = await Swal.fire({
+                title: 'Confirm Return',
+                text: 'Are you sure you want to return this product?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, return it!'
             });
-        });
 
-        //return
-        document.querySelectorAll('.return-product').forEach(button => {
-            button.addEventListener('click', async () => {
-                try {
-                    const orderId = button.getAttribute('data-order-id');
-                    const productId = button.getAttribute('data-product-id');
+            if (!confirmResult.isConfirmed) {
+                return;
+            }
 
-                    // Find the corresponding reason dropdown for this specific product
-                    const reasonDropdown = button.closest('.d-flex').querySelector('.return-reason');
-                    
-                    if (!reasonDropdown) {
-                        throw new Error('Return reason dropdown not found');
-                    }
-
-                    const returnReason = reasonDropdown.value;
-
-                    // Validate return reason
-                    if (!returnReason) {
-                        await Swal.fire({
-                            icon: 'warning',
-                            title: 'Return Reason Required',
-                            text: 'Please select a reason for returning this product',
-                            confirmButtonText: 'OK'
-                        });
-                        return;
-                    }
-
-                    // Confirmation dialog
-                    const confirmResult = await Swal.fire({
-                        title: 'Confirm Return',
-                        text: 'Are you sure you want to return this product?',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#3085d6',
-                        cancelButtonColor: '#d33',
-                        confirmButtonText: 'Yes, return it!'
-                    });
-
-                    if (!confirmResult.isConfirmed) {
-                        return;
-                    }
-
-                    // Submit return request
-                    const response = await fetch('/order/return-product', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            orderId,
-                            productId,
-                            returnReason
-                        }),
-                    });
-
-                    const result = await response.json();
-
-                    if (result.success) {
-                        await Swal.fire({
-                            icon: 'success',
-                            title: 'Return Requested',
-                            text: result.message,
-                            confirmButtonText: 'OK'
-                        });
-                        location.reload();
-                    } else {
-                        throw new Error(result.message || 'Return request failed');
-                    }
-
-                } catch (error) {
-                    console.error('Return request error:', error);
-                    await Swal.fire({
-                        icon: 'error',
-                        title: 'Return Request Failed',
-                        text: error.message || 'An error occurred while processing your return request',
-                        confirmButtonText: 'OK'
-                    });
-                }
+            // Submit return request
+            const response = await fetch('/return-product', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    orderId,
+                    itemId,
+                    reason:returnReason
+                }),
             });
-        });
 
+            const result = await response.json();
+
+            if (result.success) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Return Requested',
+                    text: result.message,
+                    confirmButtonText: 'OK'
+                });
+                location.reload();
+            } else {
+                throw new Error(result.message || 'Return request failed');
+            }
+
+        } catch (error) {
+            console.error('Return request error:', error);
+            await Swal.fire({
+                icon: 'error',
+                title: 'Return Request Failed',
+                text: error.message || 'An error occurred while processing your return request',
+                confirmButtonText: 'OK'
+            });
+        }
+    });
+});
 
         
     
     </script>
-</body>
-
-</html>

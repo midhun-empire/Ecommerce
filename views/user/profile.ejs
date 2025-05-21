@@ -260,6 +260,36 @@
                 </div>
 
                 <div class="tab-pane fade" id="orders" role="tabpanel" aria-labelledby="orders-tab">
+                  <!-- Define getOrderStatus function -->
+                  <% function getOrderStatus(orderedItems) {
+                    if (!orderedItems || orderedItems.length === 0) {
+                      return 'Unknown';
+                    }
+                    const statusOrder = ['pending', 'processing', 'shipped', 'out for delivery', 'delivered', 'cancelled'];
+                    const statuses = orderedItems.map(item => (item.status || 'pending').toLowerCase());
+                    
+                    // If all items are cancelled, return 'Cancelled'
+                    if (statuses.every(status => status === 'cancelled')) {
+                      return 'Cancelled';
+                    }
+                    
+                    // Find the most advanced non-cancelled status
+                    let maxIndex = -1;
+                    let maxStatus = 'pending';
+                    statuses.forEach(status => {
+                      if (status !== 'cancelled') {
+                        const index = statusOrder.indexOf(status);
+                        if (index > maxIndex) {
+                          maxIndex = index;
+                          maxStatus = status;
+                        }
+                      }
+                    });
+                    
+                    // Capitalize for display
+                    return maxStatus.charAt(0).toUpperCase() + maxStatus.slice(1);
+                  } %>
+                
                   <div class="card">
                     <div class="card-header">
                       <h5 class="mb-0">Your Orders</h5>
@@ -278,11 +308,12 @@
                           <tbody>
                             <% if (orders && orders.length > 0) { %>
                               <% orders.forEach(order => { %>
+                                <% const displayStatus = getOrderStatus(order.orderedItems); %>
                                 <tr>
                                   <td><%= order.orderId %></td>
                                   <td>
-                                    <span class="<%= order.status === 'Delivered' ? 'text-success' : order.status === 'Cancelled' ? 'text-danger' : 'text-warning' %>">
-                                      <%= order.status %>
+                                    <span class="<%= displayStatus === 'Delivered' ? 'text-success' : displayStatus === 'Cancelled' ? 'text-danger' : 'text-warning' %>">
+                                      <%= displayStatus %>
                                     </span>
                                   </td>
                                   <td>₹<%= order.finalAmount %></td>

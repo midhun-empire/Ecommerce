@@ -56,14 +56,14 @@ const addToCart = async (req, res) => {
     try {
       const userId = req.session.user;
       if (!userId) {
-        console.log('No user ID in session, redirecting to login');
-        return res.redirect('/login');
+        console.log("No user ID in session, redirecting to login");
+        return res.redirect("/login");
       }
   
-      const userData = await User.findById(userId).select('name walletBalance address');
+      const userData = await User.findById(userId).select("name walletBalance address").lean();
       if (!userData) {
-        console.log('User not found for ID:', userId);
-        return res.redirect('/login');
+        console.log("User not found for ID:", userId);
+        return res.redirect("/login");
       }
   
       const page = parseInt(req.query.page) || 1;
@@ -72,12 +72,12 @@ const addToCart = async (req, res) => {
   
       const cartDoc = await Cart.findOne({ userId })
         .populate({
-          path: 'items.productId',
-          select: 'productName salePrice productImage quantity isBlocked brand',  // Include brand
+          path: "items.productId",
+          select: "productName salePrice productImage quantity isBlocked brand", // Ensure 'quantity' is the stock field
           populate: {
-            path: 'brand',
-            select: 'brandname', // Get brandName from Brand model
-          }
+            path: "brand",
+            select: "brandname",
+          },
         })
         .lean();
   
@@ -87,22 +87,20 @@ const addToCart = async (req, res) => {
   
       if (cartDoc && cartDoc.items.length > 0) {
         cart = cartDoc.items
-          .filter(item => item.productId && !item.productId.isBlocked) // 🚫 Filter out blocked
-          .map(item => {
+          .filter((item) => item.productId && !item.productId.isBlocked) // Filter out blocked products
+          .map((item) => {
             const product = item.productId;
             const itemTotal = item.quantity * item.price;
             grandTotal += itemTotal;
             totalItems += 1;
-
-            // console.log('Product:', product);
-            // console.log('Brand:', product.brand);
   
             return {
               productId: product._id,
               productName: product.productName,
               productImage: product.productImage || [],
-              brand: product.brand ? product.brand.brandname : 'N/A', // Use brand.brandName
-              quantity: item.quantity,
+              brand: product.brand ? product.brand.brandname : "N/A",
+              quantity: item.quantity, // Cart item quantity
+              quantityAvailable: product.quantity, // Product stock (adjust field name if needed)
               salePrice: item.price,
               totalPrice: itemTotal,
             };
@@ -112,13 +110,13 @@ const addToCart = async (req, res) => {
         cart = cart.slice(skip, skip + itemsPerPage);
       }
   
-      const deliveryCharge = grandTotal >= 2000 ? 0 : 100;
+      // Align delivery charge with frontend logic
+      const deliveryCharge = grandTotal >= 50000 ? 0 : 140;
       const totalWithDelivery = grandTotal + deliveryCharge;
       const totalPages = Math.ceil(totalItems / itemsPerPage);
   
-      res.render('cart', {
-        user: userData,
-        userAddress: userData,
+      res.render("cart", {
+        user: userData, // Simplified to single user object
         cart,
         grandTotal: grandTotal.toFixed(2),
         deliveryCharge,
@@ -129,12 +127,13 @@ const addToCart = async (req, res) => {
         totalItems,
       });
     } catch (error) {
-      console.error('Error loading cart page:', error);
-      res.redirect('/pageNotFound');
+      console.error("Error loading cart page:", error);
+      res.redirect("/pageNotFound");
     }
   };
-
   
+
+
   const removeProduct = async (req, res) => {
     try {
       const userId = req.session.user;
@@ -163,48 +162,77 @@ const addToCart = async (req, res) => {
   };
   
   
-  const updateCartQuantity = async (req, res) => {
-    try {
-      const userId = req.session.user;
-      if (!userId) {
-        return res.status(401).json({ message: "Unauthorized. Please log in first." });
-      }
-  
-      const { productId,  action } = req.body;
-  
-      const cart = await Cart.findOne({ userId });
-      if (!cart) {
-        return res.status(404).json({ message: "Cart not found" });
-      }
-  
-    
-  
-      if (!item) {
-        return res.status(404).json({ message: "Item not found in cart" });
-      }
-  
-      if (action === 'increase') {
-        item.quantity += 1;
-      } else if (action === 'decrease' && item.quantity > 1) {
-        item.quantity -= 1;
-      }
-  
-      item.totalPrice = item.quantity * item.price;
-  
-      await cart.save();
-      return res.status(200).json({
-        message: "Cart updated successfully",
-        quantity: item.quantity,
-        totalPrice: item.totalPrice,
-      });
-  
-    } catch (error) {
-      console.error("Update Cart Quantity Error:", error);
-      return res.status(500).json({ message: "Internal server error" });
+const updateCartQuantity = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized. Please log in first." });
     }
-  };
-  
 
+    const { productId, action } = req.body;
+
+    // Find the cart
+    const cart = await Cart.findOne({ userId });
+    if (!cart) {
+      return res.status(404).json({ message: "Cart not found" });
+    }
+
+    // Find the item in the cart
+    const item = cart.items.find((item) => item.productId.toString() === productId);
+    if (!item) {
+      return res.status(404).json({ message: "Item not found in cart" });
+    }
+
+    // Fetch the product from the database
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Get available stock
+    const availableStock = product.quantity || 0; // Using 'quantity' from Product schema
+
+    // Calculate new quantity
+    let newQuantity = item.quantity;
+    if (action === "increase") {
+      newQuantity += 1;
+    } else if (action === "decrease" && item.quantity > 1) {
+      newQuantity -= 1;
+    }
+
+    // Validate stock and quantity limits
+    if (newQuantity > availableStock) {
+      return res.status(400).json({
+        success: false,
+        message: `Only ${availableStock} units available in stock.`,
+      });
+    }
+
+    if (newQuantity > 3) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot add more than 3 items of this product.",
+      });
+    }
+
+    // Update quantity and total price
+    item.quantity = newQuantity;
+    item.totalPrice = item.quantity * item.price;
+
+    // Save the cart
+    await cart.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Cart updated successfully",
+      quantity: item.quantity,
+      totalPrice: item.totalPrice,
+    });
+  } catch (error) {
+    console.error("Update Cart Quantity Error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
   module.exports={
     addToCart,

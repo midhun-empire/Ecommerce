@@ -41,7 +41,7 @@ const userAuth = (req, res, next) => {
         });
     } else {
       if (req.xhr || req.headers.accept.indexOf('json') > -1) {
-        return res.status(401).json({ message: "Unauthorized. Please log in." });
+        return res.status(401).json({ message:  'Invalid email or password' });
       } else {
         return res.redirect('/login');
       }
@@ -49,13 +49,14 @@ const userAuth = (req, res, next) => {
   };
   
 
-const adminAuth = (req, res, next) => {
+  const adminAuth = (req, res, next) => {
     if (req.session && req.session.admin) {
         next();
     } else {
+        req.session.message = 'You must be logged in as an admin to access that page.';
         res.redirect('/admin/login');
     }
-}
+};
 
 module.exports={
     userAuth,

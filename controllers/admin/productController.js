@@ -92,6 +92,7 @@ const getProductsPage = async (req, res) => {
         };
 
         const productdata = await Product.find(query)
+            .sort({ createdAt: -1 })
             .limit(limit)
             .skip((page - 1) * limit)
             .populate('category')
@@ -166,7 +167,7 @@ const getEditProduct = async (req, res) => {
     }
 };
 
-const editProduct = async (req,res)=>{
+const editProduct = async (req,res)=>{ 
     try {
         const id = req.params.id;
         const product = await Product.findOne({_id:id})
@@ -196,7 +197,7 @@ const editProduct = async (req,res)=>{
             productName:data.productName,
             description:data.description,
             brand:data.brand,
-            category:product.category,
+            category:data.category,
             regularPrice:data.regularPrice,
             salePrice:data.salePrice,
             quantity:data.quantity,

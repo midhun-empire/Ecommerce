@@ -87,69 +87,108 @@ const mongoose = require('mongoose')
 //   };
   
 const getCheckoutPage = async (req, res) => {
-    try {
-        const user = await User.findById(req.session.user);
-
-        const userAddress = await Address.findOne({ userId: req.session.user });
-
-        const userCart = await Cart.findOne({ userId: req.session.user })
-            .populate({
-                path: 'items.productId',
-                select: 'productName salePrice productImage'
-            });
-
-        if (!userCart) {
-            return res.redirect('/cart');
-        }
-      
-
-        const cartItems = userCart.items.map(item => ({
-            productId: item.productId._id,
-            productName: item.productId.productName,
-            productImage: item.productId.productImage,
-            quantity: item.quantity,
-            size: item.size,
-            price: item.price,
-            salePrice: item.productId.salePrice,
-            totalPrice: item.totalPrice,
-
-        }));
-
-        const subtotal = cartItems.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
-        const taxRate = 0.02; 
-        const tax = subtotal * taxRate;
-        let shipping = subtotal >= 2000 ? 0 : 100; 
-        let discount = 0;
-        let couponCode = null;
-        let appliedCoupon = null;
-
-
-       
-
-        const total = subtotal + shipping + tax - discount;
-
-        res.render('checkout', {
-            currentPage:'checkout',
-            addresses: userAddress ? userAddress.address : [],
-            cartItems,
-            subtotal,
-            shipping,
-            tax,
-            discount,
-            couponCode,
-            total,
-            user: req.user || req.session.user,
-            
-           
-        });
-
-
-    } catch (error) {
-        console.error("Error in getCheckout:", error);
-        res.redirect('/cart');
+  try {
+    const userId = req.session.user?._id;
+    if (!userId) {
+      return res.redirect('/login?message=Please log in to proceed to checkout');
     }
-};
 
+    const user = await User.findById(userId).select('name email').lean();
+    if (!user) {
+      return res.redirect('/login?message=User not found');
+    }
+
+    const userAddress = await Address.findOne({ userId }).lean();
+
+    const userCart = await Cart.findOne({ userId })
+      .populate({
+        path: 'items.productId',
+        select: 'productName salePrice productImage quantity isBlocked',
+      })
+      .lean();
+
+    if (!userCart || userCart.items.length === 0) {
+      return res.redirect('/cart?message=Your cart is empty');
+    }
+
+    // Map cart items and validate stock
+    const cartItems = [];
+    let outOfStockItems = [];
+    console.log('Cart items:', userCart.items.map(item => ({
+      productId: item.productId?._id?.toString(),
+      quantity: item.quantity,
+      totalPrice: item.totalPrice,
+    })));
+
+    for (const item of userCart.items) {
+      if (!item.productId || item.productId.isBlocked) {
+        continue; // Skip blocked or invalid products
+      }
+
+      if (item.quantity > (item.productId.quantity || 0)) {
+        outOfStockItems.push({
+          productName: item.productId.productName,
+          available: item.productId.quantity || 0,
+        });
+        continue;
+      }
+
+      if (typeof item.totalPrice !== 'number' || isNaN(item.totalPrice)) {
+        console.warn(`Invalid totalPrice for product ${item.productId._id}: ${item.totalPrice}`);
+        continue; // Skip items with invalid totalPrice
+      }
+
+      cartItems.push({
+        productId: item.productId._id,
+        productName: item.productId.productName,
+        productImage: item.productId.productImage || [],
+        quantity: item.quantity,
+        price: item.price,
+        salePrice: item.productId.salePrice,
+        totalPrice: item.totalPrice,
+        quantityAvailable: item.productId.quantity,
+      });
+    }
+
+    if (cartItems.length === 0) {
+      if (outOfStockItems.length > 0) {
+        const message = outOfStockItems
+          .map(item => `${item.productName} has only ${item.available} units available`)
+          .join(', ');
+        return res.redirect(`/cart?message=${encodeURIComponent(message)}`);
+      }
+      return res.redirect('/cart?message=All items in your cart are unavailable');
+    }
+
+    // Calculate totals
+    const subtotal = cartItems.reduce((sum, item) => sum + item.totalPrice, 0) || 0;
+    const taxRate = 0.02; // Adjust as needed
+    const tax = subtotal * taxRate;
+    const shipping = subtotal >= 50000 ? 0 : 140;
+    let discount = 0;
+    let couponCode = null;
+    let appliedCoupon = null;
+
+    const total = subtotal + shipping + tax - discount;
+
+    res.render('checkout', {
+      currentPage: 'checkout',
+      addresses: userAddress ? userAddress.address : [],
+      cartItems,
+      subtotal,
+      shipping,
+      tax,
+      discount,
+      couponCode,
+      appliedCoupon,
+      total,
+      user,
+    });
+  } catch (error) {
+    console.error("Error in getCheckout:", error.name, error.message, error.stack);
+    res.redirect('/cart');
+  }
+};
 
 const checkoutAddAddress = async (req,res)=>{
     try {

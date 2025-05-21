@@ -573,46 +573,50 @@ const postAddAddress = async (req, res) => {
   
   const loadProfileOrder = async (req, res) => {
     try {
-        const userId = req.session.user?._id;
-        
-        if (!userId) {
-          return res.redirect("/login");
-        }
-    
-        // Fetch all orders for the user, sorted by creation date (newest first)
-        const orders = await Order.find({ userId })
-          .populate('orderedItems.product')
-          .sort({ createdAt: -1 });
-    
-        // Calculate total amount for each order
-        const formattedOrders = orders.map(order => {
-          return {
-            _id: order._id,
-            orderId: order.orderId,
-            status: order.status,
-            totalAmount: order.totalAmount,
-            paymentMethod: order.paymentMethod,
-            createdAt: order.createdAt,
-            formattedDate: new Date(order.createdAt).toLocaleDateString('en-US', {
-              year: 'numeric', 
-              month: 'short', 
-              day: 'numeric'
-            })
-          };
-        });
-    
-        res.render("user-profile", { 
-          orders: formattedOrders, 
-          user: req.session.user,
-          currentPage: 'profile',
-          activeTab: 'orders'
-        });
-      } catch (error) {
-        console.error("Error fetching order list:", error);
-        res.status(500).send("Internal Server Error");
+      const userId = req.session.user?._id;
+      
+      if (!userId) {
+        return res.redirect("/login");
       }
+  
+      // Fetch all orders for the user, sorted by creation date (newest first)
+      const orders = await Order.find({ userId })
+        .populate('orderedItems.product')
+        .sort({ createdAt: -1 });
+  
+      // Calculate total amount for each order
+      const formattedOrders = orders.map(order => {
+        return {
+          _id: order._id,
+          orderId: order.orderId,
+          orderedItems: order.orderedItems.map(item => ({
+            product: item.product,
+            quantity: item.quantity,
+            price: item.price,
+            status: item.status
+          })),
+          totalAmount: order.totalPrice, // Use totalPrice from MongoDB document
+          paymentMethod: order.paymentMethod,
+          createdAt: order.createdAt,
+          formattedDate: new Date(order.createdAt).toLocaleDateString('en-US', {
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric'
+          })
+        };
+      });
+  
+      res.render("user-profile", { 
+        orders: formattedOrders, 
+        user: req.session.user,
+        currentPage: 'profile',
+        activeTab: 'orders'
+      });
+    } catch (error) {
+      console.error("Error fetching order list:", error);
+      res.status(500).send("Internal Server Error");
+    }
   };
-
 
 module.exports ={
     getForgotPassPage,

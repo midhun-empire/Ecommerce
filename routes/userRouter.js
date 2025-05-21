@@ -79,7 +79,7 @@ router.get('/deleteAddress',userAuth,profileController.deleteAddress)
 router.get("/cart",userAuth,cartController.loadCartPage)
 router.post('/remove-product',userAuth,cartController.removeProduct)
 router.post('/addToCart',userAuth,cartController.addToCart)
-router.post('/update-quantity', userAuth, cartController.updateCartQuantity);
+router.post('/update-quantity', userAuth, cartController.updateCartQuantity); 
 
 //checkout management
 
@@ -94,5 +94,6 @@ router.get('/order-success/:orderId',userAuth,orderController.orderSuccessPage)
 router.get('/order-details/:orderId',userAuth,orderController.getOrderDetails)
 router.get('/download-invoice/:orderId',userAuth,orderController.generateInvoice )
 router.post('/cancel-product',userAuth,orderController.cancelProductOrder)
+router.post('/return-product', orderController.returnProduct);
 
 module.exports= router

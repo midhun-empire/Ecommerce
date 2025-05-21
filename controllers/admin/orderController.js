@@ -33,9 +33,22 @@ const getOrderListPageAdmin = async (req, res) => {
   
   const changeOrderStatus = async (req, res) => {
     try {
-      const { orderId, status } = req.body;
+      const { orderId, itemId, status } = req.body;
   
-      await Order.updateOne({ _id: orderId }, { status });
+      // Validate input
+      if (!orderId || !itemId || !status) {
+        return res.status(400).json({ success: false, message: "Missing required fields" });
+      }
+  
+      // Update the status of the specific item in orderedItems
+      const updateResult = await Order.updateOne(
+        { _id: orderId, "orderedItems._id": itemId },
+        { $set: { "orderedItems.$.status": status } }
+      );
+  
+      if (updateResult.modifiedCount === 0) {
+        return res.status(404).json({ success: false, message: "Order or item not found" });
+      }
   
       return res.json({ success: true });
     } catch (error) {
@@ -102,10 +115,8 @@ const getOrderListPageAdmin = async (req, res) => {
   
       const findOrder = await Order.findOne({ _id: orderId })
         .populate("orderedItems.product")
-        .populate("userId"); // <-- populate userId here
+        .populate("userId");
   
-        console.log(findOrder.orderedItems);
-        
       if (!findOrder) {
         throw new Error("Order not found");
       }
@@ -119,10 +130,21 @@ const getOrderListPageAdmin = async (req, res) => {
       const discount = totalGrant - totalPrice;
       const finalAmount = findOrder.finalAmount;
   
+      // Check if any item has a return request and collect return reasons
+      const hasReturnRequest = findOrder.orderedItems.some(item => item.status === "Return Requested");
+      const returnReasons = findOrder.orderedItems
+        .filter(item => item.status === "Return Requested")
+        .map(item => ({
+          productName: item.product?.productName || "Product Not Available",
+          reason: item.returnReason || "Not specified"
+        }));
+  
       res.render("order-details-admin", {
         orders: findOrder,
         orderId: orderId,
         finalAmount: finalAmount,
+        hasReturnRequest, // Pass flag for return request
+        returnReasons // Pass array of return reasons
       });
     } catch (error) {
       console.error(error);
@@ -130,12 +152,56 @@ const getOrderListPageAdmin = async (req, res) => {
     }
   };
   
+  const handleReturn  = async (req,res)=>{
+    try {
+      const { orderId, itemId, action } = req.body;
   
+      if (!orderId || !itemId || !action) {
+        return res.status(400).json({ success: false, message: 'Missing required fields.' });
+      }
+  
+      // Fetch the order
+      const order = await Order.findById(orderId);
+      if (!order) {
+        return res.status(404).json({ success: false, message: 'Order not found.' });
+      }
+  
+      // Find the specific item in the order
+      const item = order.orderedItems.id(itemId);
+      if (!item) {
+        return res.status(404).json({ success: false, message: 'Item not found in order.' });
+      }
+  
+      // Check if item is in "Return Requested" status
+      if (item.status !== 'Return Requested') {
+        return res.status(400).json({ success: false, message: 'This item is not eligible for return handling.' });
+      }
+  
+      if (action === 'approve') {
+        item.status = 'Returned';
+        item.returnDeclinedReason = undefined; // clear if previously declined
+      } else if (action === 'decline') {
+        item.status = 'Delivered'; // revert back to delivered
+        item.returnDeclinedReason = 'Return declined by admin.';
+      } else {
+        return res.status(400).json({ success: false, message: 'Invalid action.' });
+      }
+  
+      await order.save();
+  
+      res.status(200).json({ success: true, message: `Return ${action}d successfully.` });
+  
+    } catch (error) {
+      console.error('Error handling return request:', error);
+      res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+  }
 
   
   module.exports={
     getOrderListPageAdmin,
     changeOrderStatus,
     filterOrders,
-    getOrderDetailsPageAdmin
+    getOrderDetailsPageAdmin,
+    handleReturn
   }

@@ -1,4 +1,3 @@
-
 <%- include("../../views/partials/admin/header") %>
 
 <head>
@@ -113,6 +112,29 @@ body {
     border-color: #d39e00;
 }
 
+.btn-approve {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+    margin-right: 5px;
+}
+
+.btn-decline {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.btn-approve:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+.btn-decline:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 768px) {
     .card-header {
@@ -143,190 +165,249 @@ body {
           <a href="/admin/orderList" class="btn btn-secondary">Back to Orders</a>
         </div>
       </div>
-  <div class="card-body">
-    <div class="row">
-      <div class="col-md-8">
-        <div class="card mb-4">
-          <div class="card-header">
-            <h4>Order Information</h4>
+      <div class="card-body">
+        <div class="row">
+          <div class=" col-md-8">
+            <div class="card mb-4">
+              <div class="card-header">
+                <h4>Order Information</h4>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <p><strong>Order ID : </strong> <%= orders._id %></p>
+                    <p><strong>Order Date : </strong> <%= orders.createdAt.toLocaleDateString() %></p>
+                    <p><strong>Customer Name : </strong> <%= orders.userId?.name || 'N/A' %></p>
+                  </div>
+                  <div class="col-md-6">
+                    <p><strong>Phone Number : </strong> <%= orders.userId.phone || 'N/A' %></p>
+                    <p><strong>Customer Email : </strong> <%= orders.userId.email || 'NA' %></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+  
+            <div class="card">
+              <div class="card-header">
+                <h4>Product Details</h4>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Subtotal</th>
+                        <th>Order Status</th>
+                        <th>Return Request</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% orders.orderedItems.forEach((item) => { %>
+                        <tr>
+                          <td>
+                            <%= item.product ? item.product.productName : 'Product Not Available' %>
+                          </td>
+                          <td><%= item.quantity %></td>
+                          <td><%= item.price.toFixed(2) %></td>
+                          <td><%= (item.price * item.quantity).toFixed(2) %></td>
+                          <td>
+                            <select class="form-select product-status-select"
+                                    data-order-id="<%= orders._id %>"
+                                    data-item-id="<%= item._id %>">
+                              <option value="pending" <%= item.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                              <option value="shipped" <%= item.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+                              <option value="out_for_delivery" <%= item.status === 'out_for_delivery' ? 'selected' : '' %>>Out for Delivery</option>
+                              <option value="delivered" <%= item.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                              <option value="cancelled" <%= item.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                            </select>
+                          </td>
+                          <td>
+                            <% if (item.status === 'Return Requested') { %>
+                              <div>
+                                <p><strong>Reason:</strong> <%= item.returnReason || 'Not specified' %></p>
+                                <button class="btn btn-approve btn-sm handle-return" data-order-id="<%= orders._id %>" data-item-id="<%= item._id %>" data-action="approve">Approve</button>
+                                <button class="btn btn-decline btn-sm handle-return" data-order-id="<%= orders._id %>" data-item-id="<%= item._id %>" data-action="decline">Decline</button>
+                              </div>
+                            <% } else { %>
+                              <span>No return requested</span>
+                            <% } %>
+                          </td>
+                        </tr>
+                      <% }); %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-6">
-                <p><strong>Order ID : </strong> <%= orders._id %></p>
-                <p><strong>Order Date : </strong> <%= orders.createdAt.toLocaleDateString() %></p>
-                <p><strong>Order Status : </strong> 
-                  <select class="form-select status-select w-auto d-inline-block" data-order-id="<%= orders._id %>">
-                    <option value="pending" <%= orders.status === 'pending' ? 'selected' : '' %>>Pending</option>
-                    <option value="shipped" <%= orders.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
-                    <option value="out_for_delivery" <%= orders.status === 'out_for_delivery' ? 'selected' : '' %>>Out for Delivery</option>
-                    <option value="delivered" <%= orders.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
-                    <option value="cancelled" <%= orders.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
-                  </select>
+  
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-header">
+                <h4>Order Summary</h4>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <strong>Subtotal:</strong>
+                  <span class="float-end"><%= (finalAmount + (orders.discount || 0)).toFixed(2) %></span>
+                </div>
+                <% if (orders.discount > 0) { %>
+                  <div class="mb-3">
+                    <strong>Discount:</strong>
+                    <span class="float-end text-success">-<%= orders.discount.toFixed(2) %></span>
+                  </div>
+                <% } %>
+                <div class="mb-3">
+                  <strong>Shipping:</strong>
+                  <span class="float-end"><%= orders.shippingPrice ? orders.shippingPrice.toFixed(2) : '0.00' %></span>
+                </div>
+                <hr>
+                <div class="mb-3">
+                  <h5>Total Amount:</h5>
+                  <h4 class="float-end text-primary"><%= finalAmount.toFixed(2) %></h4>
+                </div>
+              </div>
+            </div>
+  
+            <div class="card mt-3">
+              <div class="card-header">
+                <h4>Shipping Information</h4>
+              </div>
+              <div class="card-body">
+                <p><strong>Name:</strong> <%= orders.address.name %></p>
+                <p><strong>Address:</strong>
+                  <%= orders.address.street %>,
+                  <%= orders.address.city %>,
+                  <%= orders.address.state %>
+                  <%= orders.address.zipCode %>
                 </p>
-              </div>
-              <div class="col-md-6">
-                <p><strong>Customer Name : </strong> <%= orders.userId?.name || 'N/A' %></p>
-                <p><strong>Customer Email : </strong> <%= orders.userId.email || 'NA' %></p>
-                <p><strong>Phone Number : </strong> <%= orders.userId.phone || 'N/A' %></p>
+                <p><strong>Country:</strong> <%= orders.address.country || 'India' %></p>
+                <p><strong>Phone:</strong> <%= orders.address.phone %></p>
               </div>
             </div>
           </div>
         </div>
-  
-        <div class="card">
-          <div class="card-header">
-            <h4>Product Details</h4>
-          </div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-striped">
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>Quantity</th>
-                    <th>Price</th>
-                    <th>Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% orders.orderedItems.forEach((item) => { %>
-                    <tr>
-                      <td>
-                        <%= item.product ? item.product.productName : 'Product Not Available' %>
-                      </td>
-                      <td><%= item.quantity %></td>
-                      <td><%= item.price.toFixed(2) %></td>
-                      <td><%= (item.price * item.quantity).toFixed(2) %></td>
-                    </tr>
-                  <% }); %>
-                </tbody>
-                
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-  
-      <div class="col-md-4">
-        <div class="card">
-          <div class="card-header">
-            <h4>Order Summary</h4>
-          </div>
-          <div class="card-body">
-            <div class="mb-3">
-              <strong>Subtotal:</strong>
-              <span class="float-end"><%= (finalAmount + (orders.discount || 0)).toFixed(2) %></span>
-            </div>
-            <% if (orders.discount > 0) { %>
-              <div class="mb-3">
-                <strong>Discount:</strong>
-                <span class="float-end text-success">-<%= orders.discount.toFixed(2) %></span>
-              </div>
-            <% } %>
-            <div class="mb-3">
-              <strong>Shipping:</strong>
-              <span class="float-end"><%= orders.shippingPrice ? orders.shippingPrice.toFixed(2) : '0.00' %></span>
-            </div>
-            <hr>
-            <div class="mb-3">
-              <h5>Total Amount:</h5>
-              <h4 class="float-end text-primary"><%= finalAmount.toFixed(2) %></h4>
-            </div>
-          </div>
-        </div>
-  
-        <div class="card mt-3">
-          <div class="card-header">
-            <h4>Shipping Information</h4>
-          </div>
-          <div class="card-body">
-            <p><strong>Name:</strong> <%= orders.address.name %></p>
-          <p><strong>Address:</strong> 
-           <%= orders.address.street %>, 
-           <%= orders.address.city %>, 
-           <%= orders.address.state %> 
-           <%= orders.address.zipCode %>
-           </p>
-           <p><strong>Country:</strong> <%= orders.address.country || 'India' %></p>
-          <p><strong>Phone:</strong> <%= orders.address.phone %></p>
-
-          </div>
-        </div>
-  
-        <% if (orders.returnRequested) { %>
-          <div class="card mt-3 border-warning">
-            <div class="card-header bg-warning">
-              <h4 class="text-white">Return Request</h4>
-            </div>
-            <div class="card-body">
-              <p><strong>Reason:</strong> <%= orders.returnReason || 'Not specified' %></p>
-              <button class="btn btn-warning btn-sm handle-return" data-order-id="<%= orders._id %>">
-                Handle Return
-              </button>
-            </div>
-          </div>
-        <% } %>
       </div>
     </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-  <%- include("../../views/partials/admin/footer") %>
-
-  <script>
-
-function handleStatusChange() {
-    const orderId = this.dataset.orderId;
-    const newStatus = this.value;
-
-    fetch('/admin/changeStatus', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        orderId: orderId,
-        status: newStatus
-      })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        Swal.fire({
-          icon: 'success',
-          title: 'Order Status Updated',
-          toast: true,
-          position: 'top-end',
-          showConfirmButton: false,
-          timer: 3000
-        });
-      } else {
-        Swal.fire({
-          icon: 'error',
-          title: 'Failed to Update Status',
-          text: data.message || 'Please try again'
+  
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <%- include("../../views/partials/admin/footer") %>
+  
+    <script>
+      
+      function handleStatusChange() {
+        const orderId = this.dataset.orderId;
+        const itemId = this.dataset.itemId;
+        const newStatus = this.value;
+  
+        fetch('/admin/changeStatus', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            orderId: orderId,
+            itemId: itemId,
+            status: newStatus
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            Swal.fire({
+              icon: 'success',
+              title: 'Status Updated',
+              toast: true,
+              position: 'top-end',
+              showConfirmButton: false,
+              timer: 2000
+            }).then(() => {
+              window.location.reload();
+            });
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Failed to Update',
+              text: data.message || 'Try again.'
+            });
+          }
+        })
+        .catch(error => {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Something went wrong. Try again.'
+          });
         });
       }
-    })
-    .catch(error => {
-      Swal.fire({
-        icon: 'error',
-        title: 'Network Error',
-        text: 'Failed to update status. Please try again.'
+
+  
+      function handleReturnAction() {
+        const orderId = this.dataset.orderId;
+        const itemId = this.dataset.itemId;
+        const action = this.dataset.action;
+  
+        Swal.fire({
+          title: `Are you sure you want to ${action} this return request?`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: `Yes, ${action}!`,
+          cancelButtonText: 'No, cancel'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            fetch('/admin/handleReturn', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                orderId: orderId,
+                itemId: itemId,
+                action: action
+              })
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                Swal.fire({
+                  icon: 'success',
+                  title: `Return ${action}d`,
+                  toast: true,
+                  position: 'top-end',
+                  showConfirmButton: false,
+                  timer: 2000
+                }).then(() => {
+                  window.location.reload();
+                });
+              } else {
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Failed to Process',
+                  text: data.message || 'Try again.'
+                });
+              }
+            })
+            .catch(error => {
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Something went wrong. Try again.'
+              });
+            });
+          }
+        });
+      }
+  
+      // Attach event listeners
+      document.querySelectorAll('.product-status-select').forEach(select => {
+          select.addEventListener('change', handleStatusChange);
       });
-    });
-  }
-
-  // ✅ Bind the function to all status-select dropdowns after DOM is ready
-  document.addEventListener("DOMContentLoaded", function() {
-    const selects = document.querySelectorAll('.status-select');
-    selects.forEach(select => {
-      select.addEventListener('change', handleStatusChange);
-    });
-  });
-  </script>
-
-
-
+  
+      document.querySelectorAll('.handle-return').forEach(button => {
+          button.addEventListener('click', handleReturnAction);
+      });
+    </script>

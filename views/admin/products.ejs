@@ -35,45 +35,45 @@
         </tr>
       </thead>
       <tbody>
-        <% for (let i = data.length - 1; i >= 0; i--) { %>
+        <% data.forEach(product => { %>
           <tr>
-            <td><%= data[i].productName %></td>
-            <td><%= data[i].brand ? data[i].brand.brandname : 'No Brand' %></td>
-             <td><%= data[i].category ? data[i].category.name : 'No Category' %></td>
-            <td><%= data[i].salePrice %></td>
-            <td><%= data[i].offerPrice || '-' %></td>
+            <td><%= product.productName %></td>
+            <td><%= product.brand ? product.brand.brandname : 'No Brand' %></td>
+            <td><%= product.category ? product.category.name : 'No Category' %></td>
+            <td><%= product.salePrice %></td>
+            <td><%= product.offerPrice || '-' %></td>
             <td>
               <button class="btn btn-info" style="width: 100px;">
                 <a href="#" class="text-white">Add Offer</a>
               </button>
-              <button class="btn btn-info" style="width: 100px;">
+              <button class="btn btn-info" style="width: 100px;"> 
                 <a href="#" class="text-white">Remove</a>
               </button>
             </td>
-            <td><%= data[i].quantity %></td>
+            <td><%= product.quantity %></td>
             <td>
-              <% if (!data[i].isBlocked) { %>
+              <% if (!product.isBlocked) { %>
                 <button class="btn btn-danger" style="width: 80px;">
-                  <a href="/admin/blockProducts?id=<%= data[i]._id %>" class="text-white" style="text-decoration: none;">Block</a>
+                  <a href="/admin/blockProducts?id=<%= product._id %>" class="text-white" style="text-decoration: none;">Block</a>
                 </button>
               <% } else { %>
                 <button class="btn btn-success" style="width: 80px;">
-                  <a href="/admin/unblockProducts?id=<%= data[i]._id %>" class="text-white" style="text-decoration: none;">Unblock</a>
+                  <a href="/admin/unblockProducts?id=<%= product._id %>" class="text-white" style="text-decoration: none;">Unblock</a>
                 </button>
               <% } %>
             </td>
             <td>
               <button class="btn btn-info" style="width: 80px;">
-                <a href="/admin/editProduct?id=<%= data[i]._id %>" class="text-white" style="text-decoration: none;">Edit</a>
+                <a href="/admin/editProduct?id=<%= product._id %>" class="text-white" style="text-decoration: none;">Edit</a>
               </button>
             </td>
             <td>
-              <button class="btn btn-danger delete-btn" style="width: 80px;" data-id="<%= data[i]._id %>">
+              <button class="btn btn-danger delete-btn" style="width: 80px;" data-id="<%= product._id %>">
                 Delete
               </button>
             </td>
           </tr>
-        <% } %>
+        <% }) %>
       </tbody>
     </table>
   </div>
