@@ -31,7 +31,9 @@ const addBrands = async (req,res)=>{
     try {
 
         const brand = req.body.name;
-        const findBrand = await Brand.findOne({brandname:brand})
+        const findBrand = await Brand.findOne({
+            brandname:brand
+        })
 
         if (!findBrand){
             const newBrand = new Brand({

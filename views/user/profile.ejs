@@ -128,6 +128,31 @@
  transform: scaleX(1);
 }
 
+
+ .pagination .page-link {
+   color: #30683c;
+   border-radius: 5px;
+   margin: 0 5px;
+   transition: all 0.3s ease;
+ }
+
+ .pagination .page-link:hover {
+   color: #00bfff;
+   background-color: #e9f7fa;
+   border-color: #00bfff;
+ }
+
+ .pagination .page-item.active .page-link {
+   background-color: #487379;
+   border-color: #487379;
+   color: white;
+ }
+
+ .pagination .page-item.disabled .page-link {
+   color: #999;
+   cursor: not-allowed;
+ }
+
 </style>
 
 
@@ -328,6 +353,31 @@
                           </tbody>
                         </table>
                       </div>
+       <!-- Pagination -->
+                      <% if (totalOrders > 0) { %>
+                        <nav aria-label="Orders pagination" class="mt-4">
+                          <ul class="pagination justify-content-center" id="pagination">
+                            <!-- Previous Button -->
+                            <li class="page-item <%= currentPageNum === 1 ? 'disabled' : '' %>">
+                              <a class="page-link" href="#" data-page="<%= currentPageNum - 1 %>" aria-label="Previous">
+                                <span aria-hidden="true">«</span>
+                              </a>
+                            </li>
+                            <!-- Page Numbers -->
+                            <% for (let i = 1; i <= totalPages; i++) { %>
+                              <li class="page-item <%= currentPageNum === i ? 'active' : '' %>">
+                                <a class="page-link" href="#" data-page="<%= i %>"><%= i %></a>
+                              </li>
+                            <% } %>
+                            <!-- Next Button -->
+                            <li class="page-item <%= currentPageNum === totalPages ? 'disabled' : '' %>">
+                              <a class="page-link" href="#" data-page="<%= currentPageNum + 1 %>" aria-label="Next">
+                                <span aria-hidden="true">»</span>
+                              </a>
+                            </li>
+                          </ul>
+                        </nav>
+                      <% } %>
                     </div>
                   </div>
                 </div>
@@ -496,6 +546,19 @@ function softLogout() {
   initializeOrdersTab();
 });
 
+
+function initializeOrdersTab() {
+    const paginationLinks = document.querySelectorAll('#pagination .page-link');
+
+    paginationLinks.forEach(link => {
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        const page = this.getAttribute('data-page');
+        // Update URL with page parameter and preserve hash
+        window.location.href = `/profile?page=${page}#orders`;
+      });
+    });
+  }
 
     </script>
 

@@ -41,14 +41,20 @@
             <td><%= product.brand ? product.brand.brandname : 'No Brand' %></td>
             <td><%= product.category ? product.category.name : 'No Category' %></td>
             <td><%= product.salePrice %></td>
-            <td><%= product.offerPrice || '-' %></td>
             <td>
-              <button class="btn btn-info" style="width: 100px;">
+               <%= product.productOffer ? product.productOffer + '%' : '0%' %>
+
+            </td>
+            <td>
+              <%if(!product.productOffer){%>
+              <button class="btn btn-info" style="width: 100px;" onclick="addOffer('<%=product._id%>')">
                 <a href="#" class="text-white">Add Offer</a>
               </button>
-              <button class="btn btn-info" style="width: 100px;"> 
+                <%}else{%>
+              <button class="btn btn-info" style="width: 100px;" onclick="removeOffer('<%=product._id%>')"> 
                 <a href="#" class="text-white">Remove</a>
               </button>
+              <%}%>
             </td>
             <td><%= product.quantity %></td>
             <td>
@@ -113,5 +119,104 @@
     });
   });
   
+
+
+async function addOffer(productId) {
+  const {value:amount} = await Swal.fire({
+      
+    title:'Offer in percentage',
+    input:'number',
+    inputLabel:'percentage',
+    inputPlaceholder:'%',
+     inputAttributes: {
+    min: 1,
+    max: 100,
+    step: 1
+   },
+   showCancelButton: true,
+   confirmButtonText: 'Add Offer',
+   cancelButtonText: 'Cancel'
+   
+
+  })
+  
+  $.ajax({
+    url:'/admin/addProductsOffer',
+    method:'POST',
+    data:{
+      percentage:amount,
+      productId:productId
+    },
+    success: (response) => {
+        if (response.status === true) {
+          Swal.fire('Offer Added', response.message || 'The offer has been added successfully', 'success').then(() => {
+            location.reload();
+          });
+        } else {
+          Swal.fire('Error', response.message || 'Failed to add offer', 'error');
+        }
+      },
+      error: (jqXHR, textStatus, errorThrown) => {
+        Swal.fire('Error', 'An error occurred while adding the offer. Please try again.', 'error');
+        console.error('AJAX error:', textStatus, errorThrown);
+      }
+
+  })
+
+}
+
+
+function removeOffer(productId){
+try{
+     Swal.fire({
+     title: 'Are you sure?',
+    text: 'Do you really want to remove this offer?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Yes, remove it!',
+    cancelButtonText: 'Cancel',
+    timer:5000,
+    timerProgressBar:true
+
+   }).then(async(result)=>{
+    if(result.isConfirmed){
+      $.ajax({
+
+        url:'/admin/removeProductsOffer',
+        method:'POST',
+        data:{
+          productId:productId,
+        },
+        success:(response)=>{
+
+          if(response.status===true){
+            Swal.fire('Removed','The offer has been removed','success')
+            location.reload()
+          }else if(response.status===false){
+                 Swal.fire('failed')
+          }else{
+            alert('failed')
+          }
+        }
+      })
+    }
+   })
+
+
+
+}catch(error){
+
+console.error(error);
+
+
+}
+
+}
+
+
+
+
 </script>
 <%- include("../../views/partials/admin/footer") %>

@@ -327,7 +327,7 @@
      <main class="product-grid">
       <% for(let i = 0; i < products.length; i++) { %>
         <div class="product-card">
-          <span class="wishlist-btn" onclick="">❤️</span>
+          <span class="wishlist-btn" onclick="addToWishlist('<%=products[i]._id%>')">❤️</span>
           <a href="/productDetails/<%=products[i]._id%>">
             <img src="/Uploads/re-image/<%= products[i].productImage[0] %>" alt="<%= products[i].productName %>" />
             <h4><%= products[i].productName %></h4>
@@ -404,6 +404,48 @@ function handleAddToCart(productId) {
       }
     }
   });
+}
+
+
+
+function addToWishlist(productId){
+
+$.ajax({
+  url:'/addToWishlist',
+  method:'POST',
+  data:{productId:productId},
+  success:(response)=>{
+    if(response.status){
+    Swal.fire({
+      title:'Added to Wishlist ',
+      text:'The product has been added to your wishlist ',
+      icon:'success',
+      timer:2000
+    })
+
+    
+  }else{
+    Swal.fire({
+      title:'Already in Wishlist ',
+      text:response.message,
+      icon:'info',
+      timer:2000,
+    })
+  }
+},
+error:(error)=>{
+Swal.fire({
+  title:'Error',
+  text:'Error while adding product to wishlist',
+  icon:'error',
+  timer:2000
+})
+}
+
+})
+
+
+
 }
 
 </script>

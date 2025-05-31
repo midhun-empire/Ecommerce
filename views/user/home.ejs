@@ -347,3 +347,17 @@
 </html>
 
   <%-include("../../views/partials/user/footer.ejs")%>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+
+	 const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('blocked') === 'true') {
+    Swal.fire({
+      icon: 'error',
+      title: 'Access Denied',
+      text: 'You have been blocked by the admin.',
+      confirmButtonColor: '#d33',
+    });
+  }
+  </script>

@@ -1,0 +1,300 @@
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+<style>
+     body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7fc;
+            color: #333;
+        }
+        .page-wrapper {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .content {
+            flex: 1;
+        }
+        .card {
+            max-width: 600px;
+            width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            padding: 40px;
+            text-align: center;
+        }
+        .card-header {
+            background-color: #f8d7da;
+            color: #721c24;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .error-icon {
+            font-size: 5rem;
+            color: #dc3545;
+            margin-bottom: 30px;
+        }
+        .btn-primary, .btn-secondary {
+            font-size: 1.1rem;
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-transform: uppercase;
+            width: 100%;
+            max-width: 250px;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary:disabled {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.65;
+        }
+        .spinner-border {
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .error-message {
+            color: #dc3545;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        .bounce-animation {
+            animation: bounce 1.5s ease infinite;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+        .order-details {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .order-details p {
+            margin-bottom: 10px;
+        }
+        .order-details strong {
+            color: #495057;
+        }
+</style>
+<div class="page-wrapper">
+    <div class="container vh-100 d-flex justify-content-center align-items-center">
+        <% if (!locals.orderId || locals.orderId === 'N/A') { %>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Invalid Order</h3>
+                </div>
+                <div class="text-center">
+                    <i class="bi bi-exclamation-triangle error-icon bounce-animation"></i>
+                    <p>Sorry, we couldn't find the order details.</p>
+                    <a href="/" class="btn btn-primary mt-3">Go to Home</a>
+                </div>
+            </div>
+        <% } else { %>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Payment Failed</h3>
+                </div>
+
+                <div class="text-center mb-4">
+                    <i class="bi bi-x-circle-fill error-icon bounce-animation"></i>
+                </div>
+
+                <div class="order-details">
+                    <h4 class="text-danger mb-4">Oops! Something went wrong.</h4>
+                    <p>Order ID: <strong>#<%= locals.orderId %></strong></p>
+                    <p>Total Amount: <strong>₹<%= locals.totalAmount || 0 %></strong></p>
+                    <p>Payment Method: <strong><%= locals.paymentMethod || 'N/A' %></strong></p>
+                    <% if (locals.error) { %>
+                        <p class="error-message"><%= locals.error %></p>
+                    <% } %>
+                </div>
+
+                <div class="text-center mt-4">
+                    <form id="payment-form">
+                        <input type="hidden" name="totalAmount" value="<%= locals.totalAmount || 0 %>">
+                        <input type="hidden" name="orderId" value="<%= locals.orderId %>">
+                        <input type="hidden" name="id" value="<%= locals.id || '' %>">
+                        <button type="button" id="payNow" class="btn btn-primary"
+                                <%= (!locals.totalAmount || locals.totalAmount === 0) ? 'disabled' : '' %>>
+                            Retry Payment
+                        </button>
+                    </form>
+                    <a href="/" class="btn btn-secondary mt-3">Go to Home</a>
+                </div>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<!-- SweetAlert2 CSS & JS -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.12/dist/sweetalert2.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.12/dist/sweetalert2.min.js"></script>
+
+<!-- Razorpay Checkout Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+
+
+   document.addEventListener('DOMContentLoaded', function() {
+        const payNowButton = document.getElementById("payNow");
+        const totalAmountInput = document.querySelector('input[name="totalAmount"]');
+        
+        if (payNowButton && totalAmountInput) {
+            // Convert totalAmount to number and ensure it's greater than 0
+            const totalAmount = parseFloat(totalAmountInput.value);
+            payNowButton.disabled = !totalAmount || totalAmount <= 0;
+
+            payNowButton.addEventListener("click", async function(e) {
+                e.preventDefault();
+                const button = this;
+                const originalText = button.innerHTML;
+
+                function setLoading(isLoading) {
+                    button.disabled = isLoading;
+                    button.innerHTML = isLoading ?
+                        '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...' :
+                        originalText;
+                }
+
+                try {
+                    const result = await Swal.fire({
+                        title: 'Retry Payment',
+                        text: "Would you like to try the payment again?",
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, Pay Now!',
+                        cancelButtonText: 'No, Cancel'
+                    });
+
+                    if (!result.isConfirmed) return;
+
+                    setLoading(true);
+                    
+                    const response = await fetch('/retry-payment', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            totalAmount: totalAmount,
+                            orderId: document.querySelector('input[name="orderId"]').value,
+                        }),
+                    });
+
+                    const data = await response.json();
+
+                    if (!data.success) {
+                        throw new Error(data.message || 'Failed to create payment order');
+                    }
+
+                    const options = {
+                        key: data.key,
+                        amount: data.amount,
+                        currency: "INR",
+                        name: "BRIGHTON",
+                        description: "Payment for Order #" + data.orderId,
+                        order_id: data.razorpayOrderId,
+                        handler: async function(response) {
+                            try {
+                                setLoading(true);
+                                const verifyResponse = await fetch('/verify-payment', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        razorpayPaymentId: response.razorpay_payment_id,
+                                        razorpayOrderId: response.razorpay_order_id,
+                                        razorpaySignature: response.razorpay_signature,
+                                        orderId: data.orderId
+                                    }),
+                                });
+
+                                const verifyData = await verifyResponse.json();
+
+                                if (!verifyData.success) {
+                                    throw new Error(verifyData.message || 'Payment verification failed');
+                                }
+
+                                await Swal.fire({
+                                    title: 'Payment Successful!',
+                                    text: 'Your order has been confirmed.',
+                                    icon: 'success',
+                                    confirmButtonColor: '#28a745'
+                                });
+
+                                const id = document.querySelector('input[name="id"]').value;
+                                window.location.href = `/order-success/${data.orderId}`;
+                            } catch (error) {
+                                setLoading(false);
+                                Swal.fire({
+                                    title: 'Verification Failed',
+                                    text: error.message || 'Unable to verify payment',
+                                    icon: 'error',
+                                    confirmButtonColor: '#dc3545'
+                                });
+                            }
+                        },
+                        modal: {
+                            ondismiss: function() {
+                                setLoading(false);
+                            }
+                        },
+                        prefill: {
+                            name: "Customer Name",
+                            email: "customer@example.com",
+                            contact: "1234567890"
+                        },
+                        theme: {
+                            color: "#F37254"
+                        }
+                    };
+
+                    const rzp = new Razorpay(options);
+                    rzp.open();
+
+                    rzp.on('payment.failed', function(response) {
+                        setLoading(false);
+                        Swal.fire({
+                            title: 'Payment Failed',
+                            text: 'The payment process was unsuccessful. Please try again.',
+                            icon: 'error',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    });
+
+                } catch (error) {
+                    setLoading(false);
+                    Swal.fire({
+                        title: 'Error',
+                        text: error.message || 'Failed to initialize payment',
+                        icon: 'error',
+                        confirmButtonColor: '#dc3545'
+                    });
+                }
+            });
+        }
+    });
+</script>

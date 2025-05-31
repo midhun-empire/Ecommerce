@@ -17,10 +17,13 @@ function generateOtp(){
         otp+=digits[Math.floor(Math.random()*10)]
     }
     return otp
-}
+}   
+
 
 const  securePassword = async(password)=>{
+
     try {
+
         const passwordHash = await bcrypt.hash(password,10)
         return passwordHash
         
@@ -31,8 +34,6 @@ const  securePassword = async(password)=>{
     }
      
 }
-
-
 
 
 
@@ -71,6 +72,8 @@ const  sendVerificationEmail  =  async (email,otp)=>{
         
     }
 }
+
+
 
 const getForgotPassPage = async (req,res)=>{
     try {
@@ -225,22 +228,37 @@ const postNewPassword = async (req, res) => {
 
 const loadProfilePage = async (req, res) => {
     try {
-        
-       const userId = req.session.user;
-       const userData = await User.findById(userId)
-       const addressData = await Address.findOne({userId:userId})
-       const orders = await Order.find({ userId: userId }).sort({ createdAt: -1 });
-       console.log('oders from loadprofilepage',orders);
-       
-       res.render("profile", { 
-        user:userData,
-        currentPage: 'profile',
-        userAddress:addressData,
-        orders,
-        })
+        const userId = req.session.user;
+        const userData = await User.findById(userId);
+        const addressData = await Address.findOne({ userId: userId });
+
+        // Pagination parameters
+        const page = parseInt(req.query.page) || 1;
+        const limit = 5;
+        const skip = (page - 1) * limit;
+
+        const totalOrders = await Order.countDocuments({ userId: userId });
+        const totalPages = Math.ceil(totalOrders / limit);
+
+        const orders = await Order.find({ userId: userId })
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        console.log('Orders from loadProfilePage:', orders);
+
+        res.render("profile", {
+            user: userData,
+            currentPage: 'profile',
+            userAddress: addressData,
+            orders,
+            currentPageNum: page,
+            totalPages,
+            totalOrders
+        });
     } catch (error) {
         console.log("Error loading profile page", error);
-        res.redirect('/pageNotFound')
+        res.redirect('/pageNotFound');
     }
 };
 
@@ -572,51 +590,67 @@ const postAddAddress = async (req, res) => {
   }
   
   const loadProfileOrder = async (req, res) => {
-    try {
-      const userId = req.session.user?._id;
-      
-      if (!userId) {
-        return res.redirect("/login");
-      }
-  
-      // Fetch all orders for the user, sorted by creation date (newest first)
-      const orders = await Order.find({ userId })
-        .populate('orderedItems.product')
-        .sort({ createdAt: -1 });
-  
-      // Calculate total amount for each order
-      const formattedOrders = orders.map(order => {
-        return {
-          _id: order._id,
-          orderId: order.orderId,
-          orderedItems: order.orderedItems.map(item => ({
-            product: item.product,
-            quantity: item.quantity,
-            price: item.price,
-            status: item.status
-          })),
-          totalAmount: order.totalPrice, // Use totalPrice from MongoDB document
-          paymentMethod: order.paymentMethod,
-          createdAt: order.createdAt,
-          formattedDate: new Date(order.createdAt).toLocaleDateString('en-US', {
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric'
-          })
-        };
-      });
-  
-      res.render("user-profile", { 
-        orders: formattedOrders, 
-        user: req.session.user,
-        currentPage: 'profile',
-        activeTab: 'orders'
-      });
-    } catch (error) {
-      console.error("Error fetching order list:", error);
-      res.status(500).send("Internal Server Error");
+  try {
+    const userId = req.session.user?._id;
+
+    if (!userId) {
+      return res.redirect("/login");
     }
-  };
+
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1; // Default to page 1
+    const limit = 5; // Orders per page (adjust as needed)
+    const skip = (page - 1) * limit; // Orders to skip
+
+    // Fetch total number of orders
+    const totalOrders = await Order.countDocuments({ userId });
+
+    // Calculate total pages
+    const totalPages = Math.ceil(totalOrders / limit);
+
+    // Fetch orders for the current page
+    const orders = await Order.find({ userId })
+      .populate('orderedItems.product')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    // Calculate total amount for each order
+    const formattedOrders = orders.map(order => {
+      return {
+        _id: order._id,
+        orderId: order.orderId,
+        orderedItems: order.orderedItems.map(item => ({
+          product: item.product,
+          quantity: item.quantity,
+          price: item.price,
+          status: item.status
+        })),
+        totalAmount: order.totalPrice,
+        paymentMethod: order.paymentMethod,
+        createdAt: order.createdAt,
+        formattedDate: new Date(order.createdAt).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        })
+      };
+    });
+
+    res.render("user-profile", {
+      orders: formattedOrders,
+      user: req.session.user,
+      currentPage: 'profile',
+      activeTab: 'orders',
+      currentPageNum: page,
+      totalPages: totalPages,
+      totalOrders: totalOrders
+    });
+  } catch (error) {
+    console.error("Error fetching order list:", error);
+    res.status(500).send("Internal Server Error");
+  }
+};
 
 module.exports ={
     getForgotPassPage,

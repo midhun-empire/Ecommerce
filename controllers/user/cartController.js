@@ -2,55 +2,119 @@ const User = require('../../models/userSchema');
 const Product = require("../../models/productSchema");
 const Cart = require("../../models/cartSchema");
 const mongoose = require('mongoose');
+const Wishlist = require('../../models/wishlistSchema')
 
+// const addToCart = async (req, res) => {
+//     try {
+//       const userId = req.session.user;
+//       if (!userId) {
+//         return res.status(401).json({ message: "Unauthorized. Please log in first." });
+//       }
 
+//         // Check if user is blocked
+//     const user = await User.findById(userId);
+//     if (!user || user.isBlocked) {
+//        req.session.destroy(); // Destroy session if user is blocked
+//       return res.status(403).json({ message: "You are blocked by admin." });
+//     }
+  
+//       const { productId, quantity } = req.body;
+//       const qty = parseInt(quantity) || 1;
+  
+//       const product = await Product.findById(productId);
+//       if (!product) {
+//         return res.status(404).json({ message: "Product not found" });
+//       }
+  
+//       let cart = await Cart.findOne({ userId });
+//       if (!cart) {
+//         cart = new Cart({ userId, items: [] });
+//       }
+  
+//       const existingItemIndex = cart.items.findIndex(
+//         (item) => item.productId.toString() === productId
+//       );
+  
+//       if (existingItemIndex >= 0) {
+//         cart.items[existingItemIndex].quantity += qty;
+//         cart.items[existingItemIndex].totalPrice =
+//           cart.items[existingItemIndex].quantity * cart.items[existingItemIndex].price;
+//       } else {
+//         cart.items.push({
+//           productId,
+//           quantity: qty,
+//           price: product.salePrice,
+//           totalPrice: product.salePrice * qty,
+//         });
+//       }
+  
+//       await cart.save();
+//       return res.status(200).json({ message: "Product added to cart successfully." });
+  
+//     } catch (error) {
+//       console.error("Add to Cart Error:", error);
+//       return res.status(500).json({ message: "Internal server error" });
+//     }
+//   };
+  
 const addToCart = async (req, res) => {
-    try {
-      const userId = req.session.user;
-      if (!userId) {
-        return res.status(401).json({ message: "Unauthorized. Please log in first." });
-      }
-  
-      const { productId, quantity } = req.body;
-      const qty = parseInt(quantity) || 1;
-  
-      const product = await Product.findById(productId);
-      if (!product) {
-        return res.status(404).json({ message: "Product not found" });
-      }
-  
-      let cart = await Cart.findOne({ userId });
-      if (!cart) {
-        cart = new Cart({ userId, items: [] });
-      }
-  
-      const existingItemIndex = cart.items.findIndex(
-        (item) => item.productId.toString() === productId
-      );
-  
-      if (existingItemIndex >= 0) {
-        cart.items[existingItemIndex].quantity += qty;
-        cart.items[existingItemIndex].totalPrice =
-          cart.items[existingItemIndex].quantity * cart.items[existingItemIndex].price;
-      } else {
-        cart.items.push({
-          productId,
-          quantity: qty,
-          price: product.salePrice,
-          totalPrice: product.salePrice * qty,
-        });
-      }
-  
-      await cart.save();
-      return res.status(200).json({ message: "Product added to cart successfully." });
-  
-    } catch (error) {
-      console.error("Add to Cart Error:", error);
-      return res.status(500).json({ message: "Internal server error" });
+  try {
+    const userId = req.session.user;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized. Please log in first." });
     }
-  };
-  
 
+    const user = await User.findById(userId);
+    if (!user || user.isBlocked) {
+      req.session.destroy();
+      return res.status(403).json({ message: "You are blocked by admin." });
+    }
+
+    const { productId, quantity } = req.body;
+    const qty = parseInt(quantity) || 1;
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    let cart = await Cart.findOne({ userId });
+    if (!cart) {
+      cart = new Cart({ userId, items: [] });
+    }
+
+    const existingItemIndex = cart.items.findIndex(
+      (item) => item.productId.toString() === productId
+    );
+
+    if (existingItemIndex >= 0) {
+      cart.items[existingItemIndex].quantity += qty;
+      cart.items[existingItemIndex].totalPrice =
+        cart.items[existingItemIndex].quantity * cart.items[existingItemIndex].price;
+    } else {
+      cart.items.push({
+        productId,
+        quantity: qty,
+        price: product.salePrice,
+        totalPrice: product.salePrice * qty,
+      });
+    }
+
+    await cart.save();
+
+    // ✅ Remove product from wishlist
+    await Wishlist.findOneAndUpdate(
+      { userId },
+      { $pull: { products: { productId } } }
+    );
+
+    return res.status(200).json({ message: "Product added to cart successfully." });
+
+  } catch (error) {
+    console.error("Add to Cart Error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
   const loadCartPage = async (req, res) => {
     try {

@@ -19,7 +19,7 @@ const orderSchema = new Schema({
     paymentMethod: {
         type: String,
         required: true,
-        enum: ['COD', 'Online', 'Razorpay'], // Add methods you support
+        enum: ['COD', 'WALLET', 'RAZORPAY'], // Add methods you support
       },
     orderedItems:[{
 

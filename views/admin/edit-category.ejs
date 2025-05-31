@@ -2,7 +2,7 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-6 mt-60">
-            <form method="post" action="/admin/editCategory/<%=category._id%>">
+            <form method="post" action="/admin/editCategory/<%=category._id%>"  onsubmit="return handleEditFormSubmit(event)" id="edit-category-form">
                 <div class="d-grid text-end mt-30 col-md-5">
                     <button class="btn btn-primary" type="submit">Update category</button>
                 </div>
@@ -15,8 +15,42 @@
                     <label class="form-label">Description</label>
                     <textarea name="description" class="form-control border" > <%=category.description%> </textarea>
                 </div>
-            </form>
+            </form   >
         </div>
     </div>
 </div>
 <%- include("../../views/partials/admin/footer") %>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+  function handleEditFormSubmit(event) {
+    event.preventDefault();
+    const form = event.target;
+    const name = form.categoryname.value.trim();
+    const description = form.description.value.trim();
+    const categoryId = "<%= category._id %>";
+
+    if (!name || !/^[a-zA-Z\s]+$/.test(name)) {
+      Swal.fire("Error", "Invalid category name", "error");
+      return;
+    }
+
+    fetch(`/admin/editCategory/${categoryId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ categoryname: name, description }),
+    })
+      .then(res => {
+        if (!res.ok) return res.json().then(err => { throw new Error(err.error) });
+        return res.json();
+      })
+      .then(data => {
+        Swal.fire("Success", data.message, "success").then(() => {
+          window.location.href = "/admin/category";
+        });
+      })
+      .catch(err => {
+        Swal.fire("Error", err.message, "error");
+      });
+  }
+</script>

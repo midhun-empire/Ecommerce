@@ -330,7 +330,7 @@
         });
     }
     
-    function validateForm() {
+  async  function validateForm() {
         clearErrorMessages();
         const name = document.getElementsByName('productName')[0].value;
         const description = document.getElementById('descriptionid').value;
@@ -348,13 +348,32 @@
         } else if (!/^[a-zA-Z\s]+$/.test(name.trim())) {
             displayErrorMessage('productName-error', 'Product name should contain only alphabetic characters.');
             isValid = false;
+        }else {
+        // Check for existing product name (case-insensitive)
+        try {
+            const productId = window.location.pathname.split('/').pop(); // Extract product ID from URL
+            const response = await fetch(`/admin/checkProductName/${encodeURIComponent(name)}/${productId}`);
+            const data = await response.json();
+            if (data.exists) {
+                displayErrorMessage('productName-error', 'A product with this name already exists (case-insensitive).');
+                isValid = false;
+            }
+        } catch (error) {
+            console.error('Error checking product name:', error);
+            displayErrorMessage('productName-error', 'Error checking product name availability.');
+            isValid = false;
         }
+    }
+
+
+
+        
         
         // Description validation
         if (description.trim() === "") {
             displayErrorMessage('description-error', 'Please enter a product description.');
             isValid = false;
-        } else if (!/^[a-zA-Z\s]+$/.test(description.trim())) {
+        } else if (!/^[a-zA-Z\s,.()-]+$/.test(description.trim())) {
             displayErrorMessage('description-error', 'Product description should contain only alphabetic characters.');
             isValid = false;
         }

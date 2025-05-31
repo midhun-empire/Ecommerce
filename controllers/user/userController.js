@@ -10,7 +10,9 @@ const pageNotFound = async (req, res) => {
     try {
         res.render('page-err')
     } catch (error) {
-        res.redirect("/pageNotFound")
+       error.statusCode = 500;
+        error.message = 'Error rendering error page';
+        next(error);
     }
 }
 
@@ -32,15 +34,17 @@ const loadHomepage = async (req, res) => {
       console.log("UserData from DB:", userData);
   
       if (!userData) {
-        console.log("User not found in DB.");
-        return res.status(404).send("User not found");
+             const error = new Error('User not found');
+            error.statusCode = 404;
+            throw error;
       }
   
       res.render("home", { currentPage: "home", user: userData });
   
     } catch (error) {
-      console.error("Error loading homepage:", error);
-      res.status(500).send("Server Error");
+        error.statusCode = error.statusCode || 500;
+        error.message = error.message || 'Error loading homepage';
+        next(error);
     }
   };
   
@@ -91,8 +95,9 @@ const loadHomepage = async (req, res) => {
             
         });
     } catch (error) {
-        console.error("shop page not found", error);
-        return res.redirect('/pageNotFound');
+        error.statusCode = 500;
+        error.message = 'Error loading shop page';
+        next(error);
     }
 };
 
@@ -102,8 +107,9 @@ const loadAboutPage = async (req,res) => {
     try{
         return res.render('about',{currentPage:'about'})
     }catch(error){
-        console.log("About page is not found");
-        res.send(500).send('server Error')
+        error.statusCode = 500;
+        error.message = 'Error loading about page';
+        next(error);
     }
     
 }
@@ -116,8 +122,9 @@ const loadContactPage = async (req,res) => {
     try{
         return res.render('contact',{currentPage:'contact'})
     }catch(error){
-        console.log("About page is not found");
-        res.send(500).send('server Error')
+         error.statusCode = 500;
+        error.message = 'Error loading contact page';
+        next(error);
     }
     
 }
@@ -126,8 +133,9 @@ const loadCartPage = async (req,res) =>{
     try{
         return res.render('cart',{currentPage:'cart'})
     }catch(error){
-        console.log('cart page is not found');
-        res.send(500).send('Server Error')
+         error.statusCode = 500;
+        error.message = 'Error loading cart page';
+        next(error);
         
     }
 }
@@ -136,8 +144,9 @@ const loadSignupPage = async (req,res) =>{
     try{
         return res.render('signup')
     }catch(error){
-        console.log('signup page is not found');
-        res.send(500).send('Server Error')
+         error.statusCode = 500;
+         error.message = 'Error loading signup page';
+         next(error);
         
     }
 }
@@ -151,8 +160,9 @@ const loadLoginPage = async(req,res)=>{
             res.redirect('/')
         }
     }catch(error){
-        console.log('login page is not found');
-       res.redirect('/pageNotFound')
+         error.statusCode = 500;
+        error.message = 'Error loading login page';
+        next(error);
         
     }
 }
@@ -188,8 +198,9 @@ const login = async (req, res) => {
   
       res.redirect('/');
     } catch (error) {
-      console.error('Login error:', error);
-      res.render('login', { message: 'Login failed. Please try again later.' });
+        error.statusCode = 500;
+        error.message = 'Login failed';
+        next(error);
     }
   };
 
@@ -268,23 +279,15 @@ const login = async (req, res) => {
         console.log("OTP sent:", otp);
         
     } catch (error) {
-        console.error('Signup error:', error);
-        res.redirect('/pageNotFound');
+         error.statusCode = error.statusCode || 500;
+        error.message = error.message || 'Error during signup';
+        next(error);
     }
 };
 
 
 
 
-
-const loadWishlist = async (req,res)=>{
-    try{
-        return res.render('wishlist',{currentPage:'wishlist'})
-    }catch(error){
-        console.log('wishlist page is not found')
-        res.status(500).send('Server Error')
-    }
-}
 
 
 
@@ -295,7 +298,7 @@ const securePassword = async (password)=>{
         return passwordHash
         
     } catch (error) {
-        
+         throw new Error('Error hashing password');
     }
 
     
@@ -632,7 +635,6 @@ module.exports = {
     loadSignupPage,
     loadLoginPage,
     signup,
-    loadWishlist,
     VerifyOtp,
     resendOtp,
     login,

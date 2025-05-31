@@ -156,17 +156,18 @@
                     <td class="text-start"><%=category.name%></td>
                     <td class="text-start"><%=category.description%></td>
                     <td>
-                
+                      <%= category.categoryOffer ? category.categoryOffer + '%' : '0%' %>
                       </td>
                       <td class="text-start">
+                        <%if(!category.categoryOffer){%>
                         <button class="btn btn-info" style="width: 100px">
                           <a href="#" class="text-white" onclick="addOffer('<%= category._id %>')">Add Offer</a>
                         </button>
-                      
+                        <%}else{%>
                         <button class="btn btn-info" style="width: 100px">
                           <a href="#" class="text-white" onclick="removeOffer('<%= category._id %>')">Remove</a>
                         </button>
-                    
+                         <%}%>
                       </td>
 
                       
@@ -237,133 +238,240 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
   <script>
-   function handleFormSubmit(event) {
-  event.preventDefault();
-  if (!validateForm()) {
-    return;
-  }
-  const name = document.getElementById('product_name').value;
-  const description = document.getElementById('descriptionId').value;
 
-  fetch('/admin/addCategory', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ name, description })
-  })
-    .then(response => {
-      if (!response.ok) {
-        return response.json().then(err => {
-          throw new Error(err.error);
-        });
-      }
-      return response.json();
+
+     function handleFormSubmit(event) {
+    event.preventDefault();
+    if (!validateForm()) {
+      return;
+    }
+
+    // Convert name to lowercase before sending to backend
+    const name = document.getElementById('product_name').value.trim();
+    const description = document.getElementById('descriptionId').value.trim();
+
+    fetch('/admin/addCategory', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name, description })
     })
-    .then(data => {
-      Swal.fire({
-        icon: 'success',
-        title: 'Success!',
-        text: 'Category added successfully!',
-        timer: 2000,
-        showConfirmButton: false
-      }).then(() => {
-        location.reload();
-      });
-    })
-    .catch(error => {
-      if (error.message === 'category already exists') {
-        Swal.fire({
-          icon: 'error',
-          title: 'Oops!',
-          text: "Category already exists"
-        });
-      } else {
-        Swal.fire({
-          icon: 'error',
-          title: 'Oops!',
-          text: 'An error occurred while adding the category'
-        });
-      }
-    });
-}
-
-function validateForm() {
-  clearErrorMessages();
-  const name = document.getElementsByName('name')[0].value.trim();
-  const description = document.getElementById('descriptionId').value.trim();
-  let isValid = true;
-
-  if (name === '') {
-    displayErrorMessage('name-error', 'Please enter a name');
-    isValid = false;
-  } else if (!/^[a-zA-Z\s]+$/.test(name)) {
-    displayErrorMessage('name-error', 'Category name should contain only alphabet characters');
-    isValid = false;
-  }
-
-  if (description === '') {
-    displayErrorMessage('description-error', 'Please enter a description');
-    isValid = false;
-  }
-  return isValid;
-}
-
-function displayErrorMessage(elementId, message) {
-  var errorElement = document.getElementById(elementId);
-  errorElement.innerHTML = message;
-  errorElement.style.display = 'block';
-}
-
-function clearErrorMessages() {
-  const errorElements = document.getElementsByClassName('error-message');
-  Array.from(errorElements).forEach((element) => {
-    element.innerText = "";
-    element.style.display = 'none';
-  });
-}
-
-
-function deleteCategory(categoryId) {
-  Swal.fire({
-    title: 'Are you sure?',
-    text: "You won't be able to revert this!",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#3085d6',
-    confirmButtonText: 'Yes, delete it!'
-  }).then((result) => {
-    if (result.isConfirmed) {
-      fetch(`/admin/deleteCategory/${categoryId}`, {
-        method: 'DELETE'
-      })
       .then(response => {
         if (!response.ok) {
-          throw new Error('Failed to delete category');
+          return response.json().then(err => {
+            throw new Error(err.error);
+          });
         }
         return response.json();
       })
       .then(data => {
-        Swal.fire(
-          'Deleted!',
-          'Category has been deleted.',
-          'success'
-        ).then(() => {
-          location.reload(); // Reload the page after deleting
+        Swal.fire({
+          icon: 'success',
+          title: 'Success!',
+          text: 'Category added successfully!',
+          timer: 2000,
+          showConfirmButton: false
+        }).then(() => {
+          location.reload();
         });
       })
       .catch(error => {
-        Swal.fire(
-          'Error!',
-          'There was a problem deleting the category.',
-          'error'
-        );
+        if (error.message.toLowerCase() === 'category already exists') {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Duplicate Category',
+            text: 'This category already exists. Please try another name.'
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Oops!',
+            text: 'An error occurred while adding the category.'
+          });
+        }
       });
-    }
-  });
-}
+  }
 
+  function validateForm() {
+    clearErrorMessages();
+    const name = document.getElementsByName('name')[0].value.trim();
+    const description = document.getElementById('descriptionId').value.trim();
+    let isValid = true;
+
+    if (name === '') {
+      displayErrorMessage('name-error', 'Please enter a name');
+      isValid = false;
+    } else if (!/^[a-zA-Z\s]+$/.test(name)) {
+      displayErrorMessage('name-error', 'Category name should contain only alphabet characters');
+      isValid = false;
+    }
+
+    if (description === '') {
+      displayErrorMessage('description-error', 'Please enter a description');
+      isValid = false;
+    }
+    return isValid;
+  }
+
+  function displayErrorMessage(elementId, message) {
+    var errorElement = document.getElementById(elementId);
+    errorElement.innerHTML = message;
+    errorElement.style.display = 'block';
+  }
+
+  function clearErrorMessages() {
+    const errorElements = document.getElementsByClassName('error-message');
+    Array.from(errorElements).forEach((element) => {
+      element.innerText = "";
+      element.style.display = 'none';
+    });
+  }
+
+  function deleteCategory(categoryId) {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        fetch(`/admin/deleteCategory/${categoryId}`, {
+          method: 'DELETE'
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to delete category');
+          }
+          return response.json();
+        })
+        .then(data => {
+          Swal.fire(
+            'Deleted!',
+            'Category has been deleted.',
+            'success'
+          ).then(() => {
+            location.reload();
+          });
+        })
+        .catch(error => {
+          Swal.fire(
+            'Error!',
+            'There was a problem deleting the category.',
+            'error'
+          );
+        });
+      }
+    });
+  }
+
+
+  async function addOffer(categoryId){
+    const {value : amount} = await Swal.fire({
+      title:'offer in percentage',
+      input:'number',
+      inputLabel:'percentage',
+      inputPlaceholder:'%',
+    inputAttributes: {
+    min: 1,
+    max: 100,
+    step: 1
+   },
+   showCancelButton: true,
+   confirmButtonText: 'Add Offer',
+   cancelButtonText: 'Cancel'
+    })
+
+    if(amount){
+      try{
+        const response = await fetch('/admin/addcategoryOffer',{
+          method:'POST',
+          headers:{
+            'content-type':'application/json', 
+          },
+          body:JSON.stringify({
+            percentage:amount,
+            categoryId:categoryId,
+          }),
+
+        })
+
+  const data = await response.json()
+
+  if(response.ok && data.status === true){
+    Swal.fire(
+      'Offer added',
+      'Offer has been added',
+      "success"
+    ).then(()=>{
+      location.reload()
+    })
+  }else{
+    Swal.fire('Failed',data.message || 'Adding offer failed','error')
+  }
+
+      }catch(error){
+             Swal.fire(
+              "Error",
+              "An error occured While adding the Offer",
+              "error"
+             );
+             console.log("Error adding offer",error)
+      }
+    }
+  }
+
+
+async function removeOffer(categoryId) {
+  const confirmation = await Swal.fire({
+    title: 'Are you sure?',
+    text: 'Do you really want to remove this offer?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Yes, remove it!',
+    cancelButtonText: 'Cancel'
+  });
+
+  if (confirmation.isConfirmed) {
+    try {
+      const response = await fetch('/admin/removeCategoryOffer', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          categoryId: categoryId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.status === true) {
+        Swal.fire(
+          'Offer Removed',
+          'The offer has been successfully removed.',
+          'success'
+        ).then(() => {
+          location.reload();
+        });
+      } else {
+        Swal.fire('Failed', data.message || 'Removing offer failed.', 'error');
+      }
+    } catch (error) {
+      Swal.fire(
+        'Error',
+        'An error occurred while removing the offer.',
+        'error'
+      );
+      console.error('Error removing offer', error);
+    }
+  }
+}
 
 
   </script>

@@ -8,6 +8,7 @@ const productController = require('../controllers/user/productController')
 const cartController = require('../controllers/user/cartController')
 const checkoutController = require('../controllers/user/checkoutController')
 const orderController = require('../controllers/user/orderController')
+const wishlistController = require('../controllers/user/wishlistController')
 const { profile } = require('console');
 
 
@@ -33,10 +34,9 @@ router.get('/sort',userController.sort)
 
 //product management
 
-router.get('/productDetails/:productId', userAuth,productController.productDetails);
+router.get('/productDetails/:productId',productController.productDetails);
 router.post('/cart/add', userAuth,cartController.addToCart);
 
-router.get('/wishlist',userController.loadWishlist)
 router.post('/verify-otp',userController.VerifyOtp)
 router.post('/resend-otp',userController.resendOtp)
 router.get('/auth/google',passport.authenticate('google',{scope:['profile','email']}))
@@ -95,5 +95,21 @@ router.get('/order-details/:orderId',userAuth,orderController.getOrderDetails)
 router.get('/download-invoice/:orderId',userAuth,orderController.generateInvoice )
 router.post('/cancel-product',userAuth,orderController.cancelProductOrder)
 router.post('/return-product', orderController.returnProduct);
+router.post('/verify-payment',userAuth,orderController.verifyPayment);
+router.get('/payment-failed/:orderId',userAuth,orderController.handleFailedPayment);
+router.post('/retry-payment',userAuth,orderController.retryPayment);
+router.post('/verify-retry-payment',userAuth,orderController.verifyRetryPayment)
+
+
+//wishlist Mmanagement
+router.get('/wishlist',userAuth,wishlistController.loadWishlist)
+router.post('/addToWishlist',userAuth,wishlistController.addToWishlist)
+router.get('/removeFromWishlist',userAuth,wishlistController.removeProduct);
+
+//coupon management 
+
+router.get('/get-available-coupons',userAuth,checkoutController.getAvailableCoupons)
+router.post('/applycouponcode',userAuth,checkoutController.applyCoupon);
+router.post('/removecoupon',userAuth,checkoutController.removeCoupon);
 
 module.exports= router

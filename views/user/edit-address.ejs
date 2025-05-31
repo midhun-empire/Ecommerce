@@ -1,8 +1,32 @@
 <%- include("../../views/partials/user/header") %>
+
+<style>
+      .breadcrumb a {
+            color: #088178;
+            text-decoration: none;
+        }
+
+        .breadcrumb span {
+            margin: 0 10px;
+            color: #666;
+        }
+
+</style>
 <div class="container mt-4">
-   <h3 class="mt-3" style="color: #046963; margin-bottom:70px">Edit User Address</h3>
+           <h3 class="mt-3" style="color: #046963; margin-bottom:70px">Edit User Address</h3>
+
    <form id="addressForm" method="POST" action="/editAddress?id=<%= address._id.toLocaleString() %>" class="border-0 p-3">
+       <h3 class="mt-3" style="color: #046963; margin-bottom:70px">Edit User Address</h3>
+       
+
        <div class="row mb-50">
+        <div class="breadcrumb mb-4">
+            <a href="/">Home</a>
+            <span>/</span>
+            <a href="/profile">profile</a>
+    
+        </div>
+        
            <div class="form-group col-md-4">
                <label for="addressType">Address Type:</label>
                <input type="text" class="form-control border-3" value="<%= address.addressType %>" id="addressType" name="addressType" required>
@@ -44,6 +68,7 @@
    </form>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
    document.getElementById('submitButton').addEventListener('click', function (event) {
@@ -54,23 +79,94 @@
 
 
    function validateForm() {
-       let isValid = true;
-       const requiredFields = ["addressType", "name", "city", "landMark", "state", "pincode", "phone", "altPhone"];
-       requiredFields.forEach(function (field) {
-           const input = document.getElementById(field);
-           if (input.value.trim() === "") {
-               Swal.fire({
-                   title: 'Error',
-                   text: `Please fill all the field.`,
-                   icon: 'error'
-               });
-               isValid = false;
-           }
-       });
+        let isValid = true;
+        const requiredFields = ["addressType", "name", "city", "landMark", "state", "pincode", "phone", "altPhone"];
+        
+        requiredFields.forEach(function (field) {
+            const input = document.getElementById(field);
+            const inputValue = input.value.trim();
+            const errorElement = document.getElementById(field + '-error');
 
+            if (inputValue === "") {
+                if (!errorElement) {
+                    const errorMessage = "This field is required.";
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = "text-danger";
+                    errorDiv.textContent = errorMessage;
+                    errorDiv.id = field + '-error';
+                    input.parentNode.appendChild(errorDiv);
+                }
+                isValid = false;
+            } else {
+                if (errorElement) {
+                    errorElement.remove();
+                }
+            }
+        });
 
-       return isValid;
-   }
+        const name = document.getElementById('name').value.trim();
+        const city = document.getElementById('city').value.trim();
+        const landMark = document.getElementById('landMark').value.trim();
+        const state = document.getElementById('state').value.trim();
+        const pincode = document.getElementById('pincode').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const altPhone = document.getElementById('altPhone').value.trim();
+
+        const namePattern = /^[A-Za-z\s]{2,}$/;
+        const pincodePattern = /^[1-9][0-9]{5}$/;
+        const phonePattern = /^\d{10}$/;
+        const repeatedDigitsPattern = /^(\d)\1{9}$/;
+
+        if (!namePattern.test(name)) {
+            Swal.fire({ title: 'Error', text: 'Name must contain at least 2 letters and only alphabets.', icon: 'error' });
+            isValid = false;
+        }
+
+        if (!namePattern.test(city)) {
+            Swal.fire({ title: 'Error', text: 'City must contain at least 2 letters and only alphabets.', icon: 'error' });
+            isValid = false;
+        }
+
+        if (!namePattern.test(landMark)) {
+            Swal.fire({ title: 'Error', text: 'Landmark must contain at least 2 letters and only alphabets.', icon: 'error' });
+            isValid = false;
+        }
+
+        if (!namePattern.test(state)) {
+            Swal.fire({ title: 'Error', text: 'State must contain at least 2 letters and only alphabets.', icon: 'error' });
+            isValid = false;
+        }
+
+        if (!pincodePattern.test(pincode)) {
+            Swal.fire({ title: 'Error', text: 'Pincode must be a valid 6-digit number starting from 1-9.', icon: 'error' });
+            isValid = false;
+        }
+
+        if (!phonePattern.test(phone) || repeatedDigitsPattern.test(phone)) {
+            Swal.fire({
+                title: 'Error',
+                text: 'Phone number must be a valid 10-digit number and should not have all repeated digits (e.g., 1111111111).',
+                icon: 'error'
+            });
+            isValid = false;
+        }
+
+        if (!phonePattern.test(altPhone) || repeatedDigitsPattern.test(altPhone)) {
+            Swal.fire({
+                title: 'Error',
+                text: 'Alternate phone number must be a valid 10-digit number and should not have all repeated digits.',
+                icon: 'error'
+            });
+            isValid = false;
+        }
+
+        if (phone === altPhone) {
+            Swal.fire({ title: 'Error', text: 'Phone number and alternate phone number must be different.', icon: 'error' });
+            isValid = false;
+        }
+
+        return isValid;
+    }
 </script>
 <%- include("../../views/partials/user/footer") %>
 

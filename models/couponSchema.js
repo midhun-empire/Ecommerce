@@ -10,7 +10,7 @@ const couponSchema = new Schema({
         required: true,
         unique: true,
     },
-    createOn: {
+    createdOn: {
         type: Date,
         default: Date.now,
         required: true

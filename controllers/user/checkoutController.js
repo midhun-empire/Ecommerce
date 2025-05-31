@@ -3,7 +3,7 @@ const Cart = require('../../models/cartSchema')
 const User  = require('../../models/userSchema')
 const Address = require('../../models/addressSchema')
 const mongoose = require('mongoose')
- 
+const Coupon = require('../../models/couponSchema')
 
 
 // const getCheckoutPage = async (req, res) => {
@@ -190,6 +190,13 @@ const getCheckoutPage = async (req, res) => {
   }
 };
 
+
+
+
+
+
+
+
 const checkoutAddAddress = async (req,res)=>{
     try {
         const userId = req.session.user;
@@ -273,8 +280,123 @@ const checkoutEditAddress = async (req,res)=>{
       }
 }
 
+
+const getAvailableCoupons = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // normalize time
+
+    const userId = req.user?._id; // assuming user is logged in and available in req.user
+
+    const coupons = await Coupon.find({
+      islisted: true,
+      createdOn: { $lte: today },
+      expireOn: { $gte: today },
+      // Exclude coupons already used by this user (optional)
+      ...(userId && { userId: { $ne: userId } })
+    });
+
+    res.status(200).json({
+      status: true,
+      coupons
+    });
+
+  } catch (error) {
+    console.error('Error in getAvailableCoupons:', error);
+    res.status(500).json({
+      status: false,
+      message: 'Failed to fetch available coupons'
+    });
+  }
+};
+
+
+const applyCoupon = async (req, res) => {
+  try {
+
+           const couponCode = req.body.couponcode;
+           const cartTotal = req.body.totalAmount;
+            const userId = req.session._id;
+
+    if (!couponCode || !cartTotal) {
+      return res.status(400).json({ status: false, message: 'Coupon code or cart total missing' });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize to 00:00
+
+    // Check for a valid coupon
+    const coupon = await Coupon.findOne({
+      name: couponCode,
+      islisted: true,
+      createdOn: { $lte: today },
+      expireOn: { $gte: today }
+    });
+
+    if (!coupon) {
+      return res.status(404).json({ status: false, message: 'Invalid or expired coupon' });
+    }
+
+    // Check if user has already used the coupon
+    if (coupon.userId.includes(userId)) {
+      return res.status(403).json({ status: false, message: 'Coupon already used by this user' });
+    }
+
+    // Check if cart total meets minimum requirement
+    if (cartTotal < coupon.minimumPrice) {
+      return res.status(400).json({
+        status: false,
+        message: `Minimum order value for this coupon is ₹${coupon.minimumPrice}`
+      });
+    }
+
+    const newTotal = cartTotal - coupon.offerPrice;
+    return res.status(200).json({
+      status: true,
+      message: 'Coupon applied successfully',
+      discount: coupon.offerPrice,
+      newTotal
+    });
+
+  } catch (error) {
+    console.error('Error applying coupon:', error);
+    res.status(500).json({ status: false, message: 'Server error applying coupon' });
+  }
+};
+
+const removeCoupon = async (req, res) => {
+  try {
+    const userId = req.session.user;
+
+    // You can clear the applied coupon from session or database depending on your implementation
+    req.session.coupon = null; // if you're storing coupon in session
+
+    // Optionally, you can perform additional logic like logging, analytics, etc.
+
+    // Recalculate total (if needed, else just return success)
+    // Assuming you still have cart total from session or re-fetch it from DB
+    const cartTotal = req.session.cartTotal || 0; // fallback if needed
+
+    return res.status(200).json({
+      status: true,
+      message: 'Coupon removed successfully',
+      finalAmount: cartTotal // return the original cart total
+    });
+
+  } catch (error) {
+    console.error('Error removing coupon:', error);
+    return res.status(500).json({
+      status: false,
+      message: 'Failed to remove coupon'
+    });
+  }
+};
+
 module.exports={
     getCheckoutPage,
     checkoutAddAddress,
-    checkoutEditAddress
+    checkoutEditAddress,
+    getAvailableCoupons,
+    applyCoupon,
+    removeCoupon
 }

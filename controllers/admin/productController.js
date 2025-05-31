@@ -7,6 +7,8 @@ const path = require('path')
 const sharp = require('sharp')
 
 
+
+
 const getProductAddPage = async(req,res)=>{
     try {
 
@@ -23,6 +25,9 @@ const getProductAddPage = async(req,res)=>{
         
     }
 }
+
+
+
 
 
 const addProducts = async (req,res)=>{
@@ -130,6 +135,7 @@ const blockProducts = async (req, res) => {
     }
 };
 
+
 const unblockProducts = async (req, res) => {
     try {
         const id = req.query.id;
@@ -175,10 +181,11 @@ const editProduct = async (req,res)=>{
             return res.redirect('/admin/pageerror');  // Handle case where product doesn't exist
         }
         const data = req.body;
+
         const existingProduct = await Product.findOne({
-            productName:data.productName,
-            _id:{$ne:id}
-        })
+            productName: { $regex: `^${data.productName}$`, $options: 'i' }, // Case-insensitive match
+            _id: { $ne: id } // Exclude the current product
+        });
 
         if(existingProduct){
             return res.status(400).json({error:'product with this name already exists . Please try with another name'})
@@ -255,6 +262,59 @@ const deleteProduct = async (req, res) => {
     }
 };
 
+
+
+const addProductsOffer = async ( req,res)=>{
+    try {
+        
+        const {productId,percentage} = req.body
+        const findProduct = await Product.findOne({_id:productId})
+        const findCategory = await Category.findOne({_id:findProduct.category})
+
+        if(findCategory.categoryOffer>percentage){
+            return res.json({status:false,message:'The product category already has a category offer'})
+
+        }
+
+
+      findProduct.salePrice = Math.floor(findProduct.regularPrice * (1 - percentage / 100));
+        findProduct.productOffer = parseInt(percentage)
+
+        await findProduct.save()
+
+        findCategory.categoryOffer=0
+
+        await findCategory.save()
+          res.json({status:true})
+
+
+    } catch (error) {
+        res.status(500).json({status:false,message:'Internal server error '})
+    }
+}
+
+
+
+const removeProductOffer = async (req,res)=>{
+    try {
+        const {productId} = req.body
+        const findProduct = await Product.findOne({_id:productId})
+        const percentage = findProduct.productOffer
+        findProduct.salePrice = findProduct.salePrice+Math.floor(findProduct.regularPrice*(percentage/100))
+        findProduct.productOffer = 0 
+
+        await findProduct.save()
+
+        res.json({status:true})
+
+    } catch (error) {
+        res.redirect('pageerror')
+        console.error(error);
+        
+        
+    }
+}
+
 module.exports = {
     getProductAddPage,
     addProducts,
@@ -264,6 +324,8 @@ module.exports = {
     getEditProduct,
     editProduct,
     deleteSingleImage,
-    deleteProduct
+    deleteProduct,
+    addProductsOffer,
+    removeProductOffer
 
 }
