@@ -162,14 +162,12 @@ const getCheckoutPage = async (req, res) => {
 
     // Calculate totals
     const subtotal = cartItems.reduce((sum, item) => sum + item.totalPrice, 0) || 0;
-    const taxRate = 0.02; // Adjust as needed
-    const tax = subtotal * taxRate;
-    const shipping = subtotal >= 50000 ? 0 : 140;
+     const shipping = subtotal > 1000 ? 140 : 0;
     let discount = 0;
     let couponCode = null;
     let appliedCoupon = null;
 
-    const total = subtotal + shipping + tax - discount;
+    const total = subtotal + shipping - discount;
 
     res.render('checkout', {
       currentPage: 'checkout',
@@ -177,7 +175,6 @@ const getCheckoutPage = async (req, res) => {
       cartItems,
       subtotal,
       shipping,
-      tax,
       discount,
       couponCode,
       appliedCoupon,
@@ -189,7 +186,6 @@ const getCheckoutPage = async (req, res) => {
     res.redirect('/cart');
   }
 };
-
 
 
 

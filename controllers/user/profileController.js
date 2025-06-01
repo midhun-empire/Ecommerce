@@ -599,7 +599,7 @@ const postAddAddress = async (req, res) => {
 
     // Pagination parameters
     const page = parseInt(req.query.page) || 1; // Default to page 1
-    const limit = 5; // Orders per page (adjust as needed)
+    const limit = 10; // Orders per page (adjust as needed)
     const skip = (page - 1) * limit; // Orders to skip
 
     // Fetch total number of orders

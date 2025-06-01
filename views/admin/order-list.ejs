@@ -12,14 +12,7 @@
         <h2 class="card-title">Order Management</h2>
         
         <form id="searchForm" class="d-flex" onsubmit="handleSearch(event)">
-          <select id="filterStatus" class="form-select me-2" style="width: 150px;">
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="shipped">Shipped</option>
-            <option value="out_for_delivery">Out for Delivery</option>
-            <option value="delivered">Delivered</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+        
           
           <input type="date" id="filterDate" class="form-control me-2" style="width: 150px;">
           
@@ -81,7 +74,7 @@
     </div>
   </div>
   
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <%- include("../../views/partials/admin/footer") %>
 
@@ -244,40 +237,43 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // Search and filter functionality
-  function handleSearch(event) {
-    event.preventDefault();
+ function handleSearch(event) {
+  event.preventDefault();
 
-    const status = document.getElementById('filterStatus').value;
-    const date = document.getElementById('filterDate').value;
-    const searchTerm = document.getElementById('searchInput').value.trim();
+  const date = document.getElementById('filterDate').value;
+  const searchTerm = document.getElementById('searchInput').value.trim();
 
-    // Validate date input
-    if (date && isNaN(new Date(date).getTime())) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Invalid Date',
-        text: 'Please enter a valid date.'
-      });
-      return;
-    }
+  // Validate date input
+  if (date && isNaN(new Date(date).getTime())) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Invalid Date',
+      text: 'Please enter a valid date.'
+    });
+    return;
+  }
 
-    // Show loading state
-    const tableBody = document.getElementById('ordersTableBody');
-    tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
+  // Show loading state
+  const tableBody = document.getElementById('ordersTableBody');
+  tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
 
-    fetch('/admin/filter-orders', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        status: status,
-        date: date,
-        searchTerm: searchTerm
-      })
+  fetch('/admin/filter-orders', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      date: date,
+      searchTerm: searchTerm
     })
-    .then(response => response.json())
+  })
+    .then(response => {
+      console.log('Response status:', response.status); // Debug
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      return response.json();
+    })
     .then(data => {
+      console.log('Response data:', data); // Debug
       if (data.success) {
         // Update table with filtered results
         if (data.orders.length === 0) {
@@ -285,10 +281,10 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
           tableBody.innerHTML = data.orders.map(order => `
             <tr>
-              <td>${order.orderId}</td>
-              <td>${order.userName}</td>
-              <td>${new Date(order.orderDate).toLocaleDateString()}</td>
-              <td>$${order.totalAmount.toFixed(2)}</td>
+              <td>${order.orderId || 'N/A'}</td>
+              <td>${order.userName || order.userId?.name || 'N/A'}</td>
+              <td>${new Date(order.orderDate || order.createdAt).toLocaleDateString()}</td>
+              <td>$${order.totalAmount?.toFixed(2) || order.finalAmount?.toFixed(2) || '0.00'}</td>
               <td>
                 <select class="form-select status-select" data-order-id="${order._id}">
                   <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pending</option>
@@ -325,6 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     })
     .catch(error => {
+      console.error('Fetch error:', error); // Debug
       Swal.fire({
         icon: 'error',
         title: 'Network Error',
@@ -332,11 +329,12 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Error loading orders</td></tr>';
     });
-  }
+}
+
 
   // Reset search filters
   function resetSearch() {
-    document.getElementById('filterStatus').value = '';
+   
     document.getElementById('filterDate').value = '';
     document.getElementById('searchInput').value = '';
     location.reload();

@@ -1,207 +1,222 @@
-
 const User = require("../../models/userSchema");
 const Product = require("../../models/productSchema");
 const Address = require("../../models/addressSchema");
 const Order = require("../../models/orderSchema");
 const mongodb = require("mongodb");
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 const razorpay = require("razorpay");
 const env = require("dotenv").config();
 const crypto = require("crypto");
-const Coupon=require("../../models/couponSchema");
-const { v4: uuidv4 } = require('uuid');
-
+const Coupon = require("../../models/couponSchema");
+const { v4: uuidv4 } = require("uuid");
 
 const getOrderListPageAdmin = async (req, res) => {
-    try {
-      const orders = await Order.find({}).sort({ createdOn: -1 }) .populate('userId', 'name').populate("orderedItems.product");
-      let itemsPerPage = 3;
-      let currentPage = parseInt(req.query.page) || 1;
-      let startIndex = (currentPage - 1) * itemsPerPage;
-      let endIndex = startIndex + itemsPerPage;
-      let totalPages = Math.ceil(orders.length / 3);
-      const currentOrder = orders.slice(startIndex, endIndex);
-      currentOrder.forEach(order => {
-        order.orderId = uuidv4();
-      });
-  
-      res.render("order-list", { orders: currentOrder, totalPages, currentPage });
-    } catch (error) {
-      res.redirect("/pageerror");
+  try {
+    const orders = await Order.find({})
+      .sort({ createdOn: -1 })
+      .populate("userId", "name")
+      .populate("orderedItems.product");
+    let itemsPerPage = 7;
+    let currentPage = parseInt(req.query.page) || 1;
+    let startIndex = (currentPage - 1) * itemsPerPage;
+    let endIndex = startIndex + itemsPerPage;
+    let totalPages = Math.ceil(orders.length / 3);
+    const currentOrder = orders.slice(startIndex, endIndex);
+   
+
+    res.render("order-list", { orders: currentOrder, totalPages, currentPage });
+  } catch (error) {
+    res.redirect("/pageerror");
+  }
+};
+
+const changeOrderStatus = async (req, res) => {
+  try {
+    const { orderId, itemId, status } = req.body;
+
+    // Validate input
+    if (!orderId || !itemId || !status) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing required fields" });
     }
-  };
-  
-  const changeOrderStatus = async (req, res) => {
-    try {
-      const { orderId, itemId, status } = req.body;
-  
-      // Validate input
-      if (!orderId || !itemId || !status) {
-        return res.status(400).json({ success: false, message: "Missing required fields" });
-      }
-  
-      // Update the status of the specific item in orderedItems
-      const updateResult = await Order.updateOne(
-        { _id: orderId, "orderedItems._id": itemId },
-        { $set: { "orderedItems.$.status": status } }
-      );
-  
-      if (updateResult.modifiedCount === 0) {
-        return res.status(404).json({ success: false, message: "Order or item not found" });
-      }
-  
-      return res.json({ success: true });
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ success: false, message: "Server error" });
+
+    // Update the status of the specific item in orderedItems
+    const updateResult = await Order.updateOne(
+      { _id: orderId, "orderedItems._id": itemId },
+      { $set: { "orderedItems.$.status": status } }
+    );
+
+    if (updateResult.modifiedCount === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order or item not found" });
     }
-  };
-  
-  const filterOrders = async (req, res) => {
-    try {
-      const { status, date, searchTerm } = req.body;
-      let filter = {};
-  
-      // Filter by status
-      if (status && status !== "All") {
-        filter.status = status;
-      }
-  
-      // Filter by date (assuming format YYYY-MM-DD)
-      if (date) {
-        const start = new Date(date);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(date);
-        end.setHours(23, 59, 59, 999);
-        filter.createdAt = { $gte: start, $lte: end };
-      }
-  
-      // Fetch initial filtered orders
-      let orders = await Order.find(filter).populate('userId');
-  
-      // Apply search term filter manually
-      if (searchTerm) {
-        const lowerSearch = searchTerm.toLowerCase();
-        orders = orders.filter(order =>
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+const filterOrders = async (req, res) => {
+  try {
+    const { status, date, searchTerm } = req.body;
+    let filter = {};
+
+    // Filter by status
+    if (status && status !== "All") {
+      filter.status = status;
+    }
+
+    // Filter by date (assuming format YYYY-MM-DD)
+    if (date) {
+      const start = new Date(date);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(date);
+      end.setHours(23, 59, 59, 999);
+      filter.createdAt = { $gte: start, $lte: end };
+    }
+
+    // Fetch initial filtered orders
+    let orders = await Order.find(filter).populate("userId");
+
+    // Apply search term filter manually
+    if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase();
+      orders = orders.filter(
+        (order) =>
           order.orderId.toLowerCase().includes(lowerSearch) ||
-          (order.userId?.name && order.userId.name.toLowerCase().includes(lowerSearch))
-        );
-      }
-  
-      // Format the orders
-      const formattedOrders = orders.map(order => ({
-        _id: order._id,
-        orderId: order.orderId,
-        userName: order.userId?.name || 'N/A',
-        orderDate: order.createdAt,
-        totalAmount: order.finalAmount || 0,
-        status: order.status,
-        returnRequested: order.returnRequested || false
+          (order.userId?.name &&
+            order.userId.name.toLowerCase().includes(lowerSearch))
+      );
+    }
+
+    // Format the orders
+    const formattedOrders = orders.map((order) => ({
+      _id: order._id,
+      orderId: order.orderId,
+      userName: order.userId?.name || "N/A",
+      orderDate: order.createdAt,
+      totalAmount: order.finalAmount || 0,
+      status: order.status,
+      returnRequested: order.returnRequested || false,
+    }));
+
+    res.json({ success: true, orders: formattedOrders });
+  } catch (err) {
+    console.error("Error filtering orders:", err);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+const getOrderDetailsPageAdmin = async (req, res) => {
+  try {
+    const orderId = req.query.id;
+
+    const findOrder = await Order.findOne({ _id: orderId })
+      .populate("orderedItems.product")
+      .populate("userId");
+
+    if (!findOrder) {
+      throw new Error("Order not found");
+    }
+
+    let totalGrant = 0;
+    findOrder.orderedItems.forEach((item) => {
+      totalGrant += item.price * item.quantity;
+    });
+
+    const totalPrice = findOrder.totalPrice;
+    const discount = totalGrant - totalPrice;
+    const finalAmount = findOrder.finalAmount;
+
+    // Check if any item has a return request and collect return reasons
+    const hasReturnRequest = findOrder.orderedItems.some(
+      (item) => item.status === "Return Requested"
+    );
+    const returnReasons = findOrder.orderedItems
+      .filter((item) => item.status === "Return Requested")
+      .map((item) => ({
+        productName: item.product?.productName || "Product Not Available",
+        reason: item.returnReason || "Not specified",
       }));
-  
-      res.json({ success: true, orders: formattedOrders });
-  
-    } catch (err) {
-      console.error('Error filtering orders:', err);
-      res.status(500).json({ success: false, message: 'Internal server error' });
-    }
-  };
 
-
-
-  const getOrderDetailsPageAdmin = async (req, res) => {
-    try {
-      const orderId = req.query.id;
-  
-      const findOrder = await Order.findOne({ _id: orderId })
-        .populate("orderedItems.product")
-        .populate("userId");
-  
-      if (!findOrder) {
-        throw new Error("Order not found");
-      }
-  
-      let totalGrant = 0;
-      findOrder.orderedItems.forEach((item) => {
-        totalGrant += item.price * item.quantity;
-      });
-  
-      const totalPrice = findOrder.totalPrice;
-      const discount = totalGrant - totalPrice;
-      const finalAmount = findOrder.finalAmount;
-  
-      // Check if any item has a return request and collect return reasons
-      const hasReturnRequest = findOrder.orderedItems.some(item => item.status === "Return Requested");
-      const returnReasons = findOrder.orderedItems
-        .filter(item => item.status === "Return Requested")
-        .map(item => ({
-          productName: item.product?.productName || "Product Not Available",
-          reason: item.returnReason || "Not specified"
-        }));
-  
-      res.render("order-details-admin", {
-        orders: findOrder,
-        orderId: orderId,
-        finalAmount: finalAmount,
-        hasReturnRequest, // Pass flag for return request
-        returnReasons // Pass array of return reasons
-      });
-    } catch (error) {
-      console.error(error);
-      res.redirect("/pageerror");
-    }
-  };
-  
-  const handleReturn  = async (req,res)=>{
-    try {
-      const { orderId, itemId, action } = req.body;
-  
-      if (!orderId || !itemId || !action) {
-        return res.status(400).json({ success: false, message: 'Missing required fields.' });
-      }
-  
-      // Fetch the order
-      const order = await Order.findById(orderId);
-      if (!order) {
-        return res.status(404).json({ success: false, message: 'Order not found.' });
-      }
-  
-      // Find the specific item in the order
-      const item = order.orderedItems.id(itemId);
-      if (!item) {
-        return res.status(404).json({ success: false, message: 'Item not found in order.' });
-      }
-  
-      // Check if item is in "Return Requested" status
-      if (item.status !== 'Return Requested') {
-        return res.status(400).json({ success: false, message: 'This item is not eligible for return handling.' });
-      }
-  
-      if (action === 'approve') {
-        item.status = 'Returned';
-        item.returnDeclinedReason = undefined; // clear if previously declined
-      } else if (action === 'decline') {
-        item.status = 'Delivered'; // revert back to delivered
-        item.returnDeclinedReason = 'Return declined by admin.';
-      } else {
-        return res.status(400).json({ success: false, message: 'Invalid action.' });
-      }
-  
-      await order.save();
-  
-      res.status(200).json({ success: true, message: `Return ${action}d successfully.` });
-  
-    } catch (error) {
-      console.error('Error handling return request:', error);
-      res.status(500).json({ success: false, message: 'Internal server error.' });
-    }
+    res.render("order-details-admin", {
+      orders: findOrder,
+      orderId: orderId,
+      finalAmount: finalAmount,
+      hasReturnRequest, // Pass flag for return request
+      returnReasons, // Pass array of return reasons
+    });
+  } catch (error) {
+    console.error(error);
+    res.redirect("/pageerror");
   }
+};
 
-  
-  module.exports={
-    getOrderListPageAdmin,
-    changeOrderStatus,
-    filterOrders,
-    getOrderDetailsPageAdmin,
-    handleReturn
+const handleReturn = async (req, res) => {
+  try {
+    const { orderId, itemId, action } = req.body;
+
+    if (!orderId || !itemId || !action) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing required fields." });
+    }
+
+    // Fetch the order
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found." });
+    }
+
+    // Find the specific item in the order
+    const item = order.orderedItems.id(itemId);
+    if (!item) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Item not found in order." });
+    }
+
+    // Check if item is in "Return Requested" status
+    if (item.status !== "Return Requested") {
+      return res.status(400).json({
+        success: false,
+        message: "This item is not eligible for return handling.",
+      });
+    }
+
+    if (action === "approve") {
+      item.status = "Returned";
+      item.returnDeclinedReason = undefined; // clear if previously declined
+    } else if (action === "decline") {
+      item.status = "Delivered"; // revert back to delivered
+      item.returnDeclinedReason = "Return declined by admin.";
+    } else {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid action." });
+    }
+
+    await order.save();
+
+    res
+      .status(200)
+      .json({ success: true, message: `Return ${action}d successfully.` });
+  } catch (error) {
+    console.error("Error handling return request:", error);
+    res.status(500).json({ success: false, message: "Internal server error." });
   }
+};
+
+module.exports = {
+  getOrderListPageAdmin,
+  changeOrderStatus,
+  filterOrders,
+  getOrderDetailsPageAdmin,
+  handleReturn,
+};

@@ -75,8 +75,8 @@ const placeOrder = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Unauthorized: Please log in' });
     }
 
-    const { addressId, paymentMethod, couponCode } = req.body;
-    console.log('Request body:', { addressId, paymentMethod, couponCode });
+    const { addressId, paymentMethod, couponCode, deliveryCharge } = req.body;
+    console.log('Request body:', { addressId, paymentMethod, couponCode, deliveryCharge });
 
     // Validate inputs
     if (!addressId || !mongoose.Types.ObjectId.isValid(addressId)) {
@@ -84,6 +84,9 @@ const placeOrder = async (req, res) => {
     }
     if (!['COD', 'RAZORPAY', 'WALLET'].includes(paymentMethod)) {
       return res.status(400).json({ success: false, message: 'Invalid payment method. Only COD, Razorpay, and Wallet are supported' });
+    }
+    if (typeof deliveryCharge !== 'number' || deliveryCharge < 0) {
+      return res.status(400).json({ success: false, message: 'Invalid delivery charge' });
     }
 
     // Fetch address
@@ -145,52 +148,63 @@ const placeOrder = async (req, res) => {
       }
     }
 
-    // Calculate total price
-    let totalPrice = cart.items.reduce((sum, item) => {
+    // Calculate subtotal
+    let subtotal = cart.items.reduce((sum, item) => {
       return sum + (item.quantity * item.price);
     }, 0);
-    
-    if (isNaN(totalPrice)) {
-      return res.status(400).json({ success: false, message: 'Invalid total price calculation' });
+
+    if (isNaN(subtotal)) {
+      return res.status(400).json({ success: false, message: 'Invalid subtotal calculation' });
     }
+
+    // Calculate total price including delivery charge
+    let totalPrice = subtotal + deliveryCharge;
 
     // Apply coupon discount if provided
     let finalAmount = totalPrice;
     let couponApplied = false;
     let discount = 0;
 
-    console.log('Received couponCode:', couponCode); // Log couponCode
+    console.log('Received couponCode:', couponCode);
     if (couponCode) {
       const coupon = await Coupon.findOne({
         name: couponCode,
-        islisted: true, // Fixed: Changed isList to islisted
+        islisted: true,
         expireOn: { $gte: new Date() },
-        userId: { $nin: [userId] } // Fixed: Changed usedUsers to userId
+        userId: { $nin: [userId] }
       });
 
-      if (coupon && totalPrice >= coupon.minimumPrice) {
+      if (coupon && subtotal >= coupon.minimumPrice) {
         discount = coupon.offerPrice;
         finalAmount = totalPrice - discount;
         couponApplied = true;
-        console.log('Coupon applied:', { couponCode, discount, finalAmount }); // Log coupon application
-        await Coupon.findByIdAndUpdate(coupon._id, { $push: { userId: userId } }); // Fixed: Changed usedUsers to userId
+        console.log('Coupon applied:', { couponCode, discount, finalAmount });
+        await Coupon.findByIdAndUpdate(coupon._id, { $push: { userId: userId } });
       } else {
-        console.log('Coupon invalid or inapplicable:', { couponCode, totalPrice, coupon }); // Log why coupon failed
+        console.log('Coupon invalid or inapplicable:', { couponCode, subtotal, coupon });
         return res.status(400).json({ success: false, message: 'Invalid or inapplicable coupon' });
       }
+    }
+
+    // Check if COD is selected and final amount exceeds ₹1000
+    if (paymentMethod === 'COD' && finalAmount > 1000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cash on Delivery is not available for orders above ₹1000',
+      });
     }
 
     const orderId = uuidv4();
     console.log('Generated orderId:', orderId);
 
-    // Handle Razorpay payment (defer order creation)
+    // Handle Razorpay payment
     let razorpayOrder = null;
     if (paymentMethod === 'RAZORPAY') {
       console.log('Creating Razorpay order');
       razorpayOrder = await createRazorpayOrder(finalAmount, orderId);
 
       // Store order details in session
-      console.log('Storing pending order with couponApplied:', couponApplied); // Log couponApplied
+      console.log('Storing pending order with couponApplied:', couponApplied);
       req.session.pendingOrder = {
         userId,
         orderId,
@@ -201,6 +215,8 @@ const placeOrder = async (req, res) => {
           price: item.price,
           status: 'Pending',
         })),
+        subtotal,
+        deliveryCharge,
         totalPrice,
         finalAmount,
         address: selectedAddress,
@@ -273,7 +289,7 @@ const placeOrder = async (req, res) => {
     }
 
     // For COD and Wallet, create the order immediately
-    console.log('Creating order with couponApplied:', couponApplied); // Log before saving
+    console.log('Creating order with couponApplied:', couponApplied);
     const newOrder = new Order({
       userId,
       orderId,
@@ -284,6 +300,8 @@ const placeOrder = async (req, res) => {
         price: item.price,
         status: 'Pending',
       })),
+      subtotal,
+      deliveryCharge,
       totalPrice,
       finalAmount,
       address: selectedAddress,
@@ -296,7 +314,7 @@ const placeOrder = async (req, res) => {
     });
 
     await newOrder.save();
-    console.log('Order saved with couponApplied:', newOrder.couponApplied); // Log after saving
+    console.log('Order saved with couponApplied:', newOrder.couponApplied);
 
     // Update stock for COD/Wallet
     console.log('Updating stock for cart items');
@@ -325,6 +343,7 @@ const placeOrder = async (req, res) => {
     res.status(500).json({ success: false, message: `Server error: ${error.message}` });
   }
 };
+
 
 
 

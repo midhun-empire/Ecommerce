@@ -175,9 +175,9 @@ const addToCart = async (req, res) => {
       }
   
       // Align delivery charge with frontend logic
-      const deliveryCharge = grandTotal >= 50000 ? 0 : 140;
-      const totalWithDelivery = grandTotal + deliveryCharge;
-      const totalPages = Math.ceil(totalItems / itemsPerPage);
+         const deliveryCharge = grandTotal > 1000 ? 140 : 0;
+        const totalWithDelivery = grandTotal + deliveryCharge;
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
   
       res.render("cart", {
         user: userData, // Simplified to single user object
