@@ -5,8 +5,7 @@ const env = require('dotenv').config()
 const session = require('express-session')
 const Address = require('../../models/addressSchema')
 const Order = require('../../models/orderSchema')
-const usermiddleware = require('../../middlewares/usermiddleware')
-
+const Wallet = require('../../models/walletSchema')
 
 
 
@@ -227,41 +226,63 @@ const postNewPassword = async (req, res) => {
 
 
 const loadProfilePage = async (req, res) => {
-    try {
-        const userId = req.session.user;
-        const userData = await User.findById(userId);
-        const addressData = await Address.findOne({ userId: userId });
-
-        // Pagination parameters
-        const page = parseInt(req.query.page) || 1;
-        const limit = 5;
-        const skip = (page - 1) * limit;
-
-        const totalOrders = await Order.countDocuments({ userId: userId });
-        const totalPages = Math.ceil(totalOrders / limit);
-
-        const orders = await Order.find({ userId: userId })
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit);
-
-        console.log('Orders from loadProfilePage:', orders);
-
-        res.render("profile", {
-            user: userData,
-            currentPage: 'profile',
-            userAddress: addressData,
-            orders,
-            currentPageNum: page,
-            totalPages,
-            totalOrders
-        });
-    } catch (error) {
-        console.log("Error loading profile page", error);
-        res.redirect('/pageNotFound');
+  try {
+    const userId = req.session.user;
+    if (!userId) {
+      return res.redirect('/login');
     }
-};
 
+    const userData = await User.findById(userId);
+    const addressData = await Address.findOne({ userId: userId });
+
+    // Pagination parameters for orders
+    const orderPage = parseInt(req.query.orderPage) || 1; // Use orderPage to avoid conflict
+    const orderLimit = 5;
+    const orderSkip = (orderPage - 1) * orderLimit;
+
+    const totalOrders = await Order.countDocuments({ userId: userId });
+    const totalOrderPages = Math.ceil(totalOrders / orderLimit);
+
+    const orders = await Order.find({ userId: userId })
+      .sort({ createdAt: -1 })
+      .skip(orderSkip)
+      .limit(orderLimit);
+
+    console.log('Orders from loadProfilePage:', orders);
+
+    // Pagination parameters for wallet history
+    const walletPage = parseInt(req.query.walletPage) || 1; // Use walletPage to avoid conflict
+    const walletLimit = 7; // Match getWalletDetails limit
+    const walletSkip = (walletPage - 1) * walletLimit;
+
+    const wallet = await Wallet.findOne({ user: userId }).lean();
+    let totalHistoryItems = 0;
+    let totalWalletPages = 0;
+    let walletHistory = [];
+    if (wallet && wallet.history) {
+      totalHistoryItems = wallet.history.length;
+      totalWalletPages = Math.ceil(totalHistoryItems / walletLimit);
+      walletHistory = wallet.history.slice(walletSkip, walletSkip + walletLimit);
+    }
+
+    res.render('profile', {
+      user: userData,
+      currentPage: 'profile',
+      userAddress: addressData,
+      orders,
+      currentPageNum: orderPage, // For orders pagination
+      totalPages: totalOrderPages, // For orders pagination
+      totalOrders,
+      wallet: wallet ? { ...wallet, history: walletHistory } : { balance: 0, history: [] }, // Pass paginated history
+      totalHistoryItems, // For wallet history pagination
+      totalWalletPages, // For wallet history pagination
+      walletPage, // For wallet history pagination
+    });
+  } catch (error) {
+    console.error('Error loading profile page:', error);
+    res.redirect('/pageNotFound');
+  }
+};
 
 const changeEmail = async (req,res)=>{
     try {
@@ -652,6 +673,13 @@ const postAddAddress = async (req, res) => {
   }
 };
 
+
+
+
+
+
+
+
 module.exports ={
     getForgotPassPage,
     forgotEmailValid,
@@ -673,5 +701,6 @@ module.exports ={
     editAddress,
     postEditAddress,
     deleteAddress,
-    loadProfileOrder
+    loadProfileOrder,
+    
 }    

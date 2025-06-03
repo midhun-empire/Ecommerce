@@ -107,7 +107,7 @@ const getCheckoutPage = async (req, res) => {
       })
       .lean();
 
-    if (!userCart || userCart.items.length === 0) {
+    if (!userCart || !userCart.items.length) {
       return res.redirect('/cart?message=Your cart is empty');
     }
 
@@ -151,7 +151,7 @@ const getCheckoutPage = async (req, res) => {
     }
 
     if (cartItems.length === 0) {
-      if (outOfStockItems.length > 0) {
+      if (outOfStockItems.length ) {
         const message = outOfStockItems
           .map(item => `${item.productName} has only ${item.available} units available`)
           .join(', ');

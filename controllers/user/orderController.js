@@ -11,7 +11,7 @@ const Razorpay = require('razorpay')
 const PDFDocument = require('pdfkit');
 const { v4: uuidv4 } = require('uuid');
 const env = require('dotenv').config()
-
+const Wallet = require('../../models/walletSchema')
 
 //razorpay
 const razorpayInstance = new Razorpay({
@@ -62,7 +62,6 @@ const createRazorpayOrder = async (amount, receipt) => {
         throw new Error(`Failed to create payment order: ${error.message}`);
     }
 };
-
 
 
 
@@ -171,18 +170,36 @@ const placeOrder = async (req, res) => {
         name: couponCode,
         islisted: true,
         expireOn: { $gte: new Date() },
-        userId: { $nin: [userId] }
+        userId: { $nin: [userId] },
       });
 
-      if (coupon && subtotal >= coupon.minimumPrice) {
-        discount = coupon.offerPrice;
-        finalAmount = totalPrice - discount;
-        couponApplied = true;
-        console.log('Coupon applied:', { couponCode, discount, finalAmount });
-        await Coupon.findByIdAndUpdate(coupon._id, { $push: { userId: userId } });
-      } else {
-        console.log('Coupon invalid or inapplicable:', { couponCode, subtotal, coupon });
-        return res.status(400).json({ success: false, message: 'Invalid or inapplicable coupon' });
+      if (!coupon) {
+        console.log('Coupon not found or already used:', { couponCode });
+        return res.status(400).json({ success: false, message: 'Invalid or already used coupon' });
+      }
+
+      if (subtotal < coupon.minimumPrice) {
+        console.log('Subtotal below minimum price for coupon:', { couponCode, subtotal, minimumPrice: coupon.minimumPrice });
+        return res.status(400).json({
+          success: false,
+          message: `Coupon requires a minimum order of ₹${coupon.minimumPrice}`,
+        });
+      }
+
+      discount = coupon.offerPrice;
+      finalAmount = totalPrice - discount;
+      couponApplied = true;
+      console.log('Coupon applied:', { couponCode, discount, finalAmount });
+
+      // Update coupon to mark it as used by this user
+      const couponUpdate = await Coupon.findByIdAndUpdate(
+        coupon._id,
+        { $push: { userId: userId } },
+        { new: true }
+      );
+      if (!couponUpdate) {
+        console.error('Failed to update coupon with userId:', userId);
+        return res.status(500).json({ success: false, message: 'Failed to update coupon usage' });
       }
     }
 
@@ -223,6 +240,7 @@ const placeOrder = async (req, res) => {
         status: 'Pending',
         couponApplied,
         discount,
+        couponCode: couponCode || null, // Ensure couponCode is stored
         razorpayOrderId: razorpayOrder ? razorpayOrder.id : null,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -256,40 +274,47 @@ const placeOrder = async (req, res) => {
           id: razorpayOrder.id,
           amount: razorpayOrder.amount,
           currency: razorpayOrder.currency,
-          key: process.env.RAZORPAY_KEY_ID
-        }
+          key: process.env.RAZORPAY_KEY_ID,
+        },
       });
     }
 
     // Handle Wallet payment
     if (paymentMethod === 'WALLET') {
-      const wallet = await Wallet.findOne({ userId });
-      if (!wallet || wallet.balance < finalAmount) {
+      const wallet = await Wallet.findOne({ user: userId });
+      if (!wallet) {
+        return res.status(404).json({
+          success: false,
+          message: 'Wallet not found. Please create a wallet or choose another payment method.',
+        });
+      }
+      if (wallet.balance < finalAmount) {
         return res.status(400).json({
           success: false,
-          message: `Insufficient wallet balance. Available: ₹${wallet?.balance || 0}, Required: ₹${finalAmount}`
+          message: `Insufficient wallet balance. Available: ₹${wallet.balance || 0}, Required: ₹${finalAmount}`,
         });
       }
 
-      // Deduct from wallet
+      // Deduct from wallet and update history
       await Wallet.findOneAndUpdate(
-        { userId },
+        { user: userId },
         {
           $inc: { balance: -finalAmount },
           $push: {
-            transactions: {
+            history: {
               amount: -finalAmount,
-              type: 'debit',
+              status: 'debit',
               description: `Order payment for order ${orderId}`,
-              date: new Date()
-            }
-          }
-        }
+              date: new Date(),
+            },
+          },
+        },
+        { new: true }
       );
     }
 
     // For COD and Wallet, create the order immediately
-    console.log('Creating order with couponApplied:', couponApplied);
+    console.log('Creating order with couponApplied:', couponApplied, 'discount:', discount, 'couponCode:', couponCode);
     const newOrder = new Order({
       userId,
       orderId,
@@ -308,13 +333,19 @@ const placeOrder = async (req, res) => {
       status: paymentMethod === 'COD' ? 'Processing' : 'Processing',
       couponApplied,
       discount,
+      couponCode: couponCode || null, // Save couponCode in the order document
       razorpayOrderId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
 
     await newOrder.save();
-    console.log('Order saved with couponApplied:', newOrder.couponApplied);
+    console.log('Order saved:', {
+      orderId: newOrder.orderId,
+      couponApplied: newOrder.couponApplied,
+      discount: newOrder.discount,
+      couponCode: newOrder.couponCode,
+    });
 
     // Update stock for COD/Wallet
     console.log('Updating stock for cart items');
@@ -335,6 +366,11 @@ const placeOrder = async (req, res) => {
     // Clear cart
     console.log('Clearing cart');
     await Cart.findOneAndUpdate({ userId }, { items: [] });
+
+    // Clear any previous coupon data from session to prevent reuse
+    if (req.session.pendingOrder) {
+      req.session.pendingOrder = null;
+    }
 
     // Return response for COD/Wallet
     res.status(200).json({ success: true, orderId });

@@ -57,6 +57,8 @@ const loadWishlist = async (req, res) => {
   }
 };
 
+
+
 const addToWishlist = async (req, res) => {
     try {
         const productId = req.body.productId;

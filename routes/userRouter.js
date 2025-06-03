@@ -9,6 +9,7 @@ const cartController = require('../controllers/user/cartController')
 const checkoutController = require('../controllers/user/checkoutController')
 const orderController = require('../controllers/user/orderController')
 const wishlistController = require('../controllers/user/wishlistController')
+const walletController = require('../controllers/user/walletController')
 const { profile } = require('console');
 
 
@@ -67,7 +68,6 @@ router.post('/change-password',userAuth,profileController.changePasswordValid)
 router.post('/verify-changepassword-otp',userAuth,profileController.verifyChangePasswordOtp)
 router.get('/getOrders',userAuth,profileController.loadProfileOrder)
 
-
 //address management 
 router.get('/addAddress',userAuth,profileController.addAddress)
 router.post('/addAddress',userAuth,profileController.postAddAddress)
@@ -99,7 +99,7 @@ router.post('/verify-payment',userAuth,orderController.verifyPayment);
 router.get('/payment-failed/:orderId',userAuth,orderController.handleFailedPayment);
 router.post('/retry-payment',userAuth,orderController.retryPayment);
 router.post('/verify-retry-payment',userAuth,orderController.verifyRetryPayment)
-
+                                                                                  
 
 //wishlist Mmanagement
 router.get('/wishlist',userAuth,wishlistController.loadWishlist)
@@ -111,5 +111,13 @@ router.get('/removeFromWishlist',userAuth,wishlistController.removeProduct);
 router.get('/get-available-coupons',userAuth,checkoutController.getAvailableCoupons)
 router.post('/applycouponcode',userAuth,checkoutController.applyCoupon);
 router.post('/removecoupon',userAuth,checkoutController.removeCoupon);
+
+
+// wallet management
+
+router.post("/addMoney",userAuth, walletController.addMoneyToWallet);
+router.post('/verifyPayment', userAuth, walletController.verifyWalletPayment);
+router.get('/walletDetails', userAuth, walletController.getWalletDetails);
+router.get('/get-wallet-balance',userAuth,walletController.getWalletBalanceOrder)
 
 module.exports= router

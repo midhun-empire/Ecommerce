@@ -27,6 +27,8 @@ router.get("/export-excel", adminAuth, adminControler.generateExcelReport);
 router.get('/customers',adminAuth,customerController.customerInfo)
 router.get('/blockCustomer',adminAuth,customerController.customerBlocked)
 router.get('/UnblockCustomer',adminAuth,customerController.customerUnBlocked)
+
+
 //category Management
 router.get('/category',adminAuth,categoryController.CategoryInfo)
 router.post('/addCategory',adminAuth,categoryController.addCategory)

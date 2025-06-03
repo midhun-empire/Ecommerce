@@ -1,6 +1,6 @@
 <%- include("../../views/partials/user/header") %>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <style>
  .card-green {
    background-color: #ADD8E6;
@@ -153,6 +153,150 @@
    cursor: not-allowed;
  }
 
+
+   /* Modern Wallet Status Styles */
+        #track-orders .card {
+            background: linear-gradient(135deg, #30683c 0%, #5fb972 100%);
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+
+        #track-orders .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        #track-orders .card-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: none;
+            padding: 25px 30px;
+            border-radius: 20px 20px 0 0;
+        }
+
+        #track-orders .card-header h5 {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        #track-orders .card-body {
+            padding: 40px 30px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+        }
+
+        #track-orders .col-lg-8 h4 {
+            color: #2c3e50;
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        #track-orders .col-lg-8 h4::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, #30683c, #30683c);
+            border-radius: 2px;
+        }
+
+        #walletBalance {
+            background: linear-gradient(135deg, #30683c, #30683c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 900;
+        }
+
+        #track-orders .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        #track-orders .form-group label {
+            color: #34495e;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        #track-orders .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        #track-orders .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            outline: none;
+            transform: translateY(-2px);
+        }
+
+        #track-orders .btn-success {
+            background: linear-gradient(135deg, #30683c 0%, #30683c 100%);
+            border: none;
+            border-radius: 15px;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #track-orders .btn-success::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        #track-orders .btn-success:hover::before {
+            left: 100%;
+        }
+
+        #track-orders .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.6);
+        }
+
+        
 </style>
 
 
@@ -382,54 +526,106 @@
                   </div>
                 </div>
 
-                <div class="tab-pane fade" id="track-orders" role="tabpanel" aria-labelledby="track-orders-tab">
-                  <div class="card">
-                    <div class="card-header">
-                      <h5 class="mb-0">Wallet</h5>
-                    </div>
-                    <div class="card-body contact-from-area">
-                      <div class="row">
-                        <div class="col-lg-8 mx-auto text-center mt-90">
-                          <form>
+     <!-- Wallet Status Tab -->
+    <div class="tab-pane fade" id="track-orders" role="tabpanel" aria-labelledby="track-orders-tab">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-wallet me-2"></i>Wallet Status
+                </h5>
+            </div>
+            <div class="card-body contact-from-area">
+                <div class="row">
+                    <div class="col-lg-8 mx-auto text-center">
+                        <h4>
+                            <i class="fas fa-coins me-2 " ></i>
+                             Wallet Balance: ₹<span id="walletBalance">0</span>
+                        </h4>
+                        <form id="addMoneyForm">
                             <div class="form-group">
-                              <label for="walletAmount" class="h4">Amount</label>
-                              <div class="h3"></div>
+                                <label for="walletAmount" class="h4">
+                                    <i class="fas fa-rupee-sign me-2"></i>
+                                   Add Amount  <span class="required">*</span>
+                                </label>
+                                <input type="number" class="form-control" id="walletAmount" placeholder="Enter amount to add" min="1" required>
                             </div>
-                            <button type="button" class="btn btn-success" onclick="">Add Money</button>
-                          </form>
-                        </div>
-                      </div>
+                            <button type="button" class="btn btn-success" id="addMoneyButton">
+                                <i class="fas fa-plus-circle me-2"></i>Add Money
+                            </button>
+                        </form>
                     </div>
-                  </div>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <div class="tab-pane fade" id="wallet-history" role="tabpanel" aria-labelledby="orders-tab">
-                  <div class="card">
-                    <div class="card-header">
-                      <h5 class="mb-0">Wallet History</h5>
-                    </div>
-                    <div class="card-body">
-                      <div class="table-responsive">
-                        <table class="table">
-                          <thead>
-                            <tr>
-                              <th>Date</th>
-                              <th>Status</th>
-                              <th>Amount</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr>
-                              <td></td>
-                              <td></td>
-                              <td></td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+           <!-- Wallet History Tab -->
+<div class="tab-pane fade" id="wallet-history" role="tabpanel" aria-labelledby="wallet-history-tab">
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Wallet History</h5>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody id="walletHistoryTable">
+            <% if (wallet && wallet.history && wallet.history.length > 0) { %>
+              <% wallet.history.forEach(history => { %>
+                <tr>
+                  <td><%= new Date(history.date).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }).split('/').join('/') + ', ' + new Date(history.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false }) %></td>
+                  <td><%= history.description %></td>
+                  <td>
+                    <span class="<%= history.status === 'credit' ? 'text-success' : 'text-danger' %>">
+                      <%= history.status.charAt(0).toUpperCase() + history.status.slice(1) %>
+                    </span>
+                  </td>
+                  <td>₹<%= history.amount.toFixed(2) %></td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="4" class="text-center">No wallet transactions found</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+      <!-- Pagination -->
+      <% if (totalHistoryItems > 0) { %>
+        <nav aria-label="Wallet history pagination" class="mt-4">
+          <ul class="pagination justify-content-center" id="walletHistoryPagination">
+            <!-- Previous Button -->
+            <li class="page-item <%= walletPage === 1 ? 'disabled' : '' %>">
+              <a class="page-link" href="#" data-page="<%= walletPage - 1 %>" aria-label="Previous">
+                <span aria-hidden="true">«</span>
+              </a>
+            </li>
+            <!-- Page Numbers -->
+            <% for (let i = 1; i <= totalWalletPages; i++) { %>
+              <li class="page-item <%= walletPage === i ? 'active' : '' %>">
+                <a class="page-link" href="#" data-page="<%= i %>"><%= i %></a>
+              </li>
+            <% } %>
+            <!-- Next Button -->
+            <li class="page-item <%= walletPage === totalWalletPages ? 'disabled' : '' %>">
+              <a class="page-link" href="#" data-page="<%= walletPage + 1 %>" aria-label="Next">
+                <span aria-hidden="true">»</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      <% } %>
+    </div>
+  </div>
+</div>
 
                 <div class="tab-pane fade" id="referal" role="tabpanel" aria-labelledby="track-orders-tab">
                   <div class="card">
@@ -458,107 +654,264 @@
 
 <script>
 
-function softLogout() {
-            console.log('softLogout function triggered'); // Debug log
-            fetch('/logout')
-                .then(res => {
-                    console.log('Fetch response:', res); // Debug log
-                    if (!res.ok) {
-                        throw new Error('Logout request failed');
-                    }
-                    return res.json();
-                })
-                .then(data => {
-                    console.log('Fetch data:', data); // Debug log
-                    if (data.success) {
-                        Swal.fire({
-                            title: 'Success!',
-                            text: 'Successfully Logged Out!',
-                            icon: 'success',
-                            confirmButtonText: 'OK'
-                        }).then(() => {
-                            console.log('SweetAlert confirmed, redirecting...'); // Debug log
-                            window.location.href = '/';
-                        });
-                    } else {
-                        Swal.fire({
-                            title: 'Error!',
-                            text: 'Logout failed: ' + (data.message || 'Unknown error'),
-                            icon: 'error',
-                            confirmButtonText: 'OK'
-                        });
-                    }
-                })
-                .catch(error => {
-                    console.error('Error during logout:', error); // Debug log
-                    Swal.fire({
-                        title: 'Error!',
-                        text: 'An error occurred during logout: ' + error.message,
-                        icon: 'error',
-                        confirmButtonText: 'OK'
-                    });
-                });
-        }
-
-
-        function confirmDeleteAddress(addressId) {
-    Swal.fire({
-      title: 'Are you sure?',
-      text: 'Do you really want to delete this address?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        // Proceed with deletion
-        fetch(`/deleteAddress?id=${addressId}`, {
-          method: 'GET',
-        })
-          .then((res) => {
-            if (!res.ok) throw new Error('Failed to delete');
-            return res.text(); // or .json() if your route returns JSON
-          })
-          .then(() => {
-            Swal.fire(
-              'Deleted!',
-              'Your address has been deleted.',
-              'success'
-            ).then(() => {
-              window.location.reload();
-            });
-          })
-          .catch((error) => {
-            console.error('Deletion error:', error);
-            Swal.fire(
-              'Error!',
-              'There was a problem deleting the address.',
-              'error'
-            );
-          });
-      }
-    });
-  }
-
-
-  document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function() {
   initializeOrdersTab();
+  initializeWalletTab();
+  fetchWalletDetails();
+  initializeWalletHistoryPagination();
+
 });
 
 
-function initializeOrdersTab() {
-    const paginationLinks = document.querySelectorAll('#pagination .page-link');
+function initializeWalletHistoryPagination() {
+  const paginationLinks = document.querySelectorAll('#walletHistoryPagination .page-link');
+  paginationLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const page = this.getAttribute('data-page');
+      window.location.href = `/profile?walletPage=${page}#wallet-history`;
+    });
+  });
+}
 
-    paginationLinks.forEach(link => {
-      link.addEventListener('click', function (e) {
-        e.preventDefault();
-        const page = this.getAttribute('data-page');
-        // Update URL with page parameter and preserve hash
-        window.location.href = `/profile?page=${page}#orders`;
+function initializeOrdersTab() {
+  const paginationLinks = document.querySelectorAll('#pagination .page-link');
+  paginationLinks.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const page = this.getAttribute('data-page');
+      window.location.href = `/profile?page=${page}#orders`;
+    });
+  });
+}
+
+async function fetchWalletDetails() {
+  try {
+    const response = await fetch('/walletDetails');
+    const data = await response.json();
+    if (data.success) {
+      document.getElementById('walletBalance').textContent = data.balance.toFixed(2);
+      // Optionally update wallet history table dynamically if needed
+    } else {
+      Swal.fire({
+        title: 'Error!',
+        text: data.message || 'Failed to fetch wallet details',
+        icon: 'error',
+        confirmButtonText: 'OK'
       });
+    }
+  } catch (error) {
+    console.error('Error fetching wallet details:', error);
+    Swal.fire({
+      title: 'Error!',
+      text: 'An error occurred while fetching wallet details',
+      icon: 'error',
+      confirmButtonText: 'OK'
     });
   }
+}
+
+function initializeWalletTab() {
+  const addMoneyButton = document.getElementById('addMoneyButton');
+  if (addMoneyButton) {
+    addMoneyButton.addEventListener('click', async function() {
+      try {
+        const amountInput = document.getElementById('walletAmount');
+        const amount = parseFloat(amountInput.value);
+
+        if (!amount || amount <= 0) {
+          Swal.fire({
+            title: 'Error!',
+            text: 'Please enter a valid amount',
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
+          return;
+        }
+
+        // Create Razorpay order
+        const response = await fetch('/addMoney', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ amount })
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          Swal.fire({
+            title: 'Error!',
+            text: data.message || 'Failed to initiate payment',
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
+          return;
+        }
+
+        // Initialize Razorpay checkout
+        const options = {
+          key: data.key, // Use the key returned from the server
+          amount: data.order.amount,
+          currency: data.order.currency,
+          name: 'Your Company Name',
+          description: 'Add Money to Wallet',
+          order_id: data.order.id,
+          handler: async function(response) {
+            // Verify payment
+            const verifyResponse = await fetch('/verifyPayment', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                amount: amount
+              })
+            });
+
+            const verifyData = await verifyResponse.json();
+
+            if (verifyData.success) {
+              Swal.fire({
+                title: 'Success!',
+                text: 'Money added to wallet successfully!',
+                icon: 'success',
+                confirmButtonText: 'OK'
+              }).then(() => {
+                window.location.reload();
+              });
+            } else {
+              Swal.fire({
+                title: 'Error!',
+                text: verifyData.message || 'Payment verification failed',
+                icon: 'error',
+                confirmButtonText: 'OK'
+              });
+            }
+          },
+          prefill: {
+            name: '<%= user.name %>',
+            email: '<%= user.email %>',
+            contact: '<%= user.phone %>'
+          },
+          theme: {
+            color: '#487379'
+          },
+          modal: {
+            ondismiss: function() {
+              Swal.fire({
+                title: 'Payment Cancelled',
+                text: 'The payment process was cancelled',
+                icon: 'info',
+                confirmButtonText: 'OK'
+              });
+            }
+          }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+
+        rzp.on('payment.failed', function(response) {
+          Swal.fire({
+            title: 'Payment Failed',
+            text: 'Payment failed. Please try again.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
+        });
+
+      } catch (error) {
+        console.error('Error in wallet payment:', error);
+        Swal.fire({
+          title: 'Error!',
+          text: 'An error occurred while processing payment',
+          icon: 'error',
+          confirmButtonText: 'OK'
+        });
+      }
+    });
+  }
+}
+
+function softLogout() {
+  fetch('/logout')
+    .then(res => {
+      if (!res.ok) throw new Error('Logout request failed');
+      return res.json();
+    })
+    .then(data => {
+      if (data.success) {
+        Swal.fire({
+          title: 'Success!',
+          text: 'Successfully Logged Out!',
+          icon: 'success',
+          confirmButtonText: 'OK'
+        }).then(() => {
+          window.location.href = '/';
+        });
+      } else {
+        Swal.fire({
+          title: 'Error!',
+          text: 'Logout failed: ' + (data.message || 'Unknown error'),
+          icon: 'error',
+          confirmButtonText: 'OK'
+        });
+      }
+    })
+    .catch(error => {
+      console.error('Error during logout:', error);
+      Swal.fire({
+        title: 'Error!',
+        text: 'An error occurred during logout: ' + error.message,
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
+    });
+}
+
+function confirmDeleteAddress(addressId) {
+  Swal.fire({
+    title: 'Are you sure?',
+    text: 'Do you really want to delete this address?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Yes, delete it!'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      fetch(`/deleteAddress?id=${addressId}`, {
+        method: 'GET',
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error('Failed to delete');
+          return res.text();
+        })
+        .then(() => {
+          Swal.fire(
+            'Deleted!',
+            'Your address has been deleted.',
+            'success'
+          ).then(() => {
+            window.location.reload();
+          });
+        })
+        .catch((error) => {
+          console.error('Deletion error:', error);
+          Swal.fire(
+            'Error!',
+            'There was a problem deleting the address.',
+            'error'
+          );
+        });
+    }
+  });
+}
 
     </script>
 
