@@ -78,6 +78,13 @@ const addToCart = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
+    // Check stock availability
+    if (product.quantity < qty) {
+      return res.status(400).json({ 
+        message: `Insufficient stock. Only ${product.quantity} ${product.productName}(s) available.`
+      });
+    }
+
     let cart = await Cart.findOne({ userId });
     if (!cart) {
       cart = new Cart({ userId, items: [] });
@@ -88,10 +95,28 @@ const addToCart = async (req, res) => {
     );
 
     if (existingItemIndex >= 0) {
-      cart.items[existingItemIndex].quantity += qty;
-      cart.items[existingItemIndex].totalPrice =
-        cart.items[existingItemIndex].quantity * cart.items[existingItemIndex].price;
+      // Check if adding more quantity exceeds stock or max limit of 3
+      const newQuantity = cart.items[existingItemIndex].quantity + qty;
+      if (newQuantity > 3) {
+        return res.status(400).json({ 
+          message: `Cannot add more than 3 ${product.productName}(s) to cart.`
+        });
+      }
+      if (newQuantity > product.quantity) {
+        return res.status(400).json({ 
+          message: `Insufficient stock. Only ${product.quantity} ${product.productName}(s) available.`
+        });
+      }
+      cart.items[existingItemIndex].quantity = newQuantity;
+      cart.items[existingItemIndex].totalPrice = 
+        newQuantity * cart.items[existingItemIndex].price;
     } else {
+      // Check if new item quantity exceeds max limit of 3
+      if (qty > 3) {
+        return res.status(400).json({ 
+          message: `Cannot add more than 3 ${product.productName}(s) to cart.`
+        });
+      }
       cart.items.push({
         productId,
         quantity: qty,
@@ -115,6 +140,8 @@ const addToCart = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
 
   const loadCartPage = async (req, res) => {
     try {

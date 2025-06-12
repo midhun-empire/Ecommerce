@@ -1,10 +1,9 @@
-const Product = require('../../models/productSchema')
-const Cart = require('../../models/cartSchema')
-const User  = require('../../models/userSchema')
-const Address = require('../../models/addressSchema')
-const mongoose = require('mongoose')
-const Coupon = require('../../models/couponSchema')
-
+const Product = require("../../models/productSchema");
+const Cart = require("../../models/cartSchema");
+const User = require("../../models/userSchema");
+const Address = require("../../models/addressSchema");
+const mongoose = require("mongoose");
+const Coupon = require("../../models/couponSchema");
 
 // const getCheckoutPage = async (req, res) => {
 //     try {
@@ -13,13 +12,13 @@ const Coupon = require('../../models/couponSchema')
 //         console.log('No user ID in session, redirecting to login');
 //         return res.redirect('/login');
 //       }
-  
+
 //       const userData = await User.findById(userId).select('name walletBalance address');
 //       if (!userData) {
 //         console.log('User not found for ID:', userId);
 //         return res.redirect('/login');
 //       }
-  
+
 //       const cartDoc = await Cart.findOne({ userId })
 //         .populate({
 //           path: 'items.productId',
@@ -30,13 +29,13 @@ const Coupon = require('../../models/couponSchema')
 //           },
 //         })
 //         .lean();
-  
+
 //       let cart = [];
 //       let grandTotal = 0;
-  
+
 //       if (cartDoc && cartDoc.items.length > 0) {
 //         cart = cartDoc.items
-//           .filter(item => 
+//           .filter(item =>
 //             item.productId &&
 //             !item.productId.isBlocked &&
 //             item.productId.quantity > 0 // ❗ Exclude out-of-stock
@@ -45,7 +44,7 @@ const Coupon = require('../../models/couponSchema')
 //             const product = item.productId;
 //             const itemTotal = item.quantity * item.price;
 //             grandTotal += itemTotal;
-  
+
 //             return {
 //               productId: product._id,
 //               productName: product.productName,
@@ -57,17 +56,17 @@ const Coupon = require('../../models/couponSchema')
 //             };
 //           });
 //       }
-  
+
 //       const deliveryCharge = grandTotal >= 2000 ? 0 : 100;
 //       const total = grandTotal + deliveryCharge;
-//       const taxRate = 0.02; 
+//       const taxRate = 0.02;
 //       const subtotal = cartItems.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
 //       const tax = subtotal * taxRate;
-//       let shipping = subtotal >= 2000 ? 0 : 100; 
+//       let shipping = subtotal >= 2000 ? 0 : 100;
 //       let discount = 0;
 //       let couponCode = null;
 //       let appliedCoupon = null;
-      
+
 //       res.render('checkout', {
 //         currentPage:'checkout',
 //         user: userData,
@@ -79,46 +78,51 @@ const Coupon = require('../../models/couponSchema')
 //         total: total.toFixed(2),
 //         subtotal: grandTotal
 //       });
-  
+
 //     } catch (error) {
 //       console.error('Error loading checkout page:', error);
 //       res.redirect('/pageNotFound');
 //     }
 //   };
-  
+
 const getCheckoutPage = async (req, res) => {
   try {
     const userId = req.session.user?._id;
     if (!userId) {
-      return res.redirect('/login?message=Please log in to proceed to checkout');
+      return res.redirect(
+        "/login?message=Please log in to proceed to checkout"
+      );
     }
 
-    const user = await User.findById(userId).select('name email').lean();
+    const user = await User.findById(userId).select("name email").lean();
     if (!user) {
-      return res.redirect('/login?message=User not found');
+      return res.redirect("/login?message=User not found");
     }
 
     const userAddress = await Address.findOne({ userId }).lean();
 
     const userCart = await Cart.findOne({ userId })
       .populate({
-        path: 'items.productId',
-        select: 'productName salePrice productImage quantity isBlocked',
+        path: "items.productId",
+        select: "productName salePrice productImage quantity isBlocked",
       })
       .lean();
 
     if (!userCart || !userCart.items.length) {
-      return res.redirect('/cart?message=Your cart is empty');
+      return res.redirect("/cart?message=Your cart is empty");
     }
 
     // Map cart items and validate stock
     const cartItems = [];
     let outOfStockItems = [];
-    console.log('Cart items:', userCart.items.map(item => ({
-      productId: item.productId?._id?.toString(),
-      quantity: item.quantity,
-      totalPrice: item.totalPrice,
-    })));
+    console.log(
+      "Cart items:",
+      userCart.items.map((item) => ({
+        productId: item.productId?._id?.toString(),
+        quantity: item.quantity,
+        totalPrice: item.totalPrice,
+      }))
+    );
 
     for (const item of userCart.items) {
       if (!item.productId || item.productId.isBlocked) {
@@ -133,8 +137,10 @@ const getCheckoutPage = async (req, res) => {
         continue;
       }
 
-      if (typeof item.totalPrice !== 'number' || isNaN(item.totalPrice)) {
-        console.warn(`Invalid totalPrice for product ${item.productId._id}: ${item.totalPrice}`);
+      if (typeof item.totalPrice !== "number" || isNaN(item.totalPrice)) {
+        console.warn(
+          `Invalid totalPrice for product ${item.productId._id}: ${item.totalPrice}`
+        );
         continue; // Skip items with invalid totalPrice
       }
 
@@ -151,26 +157,32 @@ const getCheckoutPage = async (req, res) => {
     }
 
     if (cartItems.length === 0) {
-      if (outOfStockItems.length ) {
+      if (outOfStockItems.length) {
         const message = outOfStockItems
-          .map(item => `${item.productName} has only ${item.available} units available`)
-          .join(', ');
+          .map(
+            (item) =>
+              `${item.productName} has only ${item.available} units available`
+          )
+          .join(", ");
         return res.redirect(`/cart?message=${encodeURIComponent(message)}`);
       }
-      return res.redirect('/cart?message=All items in your cart are unavailable');
+      return res.redirect(
+        "/cart?message=All items in your cart are unavailable"
+      );
     }
 
     // Calculate totals
-    const subtotal = cartItems.reduce((sum, item) => sum + item.totalPrice, 0) || 0;
-     const shipping = subtotal > 1000 ? 140 : 0;
+    const subtotal =
+      cartItems.reduce((sum, item) => sum + item.totalPrice, 0) || 0;
+    const shipping = subtotal > 1000 ? 140 : 0;
     let discount = 0;
     let couponCode = null;
     let appliedCoupon = null;
 
     const total = subtotal + shipping - discount;
 
-    res.render('checkout', {
-      currentPage: 'checkout',
+    res.render("checkout", {
+      currentPage: "checkout",
       addresses: userAddress ? userAddress.address : [],
       cartItems,
       subtotal,
@@ -182,45 +194,40 @@ const getCheckoutPage = async (req, res) => {
       user,
     });
   } catch (error) {
-    console.error("Error in getCheckout:", error.name, error.message, error.stack);
-    res.redirect('/cart');
+    console.error(
+      "Error in getCheckout:",
+      error.name,
+      error.message,
+      error.stack
+    );
+    res.redirect("/cart");
   }
 };
 
+const checkoutAddAddress = async (req, res) => {
+  try {
+    const userId = req.session.user;
+    const userData = await User.findOne({ _id: userId });
 
+    const {
+      addressType,
+      name,
+      city,
+      landMark,
+      state,
+      pincode,
+      phone,
+      altPhone,
+    } = req.body;
 
+    const userAddress = await Address.findOne({ userId: userData._id });
 
-
-
-
-const checkoutAddAddress = async (req,res)=>{
-    try {
-        const userId = req.session.user;
-        const userData = await User.findOne({ _id: userId });
-    
-        const { addressType, name, city, landMark, state, pincode, phone, altPhone } = req.body;
-    
-        const userAddress = await Address.findOne({ userId: userData._id });
-    
-        if (!userAddress) {
-          // First address for this user
-          const newAddress = new Address({
-            userId: userData._id,
-            address: [{
-              addressType,
-              name,
-              city,
-              landMark,
-              state,
-              pincode,
-              phone,
-              altPhone
-            }]
-          });
-          await newAddress.save();
-        } else {
-          // User already has addresses — push new one
-          userAddress.address.push({
+    if (!userAddress) {
+      // First address for this user
+      const newAddress = new Address({
+        userId: userData._id,
+        address: [
+          {
             addressType,
             name,
             city,
@@ -228,69 +235,85 @@ const checkoutAddAddress = async (req,res)=>{
             state,
             pincode,
             phone,
-            altPhone
-          });
-          await userAddress.save();
-        }
-    
-        res.redirect('/checkout');
-      } catch (error) {
-        console.error('Error adding address:', error);
-        res.redirect('/pageNotFound');
+            altPhone,
+          },
+        ],
+      });
+      await newAddress.save();
+    } else {
+      // User already has addresses — push new one
+      userAddress.address.push({
+        addressType,
+        name,
+        city,
+        landMark,
+        state,
+        pincode,
+        phone,
+        altPhone,
+      });
+      await userAddress.save();
+    }
+
+    res.redirect("/checkout");
+  } catch (error) {
+    console.error("Error adding address:", error);
+    res.redirect("/pageNotFound");
+  }
+};
+
+const checkoutEditAddress = async (req, res) => {
+  try {
+    const data = req.body;
+    const addressId = req.body.addressId;
+    const user = req.session.user;
+
+    const findAddress = await Address.findOne({ "address._id": addressId });
+
+    if (!findAddress) {
+      return res.redirect("/pageNotFound");
+    }
+
+    await Address.updateOne(
+      { "address._id": addressId },
+      {
+        $set: {
+          "address.$.addressType": data.addressType,
+          "address.$.name": data.name,
+          "address.$.city": data.city,
+          "address.$.landMark": data.landMark,
+          "address.$.state": data.state,
+          "address.$.pincode": data.pincode,
+          "address.$.phone": data.phone,
+          "address.$.altPhone": data.altPhone,
+        },
       }
-}
+    );
 
-
-const checkoutEditAddress = async (req,res)=>{
-    try {
-        const data = req.body;
-        const addressId = req.body.addressId;
-        const user = req.session.user;
-    
-        const findAddress = await Address.findOne({ 'address._id': addressId });
-    
-        if (!findAddress) {
-          return res.redirect('/pageNotFound');
-        }
-    
-        await Address.updateOne(
-          { 'address._id': addressId },
-          {
-            $set: {
-              'address.$.addressType': data.addressType,
-              'address.$.name': data.name,
-              'address.$.city': data.city,
-              'address.$.landMark': data.landMark,
-              'address.$.state': data.state,
-              'address.$.pincode': data.pincode,
-              'address.$.phone': data.phone,
-              'address.$.altPhone': data.altPhone
-            }
-          }
-        );
-    
-        res.redirect('/checkout');
-      } catch (error) {
-        console.error('Error in editing address:', error);
-        res.redirect('/pageNotFound');
-      }
-}
-
+    res.redirect("/checkout");
+  } catch (error) {
+    console.error("Error in editing address:", error);
+    res.redirect("/pageNotFound");
+  }
+};
 
 const getAvailableCoupons = async (req, res) => {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // normalize time
 
-    const userId = req.user?._id; // assuming user is logged in and available in req.user
-
+    const userId = req.session.user?._id; // assuming user is logged in and available in req.user
+    console.log('userid in getavailablecoupons',userId)
     const coupons = await Coupon.find({
       islisted: true,
       createdOn: { $lte: today },
       expireOn: { $gte: today },
       // Exclude coupons already used by this user (optional)
-      ...(userId && { userId: { $ne: userId } })
+      ...(userId && { userId: { $nin: userId } })
     });
+
+    console.log(coupons);
+    
 
     res.status(200).json({
       status: true,
@@ -388,11 +411,11 @@ const removeCoupon = async (req, res) => {
   }
 };
 
-module.exports={
-    getCheckoutPage,
-    checkoutAddAddress,
-    checkoutEditAddress,
-    getAvailableCoupons,
-    applyCoupon,
-    removeCoupon
-}
+module.exports = {
+  getCheckoutPage,
+  checkoutAddAddress,
+  checkoutEditAddress,
+  getAvailableCoupons,
+  applyCoupon,
+  removeCoupon,
+};

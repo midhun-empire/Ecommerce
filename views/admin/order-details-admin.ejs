@@ -175,7 +175,7 @@ body {
               <div class="card-body">
                 <div class="row">
                   <div class="col-md-6">
-                    <p><strong>Order ID : </strong> <%= orders._id %></p>
+                    <p><strong>Order ID : </strong> <%= orders.orderId %></p>
                     <p><strong>Order Date : </strong> <%= orders.createdAt.toLocaleDateString() %></p>
                     <p><strong>Customer Name : </strong> <%= orders.userId?.name || 'N/A' %></p>
                   </div>

@@ -115,6 +115,11 @@ const getOrderDetailsPageAdmin = async (req, res) => {
   try {
     const orderId = req.query.id;
 
+    // Validate orderId
+    if (!orderId || !mongoose.isValidObjectId(orderId)) {
+      throw new Error("Invalid Order ID");
+    }
+
     const findOrder = await Order.findOne({ _id: orderId })
       .populate("orderedItems.product")
       .populate("userId");
@@ -147,14 +152,15 @@ const getOrderDetailsPageAdmin = async (req, res) => {
       orders: findOrder,
       orderId: orderId,
       finalAmount: finalAmount,
-      hasReturnRequest, // Pass flag for return request
-      returnReasons, // Pass array of return reasons
+      hasReturnRequest,
+      returnReasons,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error in getOrderDetailsPageAdmin:", error.message);
     res.redirect("/pageerror");
   }
 };
+
 
 const handleReturn = async (req, res) => {
   try {

@@ -134,6 +134,7 @@
                         <input type="hidden" name="totalAmount" value="<%= locals.totalAmount || 0 %>">
                         <input type="hidden" name="orderId" value="<%= locals.orderId %>">
                         <input type="hidden" name="id" value="<%= locals.id || '' %>">
+                        <input type="hidden" name="couponCode" value="<%= locals.couponCode || '' %>">
                         <button type="button" id="payNow" class="btn btn-primary"
                                 <%= (!locals.totalAmount || locals.totalAmount === 0) ? 'disabled' : '' %>>
                             Retry Payment
@@ -158,6 +159,7 @@
    document.addEventListener('DOMContentLoaded', function() {
         const payNowButton = document.getElementById("payNow");
         const totalAmountInput = document.querySelector('input[name="totalAmount"]');
+        const couponCode = document.querySelector('input[name="couponCode"]').value || null;
         
         if (payNowButton && totalAmountInput) {
             // Convert totalAmount to number and ensure it's greater than 0
@@ -200,6 +202,7 @@
                         body: JSON.stringify({
                             totalAmount: totalAmount,
                             orderId: document.querySelector('input[name="orderId"]').value,
+                            couponCode:couponCode
                         }),
                     });
 

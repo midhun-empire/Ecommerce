@@ -1341,42 +1341,51 @@
      
      
      function handleAddToCart(productId) {
-    $.ajax({
-      url: '/cart/add',
-      method: 'POST',
-      data: {
-        productId: productId,
-        quantity: 1  // You can modify this to allow the user to select the quantity
-      },
-      success: function (response) {
+  $.ajax({
+    url: '/addToCart',
+    method: 'POST',
+    data: {
+      productId: productId,
+      quantity: 1
+    },
+    success: function (response) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Added to Cart!',
+        text: 'Product has been added to your cart.',
+        timer: 2000,
+        showConfirmButton: false
+      });
+    },
+    error: function (xhr) {
+      if (xhr.status === 401) {
         Swal.fire({
-          icon: 'success',
-          title: 'Added to Cart!',
-          text: 'Product has been added to your cart.',
-          timer: 2000,
-          showConfirmButton: false
+          icon: 'warning',
+          title: 'Login Required',
+          text: 'Please login to add items to your cart.',
+          confirmButtonText: 'Login'
+        }).then(() => {
+          window.location.href = '/login';
         });
-      },
-      error: function (xhr) {
-        if (xhr.status === 401) {
-          Swal.fire({
-            icon: 'warning',
-            title: 'Login Required',
-            text: 'Please login to add items to your cart.',
-            showConfirmButton: true
-          }).then(() => {
-            window.location.href = '/login';  // Redirect user to login page
-          });
-        } else {
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Something went wrong. Please try again later.'
-          });
-        }
+      } else if (xhr.status === 400) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Cannot Add to Cart',
+          text: xhr.responseJSON.message || 'Cannot add item to cart.',
+          confirmButtonText: 'OK'
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Something went wrong. Please try again later.',
+          confirmButtonText: 'OK'
+        });
       }
-    });
-  }
+    }
+  });
+}
+
 
   
  </script>

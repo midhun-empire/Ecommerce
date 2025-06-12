@@ -4,7 +4,7 @@ const User = require('../../models/userSchema')
 const mongoose = require('mongoose')
 const Razorpay = require('razorpay')
 const crypto = require('crypto')
-
+const Coupon = require('../../models/couponSchema')
 
 
 const razorpayInstance = new Razorpay({
