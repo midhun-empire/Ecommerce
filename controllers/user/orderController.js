@@ -387,13 +387,14 @@ const verifyPayment = async (req, res) => {
     try {
         const { razorpayPaymentId, razorpayOrderId, razorpaySignature, orderId } = req.body;
         const userId = req.session.user?._id;
-        console.log('userid in verifypayment', userId);
+        console.log('verifyPayment:', { userId, razorpayOrderId, orderId });
 
         if (!userId) {
             return res.status(401).json({ success: false, message: 'User not authenticated' });
         }
 
         if (!razorpayPaymentId || !razorpayOrderId || !razorpaySignature || !orderId) {
+            console.error('Missing payment details:', { razorpayPaymentId, razorpayOrderId, razorpaySignature, orderId });
             return res.status(400).json({ success: false, message: 'Missing required payment details' });
         }
 
@@ -405,19 +406,21 @@ const verifyPayment = async (req, res) => {
             .digest('hex');
 
         if (expectedSignature !== razorpaySignature) {
+            console.error('Invalid signature:', { expectedSignature, razorpaySignature });
             return res.status(400).json({ success: false, message: 'Invalid payment signature' });
         }
 
         console.log('Session pendingOrder:', req.session.pendingOrder);
-
         const pendingOrder = req.session.pendingOrder;
-        if (!pendingOrder || pendingOrder.orderId !== orderId) {
+        if (!pendingOrder || pendingOrder.orderId !== orderId || pendingOrder.razorpayOrderId !== razorpayOrderId) {
+            console.error('Invalid pending order:', { pendingOrder, orderId, razorpayOrderId });
             return res.status(400).json({ success: false, message: 'Invalid order data in session' });
         }
 
-        // Handle duplicate orders gracefully
-        const existingOrder = await Order.findOne({ orderId: pendingOrder.orderId });
-        if (existingOrder) {
+        let order = await Order.findOne({ orderId: pendingOrder.orderId, userId });
+        if (order && order.paymentStatus === 'completed') {
+            console.log('Order already processed:', order.orderId);
+            delete req.session.pendingOrder;
             return res.status(200).json({
                 success: true,
                 message: 'Order already processed',
@@ -449,66 +452,81 @@ const verifyPayment = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Missing address in pending order' });
         }
 
-        // Create new order
-        const newOrder = new Order({
-            userId: pendingOrder.userId,
-            orderId: pendingOrder.orderId,
-            paymentMethod: pendingOrder.paymentMethod,
-            orderedItems: pendingOrder.orderedItems,
-            totalPrice: pendingOrder.totalPrice,
-            finalAmount: pendingOrder.finalAmount,
-            address: pendingOrder.address,
-            status: 'Processing',
-            couponApplied: pendingOrder.couponApplied || false,
-            discount: pendingOrder.discount || 0,
-            couponCode: pendingOrder.couponCode || null,
-            razorpayOrderId: pendingOrder.razorpayOrderId,
-            razorpayPaymentId,
-            razorpaySignature,
-            paymentStatus: 'completed',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        });
-
-        // Update coupon usage if coupon was applied
-        console.log('Checking coupon update: couponApplied=', pendingOrder.couponApplied, 'discount=', pendingOrder.discount);
-        if (pendingOrder.couponApplied && pendingOrder.discount > 0) {
-            let updatedCoupon;
-            if (pendingOrder.couponCode) {
-                console.log(`Attempting to update coupon with name: ${pendingOrder.couponCode}`);
-                updatedCoupon = await Coupon.findOneAndUpdate(
-                    { name: pendingOrder.couponCode, islisted: true, expireOn: { $gte: new Date() } },
-                    { $addToSet: { userId: userId } },
-                    { new: true }
-                );
-                console.log('Coupon update by name result:', updatedCoupon);
-            } else {
-                console.log(`Attempting to find coupon with offerPrice: ${pendingOrder.discount} or name: NEW200`);
-                updatedCoupon = await Coupon.findOneAndUpdate(
-                    {
-                        $or: [
-                            { offerPrice: pendingOrder.discount, islisted: true, expireOn: { $gte: new Date() } },
-                            { name: 'NEW200', islisted: true, expireOn: { $gte: new Date() } }
-                        ]
-                    },
-                    { $addToSet: { userId: userId } },
-                    { new: true }
-                );
-                console.log('Coupon update by offerPrice or name result:', updatedCoupon);
-                if (updatedCoupon) {
-                    newOrder.couponCode = updatedCoupon.name;
-                    console.log(`Updated order with couponCode: ${updatedCoupon.name}`);
-                }
-            }
-            if (!updatedCoupon) {
-                console.log(`No coupon found for discount ${pendingOrder.discount} or name NEW200`);
-            }
+        // Update or create order
+        if (order) {
+            // Update existing order for retry payment
+            order.paymentStatus = 'completed';
+            order.status = 'Processing';
+            order.razorpayPaymentId = razorpayPaymentId;
+            order.razorpayOrderId = razorpayOrderId;
+            order.razorpaySignature = razorpaySignature;
+            order.subtotal = pendingOrder.subtotal || order.subtotal;
+            order.deliveryCharge = pendingOrder.deliveryCharge || order.deliveryCharge || 140;
+            order.totalPrice = pendingOrder.totalPrice || order.totalPrice;
+            order.finalAmount = pendingOrder.finalAmount || order.finalAmount;
+            order.discount = pendingOrder.discount || order.discount || 0;
+            order.couponApplied = pendingOrder.couponApplied || order.couponApplied || false;
+            order.couponCode = pendingOrder.couponCode || order.couponCode || null;
+            order.updatedAt = new Date();
         } else {
-            console.log('No coupon applied or discount is 0, skipping coupon update');
+            // Create new order
+            order = new Order({
+                userId: pendingOrder.userId,
+                orderId: pendingOrder.orderId,
+                paymentMethod: pendingOrder.paymentMethod,
+                orderedItems: pendingOrder.orderedItems,
+                subtotal: pendingOrder.subtotal,
+                deliveryCharge: pendingOrder.deliveryCharge || 140,
+                totalPrice: pendingOrder.totalPrice,
+                finalAmount: pendingOrder.finalAmount,
+                address: pendingOrder.address,
+                status: 'Processing',
+                couponApplied: pendingOrder.couponApplied || false,
+                discount: pendingOrder.discount || 0,
+                couponCode: pendingOrder.couponCode || null,
+                razorpayOrderId: razorpayOrderId,
+                razorpayPaymentId,
+                razorpaySignature,
+                paymentStatus: 'completed',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            });
         }
 
-        await newOrder.save();
-        console.log('Order saved:', newOrder);
+        // Update coupon with userId
+        console.log('Checking coupon update:', {
+            couponApplied: pendingOrder.couponApplied,
+            discount: pendingOrder.discount,
+            couponCode: pendingOrder.couponCode,
+            userId
+        });
+
+        if (pendingOrder.couponApplied && pendingOrder.discount > 0 && pendingOrder.couponCode) {
+            console.log(`Attempting to update coupon: ${pendingOrder.couponCode}`);
+            const updatedCoupon = await Coupon.findOneAndUpdate(
+                {
+                    name: pendingOrder.couponCode,
+                    islisted: true,
+                    expireOn: { $gte: new Date() },
+                    userId: { $nin: [userId] } // Ensure user hasn't used this coupon
+                },
+                { $addToSet: { userId: userId } },
+                { new: true }
+            );
+            console.log('Coupon update result:', updatedCoupon);
+            if (!updatedCoupon) {
+                console.warn(`Coupon not found or already used by user: ${pendingOrder.couponCode}`);
+                order.couponApplied = false;
+                order.couponCode = null;
+                order.discount = 0;
+                order.finalAmount = order.totalPrice; // Remove discount if coupon is invalid
+            }
+        } else {
+            console.log('No valid coupon applied, skipping coupon update');
+        }
+
+        await order.save();
+        console.log('Order saved:', order);
 
         delete req.session.pendingOrder;
 
@@ -904,22 +922,26 @@ const cancelProductOrder = async (req, res) => {
 
     // Update the specific item's status and cancellation reason
     item.status = 'Cancelled';
-    item.cancellationReason = cancellationReason; // Assumes cancellationReason field exists in orderedItems schema
+    item.cancellationReason = cancellationReason;
 
     // Recalculate totalPrice and finalAmount
     const itemTotal = item.price * item.quantity;
     findOrder.totalPrice -= itemTotal;
     findOrder.finalAmount = findOrder.totalPrice - findOrder.discount;
 
-    // Update overall order status
-    const allItemsCancelled = findOrder.orderedItems.every(
-      (item) => item.status === 'Cancelled'
+    // Update overall order status and financial fields
+    const allItemsCancelledOrReturned = findOrder.orderedItems.every(
+      (item) => item.status === 'Cancelled' || item.status === 'Return Requested'
     );
-    if (allItemsCancelled) {
+    if (allItemsCancelledOrReturned) {
       findOrder.status = 'Cancelled';
+      findOrder.totalPrice = 0;
+      findOrder.subtotal = 0;
+      findOrder.discount = 0;
+      findOrder.deliveryCharge = 0;
+      findOrder.finalAmount = 0;
     } else if (findOrder.status === 'Cancelled') {
-      // If some items are not cancelled, revert order status to Pending or appropriate status
-      findOrder.status = 'Pending'; // Adjust based on your logic
+      findOrder.status = 'Pending';
     }
 
     // Update product stock

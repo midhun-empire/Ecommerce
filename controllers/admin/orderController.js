@@ -13,7 +13,7 @@ const { v4: uuidv4 } = require("uuid");
 const getOrderListPageAdmin = async (req, res) => {
   try {
     const orders = await Order.find({})
-      .sort({ createdOn: -1 })
+      .sort({ createdAt: -1 })
       .populate("userId", "name")
       .populate("orderedItems.product");
     let itemsPerPage = 7;
