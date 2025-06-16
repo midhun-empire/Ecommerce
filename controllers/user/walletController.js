@@ -146,8 +146,10 @@ const getWalletDetails = async (req, res) => {
       });
     }
 
-    const totalHistoryItems = wallet.history.length;
-    const paginatedHistory = wallet.history.slice(skip, skip + limit);
+   const sortedHistory = wallet.history.sort((a, b) => new Date(b.date) - new Date(a.date));
+const totalHistoryItems = sortedHistory.length;
+const paginatedHistory = sortedHistory.slice(skip, skip + limit);
+
 
     console.log('Wallet details fetched:', { balance: wallet.balance, totalHistoryItems });
     return res.json({
@@ -163,6 +165,7 @@ const getWalletDetails = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Failed to fetch wallet details' });
   }
 };
+
 
 const getWalletBalanceOrder = async (req, res) => {
   try {

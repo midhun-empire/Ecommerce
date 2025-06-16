@@ -70,6 +70,7 @@ const loadDashboard = async (req, res, next) => {
         {
           $match: {
             createdAt: { $gte: start, $lt: end },
+            'orderedItems.status': 'delivered',
             discount: { $exists: true, $ne: null },
           },
         },
@@ -82,7 +83,10 @@ const loadDashboard = async (req, res, next) => {
       ]);
 
       const totalSales = await Order.aggregate([
-        { $match: { createdAt: { $gte: start, $lt: end } } },
+        { $match: 
+          { createdAt: { $gte: start, $lt: end } ,
+             'orderedItems.status': 'delivered'
+        } },
         {
           $group: {
             _id: null,
@@ -92,7 +96,11 @@ const loadDashboard = async (req, res, next) => {
       ]);
 
       const dailySales = await Order.aggregate([
-        { $match: { createdAt: { $gte: start, $lt: end } } },
+        { $match: 
+          { createdAt: 
+            { $gte: start, $lt: end },
+            'orderedItems.status': 'delivered'
+           } },
         {
           $group: {
             _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
@@ -103,7 +111,10 @@ const loadDashboard = async (req, res, next) => {
       ]);
 
       const dailyOrders = await Order.aggregate([
-        { $match: { createdAt: { $gte: start, $lt: end } } },
+        { $match:
+           { createdAt: { $gte: start, $lt: end } ,
+          'orderedItems.status': 'delivered'
+          } },
         {
           $group: {
             _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
@@ -114,7 +125,10 @@ const loadDashboard = async (req, res, next) => {
       ]);
 
       const dailyDiscounts = await Order.aggregate([
-        { $match: { createdAt: { $gte: start, $lt: end } } },
+        { $match: { createdAt: { $gte: start, $lt: end } ,
+         'orderedItems.status': 'delivered'
+      
+      } },
         {
           $group: {
             _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
@@ -126,6 +140,7 @@ const loadDashboard = async (req, res, next) => {
 
       const totalOrders = await Order.countDocuments({
         createdAt: { $gte: start, $lt: end },
+        
       });
       const returnedOrders = await Order.countDocuments({
         createdAt: { $gte: start, $lt: end },
@@ -155,6 +170,7 @@ const loadDashboard = async (req, res, next) => {
       const topProducts = await Order.aggregate([
         { $match: { createdAt: { $gte: start, $lt: end } } },
         { $unwind: "$orderedItems" },
+        { $match: { "orderedItems.status": "delivered" } }, 
         {
           $group: {
             _id: "$orderedItems.product",
@@ -195,6 +211,7 @@ const loadDashboard = async (req, res, next) => {
       const topCategories = await Order.aggregate([
         { $match: { createdAt: { $gte: start, $lt: end } } },
         { $unwind: "$orderedItems" },
+        { $match: { "orderedItems.status": "delivered" } },
         {
           $lookup: {
             from: "products",
@@ -248,6 +265,7 @@ const loadDashboard = async (req, res, next) => {
       const topBrands = await Order.aggregate([
         { $match: { createdAt: { $gte: start, $lt: end } } },
         { $unwind: "$orderedItems" },
+        { $match: { "orderedItems.status": "delivered" } },
         {
           $lookup: {
             from: "products",
@@ -362,6 +380,10 @@ const Logout = async (req, res) => {
   }
 };
 
+
+
+
+
 const generatePdfReport = async (req, res, next) => {
   try {
     const doc = new PDFDocument({
@@ -422,9 +444,11 @@ const generatePdfReport = async (req, res, next) => {
     }
 
     // Query orders using createdAt
-    const orders = await Order.find({ createdAt: { $gte: start, $lt: end } })
+    const orders = await Order.find({ createdAt: { $gte: start, $lt: end },
+        'orderedItems.status':'delivered'
+    })
       .select(
-        "orderId createdAt product totalPrice discount finalAmount payment"
+        "orderId createdAt product totalPrice discount finalAmount paymentMethod orderedItems"
       )
       .sort({ createdAt: 1 });
 
@@ -564,9 +588,8 @@ const generatePdfReport = async (req, res, next) => {
       doc.font("Helvetica").fontSize(8).fillColor(colors.text);
       for (let i = startIndex; i <= endIndex && i < orders.length; i++) {
         const order = orders[i];
-        const itemCount = Array.isArray(order.product)
-          ? order.product.length
-          : 0;
+       const itemCount = Array.isArray(order.orderedItems)
+        ? order.orderedItems.reduce((sum, item) => sum + (item.status === 'delivered' ? item.quantity : 0), 0) : 0;
         xPos = tableX;
 
         const rowData = [
@@ -582,7 +605,7 @@ const generatePdfReport = async (req, res, next) => {
           order.finalAmount !== undefined
             ? `${order.finalAmount.toFixed(2)}`
             : "0.00",
-          order.payment || "N/A",
+          order.paymentMethod || "N/A",
         ];
 
         rowData.forEach((data, j) => {
@@ -698,6 +721,8 @@ const generatePdfReport = async (req, res, next) => {
   }
 };
 
+
+
 const generateExcelReport = async (req, res, next) => {
   try {
     const workbook = new ExcelJS.Workbook();
@@ -732,7 +757,9 @@ const generateExcelReport = async (req, res, next) => {
     const end = new Date(endDate);
     end.setDate(end.getDate() + 1);
 
-    const orders = await Order.find({ createdAt: { $gte: start, $lt: end } })
+    const orders = await Order.find({ createdAt: { $gte: start, $lt: end } ,
+    'orderedItems.status': 'delivered'
+    })
       .select(
         "orderId createdAt orderedItems totalPrice discount finalAmount paymentMethod"
       )
@@ -740,8 +767,8 @@ const generateExcelReport = async (req, res, next) => {
 
     orders.forEach((order) => {
       const itemCount = Array.isArray(order.orderedItems)
-        ? order.orderedItems.length
-        : 0;
+  ? order.orderedItems.reduce((sum, item) => sum + (item.status === 'delivered' ? item.quantity : 0), 0)
+  : 0; // Line 44
       const amount =
         order.totalPrice !== undefined
           ? `${order.totalPrice.toFixed(2)}`
