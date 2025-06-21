@@ -361,22 +361,22 @@
                                 <p>Processing</p>
                             </div>
                             <div
-                                class="tracking-line <%= ['Shipped', 'Out for Delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
+                                class="tracking-line <%= ['Shipped', 'Out_for_Delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
                             </div>
 
                             <!-- Shipped -->
                             <div
-                                class="tracking-step <%= ['Shipped', 'Out for Delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
+                                class="tracking-step <%= ['Shipped', 'Out_for_Delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
                                 <div class="icon">🚚</div>
                                 <p>Shipped</p>
                             </div>
                             <div
-                                class="tracking-line <%= ['Out for Delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
+                                class="tracking-line <%= ['Out_for_Delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
                             </div>
 
                             <!-- Out for Delivery -->
                             <div
-                                class="tracking-step <%= ['Out for Delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
+                                class="tracking-step <%= ['Out_for_Delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
                                 <div class="icon">📦</div>
                                 <p>Out for Delivery</p>
                             </div>
@@ -406,59 +406,66 @@
 
 
     <!-- Cancel / Return -->
-    <div class="col-md-4 text-end">
-        <% console.log('Item Status:', item.status, 'Item ID:', item._id.toString()); %>
-        <% if (item.status && item.status.toLowerCase() === 'cancelled') { %>
-          <button class="btn btn-danger btn-sm" disabled>Order Cancelled</button>
-        <% } else if (['pending', 'processing', 'shipped', 'out for delivery'].map(s => s.toLowerCase()).includes(item.status.toLowerCase())) { %>
-          <div class="d-flex flex-column align-items-end">
-            <select class="form-select mb-2 cancel-reason"
-                    data-order-id="<%= order._id %>"
-                    data-item-id="<%= item._id %>">
-              <option value="">Select Cancellation Reason</option>
-              <option value="Changed My Mind">Changed My Mind</option>
-              <option value="Found a Cheaper Alternative">Found a Cheaper Alternative</option>
-              <option value="Incorrect Item Ordered">Incorrect Item Ordered</option>
-              <option value="Delivery Taking Too Long">Delivery Taking Too Long</option>
-              <option value="Product Quality Concern">Product Quality Concern</option>
-              <option value="Other Reason">Other Reason</option>
-            </select>
-            <button class="btn btn-danger btn-sm cancel-product"
-                    data-order-id="<%= order._id %>"
-                    data-item-id="<%= item._id %>">
-              Cancel Order
-            </button>
-          </div>
-        <% } else if (item.status && item.status.toLowerCase() === 'delivered') { %>
-          <% if (item.returnDeclinedReason) { %>
-            <button class="btn btn-danger btn-sm" disabled>Return Declined</button>
-            <small class="text-muted d-block mt-1">Reason: <%= item.returnDeclinedReason %></small>
-          <% } else { %>
-            <div class="d-flex flex-column align-items-end">
-              <select class="form-select mb-2 return-reason"
-                      data-order-id="<%= order._id %>"
-                      data-item-id="<%= item._id %>">
-                <option value="">Select Return Reason</option>
-                <option value="Wrong Size">Dislike</option>
-                <option value="Defective Product">Defective Product</option>
-                <option value="Not as Described">Not as Described</option>
-                <option value="Better Alternative Found">Better Alternative Found</option>
-                <option value="Quality Issues">Quality Issues</option>
-                <option value="Other">Other</option>
-              </select>
-              <button class="btn btn-warning btn-sm return-product"
-                      data-order-id="<%= order._id %>"
-                      data-item-id="<%= item._id %>">
-                Return
-              </button>
-            </div>
-          <% } %>
-        <% } else { %>
-          <button class="btn btn-secondary btn-sm" disabled>
-            <%= item.status %>
-          </button>
-        <% } %>
+ <div class="col-md-4 text-end">
+    <% console.log('Item Status:', item.status, 'Item ID:', item._id.toString()); %>
+    <% if (item.status && item.status.toLowerCase() === 'cancelled') { %>
+      <button class="btn btn-danger btn-sm" disabled>Order Cancelled</button>
+    <% } else if (['pending', 'processing', 'shipped', 'out for delivery'].map(s => s.toLowerCase()).includes(item.status.toLowerCase())) { %>
+      <div class="d-flex flex-column align-items-end">
+        <select class="form-select mb-2 cancel-reason"
+                data-order-id="<%= order._id %>"
+                data-item-id="<%= item._id %>">
+          <option value="">Select Cancellation Reason</option>
+          <option value="Changed My Mind">Changed My Mind</option>
+          <option value="Found a Cheaper Alternative">Found a Cheaper Alternative</option>
+          <option value="Incorrect Item Ordered">Incorrect Item Ordered</option>
+          <option value="Delivery Taking Too Long">Delivery Taking Too Long</option>
+          <option value="Product Quality Concern">Product Quality Concern</option>
+          <option value="Other Reason">Other Reason</option>
+        </select>
+        <button class="btn btn-danger btn-sm cancel-product"
+                data-order-id="<%= order._id %>"
+                data-item-id="<%= item._id %>">
+          Cancel Order
+        </button>
       </div>
+    <% } else if (item.status && item.status.toLowerCase() === 'delivered') { %>
+      <% if (item.returnDeclinedReason) { %>
+        <button class="btn btn-danger btn-sm" disabled>Return Declined</button>
+        <small class="text-muted d-block mt-1">Reason: <%= item.returnDeclinedReason %></small>
+      <% } else { %>
+        <div class="d-flex flex-column align-items-end">
+          <select class="form-select mb-2 return-reason"
+                  data-order-id="<%= order._id %>"
+                  data-item-id="<%= item._id %>">
+            <option value="">Select Return Reason</option>
+            <option value="Dislike">Dislike</option>
+            <option value="Defective Product">Defective Product</option>
+            <option value="Not as Described">Not as Described</option>
+            <option value="Better Alternative Found">Better Alternative Found</option>
+            <option value="Quality Issues">Quality Issues</option>
+            <option value="Other">Other</option>
+          </select>
+          <button class="btn btn-warning btn-sm return-product"
+                  data-order-id="<%= order._id %>"
+                  data-item-id="<%= item._id %>">
+            Return
+          </button>
+        </div>
+      <% } %>
+    <% } else if (item.status && item.status.toLowerCase() === 'failed') { %>
+      <button class="btn btn-primary btn-sm retry-payment"
+              data-order-id="<%= order.orderId %>"
+              data-total-amount="<%= order.finalAmount %>"
+              data-coupon-code="<%= order.couponCode || '' %>">
+        Retry Payment
+      </button>
+    <% } else { %>
+      <button class="btn btn-secondary btn-sm" disabled>
+        <%= item.status %>
+      </button>
+    <% } %>
+</div>>
                         </div>
                     </div>
     
@@ -538,6 +545,9 @@
     
     <!-- Include SweetAlert2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Razorpay Checkout Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
 
 document.querySelectorAll('.cancel-product').forEach(button => {
@@ -693,6 +703,143 @@ document.querySelectorAll('.return-product').forEach(button => {
     });
 });
 
-        
+    document.querySelectorAll('.retry-payment').forEach(button => {
+  button.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const orderId = button.getAttribute('data-order-id');
+    const totalAmount = parseFloat(button.getAttribute('data-total-amount'));
+    const couponCode = button.getAttribute('data-coupon-code') || null;
+    const originalText = button.innerHTML;
+
+    function setLoading(isLoading) {
+      button.disabled = isLoading;
+      button.innerHTML = isLoading ?
+        '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...' :
+        originalText;
+    }
+
+    try {
+      const result = await Swal.fire({
+        title: 'Retry Payment',
+        text: 'Would you like to try the payment again?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, Pay Now!',
+        cancelButtonText: 'No, Cancel'
+      });
+
+      if (!result.isConfirmed) return;
+
+      setLoading(true);
+
+      const response = await fetch('/retry-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          totalAmount,
+          orderId,
+          couponCode
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to create payment order');
+      }
+
+      const options = {
+        key: data.key,
+        amount: data.amount,
+        currency: 'INR',
+        name: 'BRIGHTON',
+        description: 'Retry Payment for Order #' + orderId,
+        order_id: data.razorpayOrderId,
+        handler: async function(response) {
+          try {
+            setLoading(true);
+            const verifyResponse = await fetch('/verify-payment', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpaySignature: response.razorpay_signature,
+                orderId
+              }),
+            });
+
+            const verifyData = await verifyResponse.json();
+
+            if (!verifyData.success) {
+              throw new Error(verifyData.message || 'Payment verification failed');
+            }
+
+            await Swal.fire({
+              title: 'Payment Successful!',
+              text: 'Your order has been confirmed.',
+              icon: 'success',
+              confirmButtonColor: '#28a745'
+            });
+
+            window.location.href = `/order-success/${orderId}`;
+          } catch (error) {
+            setLoading(false);
+            Swal.fire({
+              title: 'Verification Failed',
+              text: error.message || 'Unable to verify payment',
+              icon: 'error',
+              confirmButtonColor: '#dc3545'
+            });
+          }
+        },
+        modal: {
+          ondismiss: function() {
+            setLoading(false);
+          }
+        },
+        prefill: {
+          name: '<%= order.address.name || "Customer Name" %>',
+          email: '<%= locals.user?.email || "customer@example.com" %>',
+          contact: '<%= order.address.phone || "1234567890" %>'
+        },
+        theme: {
+          color: '#088178'
+        }
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.open();
+
+      rzp.on('payment.failed', function(response) {
+        setLoading(false);
+        Swal.fire({
+          title: 'Payment Failed',
+          text: 'The payment process was unsuccessful. Please try again.',
+          icon: 'error',
+          confirmButtonColor: '#dc3545'
+        });
+      });
+    } catch (error) {
+      setLoading(false);
+      Swal.fire({
+        title: 'Error',
+        text: error.message || 'Failed to initialize payment',
+        icon: 'error',
+        confirmButtonColor: '#dc3545'
+      });
+    }
+  });
+});    
+
+
+
+
     
     </script>

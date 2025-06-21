@@ -198,9 +198,35 @@ const handleReturn = async (req, res) => {
 
     if (action === "approve") {
       item.status = "Returned";
-      item.returnDeclinedReason = undefined; // clear if previously declined
+      item.returnDeclinedReason = ''; // Clear if previously declined
+
+      // Debug: Log item details
+      console.log("Item details:", JSON.stringify(item, null, 2));
+
+      // Get product ID from item.product
+      const productId = item.product;
+      if (!productId) {
+        console.log("No product ID found in item:", item);
+        return res
+          .status(400)
+          .json({ success: false, message: "Product ID not found in order item." });
+      }
+
+      // Update product inventory
+      const product = await Product.findById(productId);
+      if (!product) {
+        console.log("Product not found for ID:", productId);
+        return res
+          .status(404)
+          .json({ success: false, message: "Product not found." });
+      }
+      console.log("Product found:", product.productName, "Current quantity:", product.quantity);
+      product.quantity += item.quantity; // Add returned quantity back to stock
+      await product.save();
+      console.log("Updated product quantity:", product.quantity);
+
     } else if (action === "decline") {
-      item.status = "Delivered"; // revert back to delivered
+      item.status = "Delivered"; // Revert back to delivered
       item.returnDeclinedReason = "Return declined by admin.";
     } else {
       return res

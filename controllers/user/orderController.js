@@ -607,6 +607,14 @@ const getOrderDetails = async (req, res) => {
       return res.status(404).send("Order not found");
     }
     
+    console.log('Order for details page:', {
+            orderId: order.orderId,
+            couponApplied: order.couponApplied,
+            couponCode: order.couponCode,
+            discount: order.discount,
+            finalAmount: order.finalAmount
+        });
+
     // Normalize status values to ensure consistency
     // Added null check to handle undefined status values
     const normalizeStatus = (status) => {
@@ -1081,6 +1089,46 @@ const handleFailedPayment = async (req, res) => {
             paymentMethod = pendingOrder.paymentMethod;
             id = userId;
             couponCode = pendingOrder.couponCode; // Pass the couponCode from pendingOrder
+
+            // NEW: Create failed order using pendingOrder
+            console.log('handleFailedPayment: Pending order data:', { pendingOrder });
+            console.log('handleFailedPayment: Creating new failed order', { orderId });
+            try {
+                const orderedItems = pendingOrder.orderedItems.map(item => {
+                    if (!mongoose.Types.ObjectId.isValid(item.product)) {
+                        console.error('handleFailedPayment: Invalid product ID:', { productId: item.product, orderId });
+                        throw new Error(`Invalid product ID: ${item.product}`);
+                    }
+                    return {
+                        product: item.product,
+                        quantity: item.quantity,
+                        price: item.price,
+                        status: 'failed' // Schema allows 'failed' for items
+                    };
+                });
+
+                order = new Order({
+                    userId: pendingOrder.userId,
+                    orderId: pendingOrder.orderId,
+                    paymentMethod: pendingOrder.paymentMethod,
+                    orderedItems: orderedItems,
+                    totalPrice: pendingOrder.totalPrice,
+                    discount: pendingOrder.discount || 0,
+                    finalAmount: pendingOrder.finalAmount,
+                    address: pendingOrder.address,
+                    status: 'Pending', // Schema does not allow 'failed', use 'Pending'
+                    couponApplied: pendingOrder.couponApplied || false,
+                    couponCode: pendingOrder.couponCode || null,
+                    createdAt: pendingOrder.createdAt || new Date(),
+                    updatedAt: new Date()
+                });
+
+                await order.save();
+                console.log('handleFailedPayment: New failed order created successfully', { orderId, newOrderId: order._id });
+            } catch (orderError) {
+                console.error('handleFailedPayment: Failed to create new order', { orderId, error: orderError.message });
+            }
+            // END NEW
 
             // Validate and restore cart items
             const restoredItems = [];

@@ -82,6 +82,22 @@ const loadDashboard = async (req, res, next) => {
         },
       ]);
 
+
+        const Discounts = await Order.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: start, $lt: end },
+            discount: { $exists: true, $ne: null },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$discount" },
+          },
+        },
+      ]);
+
       const totalSales = await Order.aggregate([
         { $match: 
           { createdAt: { $gte: start, $lt: end } ,
@@ -343,6 +359,7 @@ const loadDashboard = async (req, res, next) => {
         processingOrders,
         totalUsers,
         totalDiscount: totalDiscount[0]?.total || 0,
+         Discounts:Discounts[0]?.total || 0,
         startDate,
         endDate,
         dailySales: JSON.stringify(dailySales),

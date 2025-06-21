@@ -236,8 +236,8 @@ const loadProfilePage = async (req, res) => {
     const addressData = await Address.findOne({ userId: userId });
 
     // Pagination parameters for orders
-    const orderPage = parseInt(req.query.orderPage) || 1; // Use orderPage to avoid conflict
-    const orderLimit = 5;
+    const orderPage = Math.max(1, parseInt(req.query.orderPage) || 1); // Validate page
+    const orderLimit = 10;
     const orderSkip = (orderPage - 1) * orderLimit;
 
     const totalOrders = await Order.countDocuments({ userId: userId });
@@ -248,11 +248,11 @@ const loadProfilePage = async (req, res) => {
       .skip(orderSkip)
       .limit(orderLimit);
 
-    console.log('Orders from loadProfilePage:', orders);
+    console.log('Orders from loadProfilePage:', orders.length, 'Page:', orderPage);
 
     // Pagination parameters for wallet history
-    const walletPage = parseInt(req.query.walletPage) || 1; // Use walletPage to avoid conflict
-    const walletLimit = 7; // Match getWalletDetails limit
+    const walletPage = Math.max(1, parseInt(req.query.walletPage) || 1); // Validate page
+    const walletLimit = 10;
     const walletSkip = (walletPage - 1) * walletLimit;
 
     const wallet = await Wallet.findOne({ user: userId }).lean();
@@ -260,23 +260,28 @@ const loadProfilePage = async (req, res) => {
     let totalWalletPages = 0;
     let walletHistory = [];
     if (wallet && wallet.history) {
+      wallet.history.sort((a, b) => new Date(b.date) - new Date(a.date));
       totalHistoryItems = wallet.history.length;
       totalWalletPages = Math.ceil(totalHistoryItems / walletLimit);
       walletHistory = wallet.history.slice(walletSkip, walletSkip + walletLimit);
     }
+
+    // Determine active tab
+    const activeTab = req.query.orderPage ? 'orders' : 'dashboard';
 
     res.render('profile', {
       user: userData,
       currentPage: 'profile',
       userAddress: addressData,
       orders,
-      currentPageNum: orderPage, // For orders pagination
-      totalPages: totalOrderPages, // For orders pagination
+      currentPageNum: orderPage,
+      totalPages: totalOrderPages,
       totalOrders,
-      wallet: wallet ? { ...wallet, history: walletHistory } : { balance: 0, history: [] }, // Pass paginated history
-      totalHistoryItems, // For wallet history pagination
-      totalWalletPages, // For wallet history pagination
-      walletPage, // For wallet history pagination
+      wallet: wallet ? { ...wallet, history: walletHistory } : { balance: 0, history: [] },
+      totalHistoryItems,
+      totalWalletPages,
+      walletPage,
+      activeTab, // Add activeTab
     });
   } catch (error) {
     console.error('Error loading profile page:', error);

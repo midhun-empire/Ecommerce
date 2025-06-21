@@ -569,6 +569,9 @@
 </style>
 
 <script>
+
+
+
   $(document).ready(function () {
     // Tooltip init
     const tooltipTriggerList = [].slice.call(
@@ -576,25 +579,33 @@
     );
     tooltipTriggerList.map((el) => new bootstrap.Tooltip(el));
 
+    // Check for query parameter message and display SweetAlert
+    const urlParams = new URLSearchParams(window.location.search);
+    const message = urlParams.get("message");
+    if (message) {
+      Swal.fire({
+        title: "Cart Error",
+        text: decodeURIComponent(message),
+        icon: "error",
+        confirmButtonColor: "#088178",
+        confirmButtonText: "OK",
+      }).then(() => {
+        // Clear the message from the URL
+        window.history.replaceState({}, document.title, "/cart");
+      });
+    }
+
     // Handle quantity buttons
     document.querySelectorAll(".btn-quantity").forEach((button) => {
       button.addEventListener("click", async () => {
         const form = button.closest(".quantity-form");
         const productId = form.querySelector('input[name="productId"]').value;
-        const action = button.classList.contains("increase-btn")
-          ? "increase"
-          : "decrease";
+        const action = button.classList.contains("increase-btn") ? "increase" : "decrease";
         const quantitySpan = form.querySelector(".quantity-value");
         const availableStock = parseInt(form.dataset.stock);
         let quantity = parseInt(quantitySpan.textContent);
 
-        // Log productId for debugging
-        console.log(
-          "Updating quantity for productId:",
-          productId,
-          "Action:",
-          action
-        );
+        console.log("Updating quantity for productId:", productId, "Action:", action);
 
         // Client-side validation
         if (action === "increase" && quantity >= availableStock) {
@@ -622,7 +633,7 @@
         if (action === "decrease" && quantity <= 1) {
           Swal.fire({
             title: "Minimum Quantity Required",
-            text: "At least 1 item is required in the cart.",
+            text: "At least 1 item is required in the cart. To remove this item, use the trash icon.",
             icon: "warning",
             confirmButtonColor: "#088178",
             confirmButtonText: "OK",
@@ -633,9 +644,7 @@
         try {
           const res = await fetch("/update-quantity", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ productId, action }),
           });
 
@@ -645,12 +654,8 @@
             // Update quantity and price in UI
             quantitySpan.textContent = data.quantity;
             const unitPrice = parseFloat(form.dataset.price);
-            const priceContainer = form
-              .closest(".cart-item")
-              .querySelector(".price-tag");
-            priceContainer.textContent = `₹${(
-              data.quantity * unitPrice
-            ).toFixed(2)}`;
+            const priceContainer = form.closest(".cart-item").querySelector(".price-tag");
+            priceContainer.textContent = `₹${(data.quantity * unitPrice).toFixed(2)}`;
 
             // Update cart totals
             updateCartTotal();
@@ -677,6 +682,34 @@
       });
     });
 
+    // Handle Proceed to Checkout button
+    $(".checkout-btn").click(async function (e) {
+      e.preventDefault(); // Prevent default navigation
+
+      // Check for items with quantity 0
+      let hasZeroQuantity = false;
+      $(".quantity-form").each(function () {
+        const quantity = parseInt($(this).find(".quantity-value").text());
+        if (quantity === 0) {
+          hasZeroQuantity = true;
+        }
+      });
+
+      if (hasZeroQuantity) {
+        Swal.fire({
+          title: "Out of Stock",
+          text: "One or more items in your cart are out of stock. Please remove or update them before proceeding to checkout.",
+          icon: "error",
+          confirmButtonColor: "#088178",
+          confirmButtonText: "OK",
+        });
+        return;
+      }
+
+      // If no issues, proceed to checkout
+      window.location.href = "/checkout";
+    });
+
     // Update subtotal and total
     function updateCartTotal() {
       let subtotal = 0;
@@ -693,13 +726,12 @@
       $("#cart-total").text(`₹${total.toFixed(2)}`);
 
       // Update free shipping progress
-      const progressPercent =
-        subtotal > 0 ? Math.min(Math.round((subtotal / 50000) * 100), 100) : 0;
+      const progressPercent = subtotal > 0 ? Math.min(Math.round((subtotal / 50000) * 100), 100) : 0;
       $(".free-shipping-progress .text-primary").text(`${progressPercent}%`);
       if (subtotal < 50000) {
-        $(".shipping-info .badge").text(
-          `Add ₹${(50000 - subtotal).toFixed(2)} more for FREE delivery!`
-        );
+        $(".shipping-info .badge").text(`Add ₹${(50000 - subtotal).toFixed(2)} more for FREE delivery!`);
+        $(".free-shipping-progress").show();
+        $(".free-shipping-achieved").hide();
       } else {
         $(".free-shipping-progress").hide();
         $(".free-shipping-achieved").show();
@@ -724,4 +756,8 @@
       });
     });
   });
+  
+
+
+  
 </script>

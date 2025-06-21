@@ -89,9 +89,7 @@ const getCheckoutPage = async (req, res) => {
   try {
     const userId = req.session.user?._id;
     if (!userId) {
-      return res.redirect(
-        "/login?message=Please log in to proceed to checkout"
-      );
+      return res.redirect("/login?message=Please log in to proceed to checkout");
     }
 
     const user = await User.findById(userId).select("name email").lean();
@@ -115,6 +113,8 @@ const getCheckoutPage = async (req, res) => {
     // Map cart items and validate stock
     const cartItems = [];
     let outOfStockItems = [];
+    let zeroQuantityItems = [];
+
     console.log(
       "Cart items:",
       userCart.items.map((item) => ({
@@ -129,6 +129,13 @@ const getCheckoutPage = async (req, res) => {
         continue; // Skip blocked or invalid products
       }
 
+      if (item.quantity === 0) {
+        zeroQuantityItems.push({
+          productName: item.productId.productName,
+        });
+        continue;
+      }
+
       if (item.quantity > (item.productId.quantity || 0)) {
         outOfStockItems.push({
           productName: item.productId.productName,
@@ -138,9 +145,7 @@ const getCheckoutPage = async (req, res) => {
       }
 
       if (typeof item.totalPrice !== "number" || isNaN(item.totalPrice)) {
-        console.warn(
-          `Invalid totalPrice for product ${item.productId._id}: ${item.totalPrice}`
-        );
+        console.warn(`Invalid totalPrice for product ${item.productId._id}: ${item.totalPrice}`);
         continue; // Skip items with invalid totalPrice
       }
 
@@ -156,24 +161,28 @@ const getCheckoutPage = async (req, res) => {
       });
     }
 
+    // Handle zero quantity items
+    if (zeroQuantityItems.length > 0) {
+      const message = zeroQuantityItems
+        .map((item) => `${item.productName} is out of stock (quantity is 0)`)
+        .join(", ");
+      return res.redirect(`/cart?message=${encodeURIComponent(message)}`);
+    }
+
+    // Handle out-of-stock items
+    if (outOfStockItems.length > 0) {
+      const message = outOfStockItems
+        .map((item) => `${item.productName} has only ${item.available} units available`)
+        .join(", ");
+      return res.redirect(`/cart?message=${encodeURIComponent(message)}`);
+    }
+
     if (cartItems.length === 0) {
-      if (outOfStockItems.length) {
-        const message = outOfStockItems
-          .map(
-            (item) =>
-              `${item.productName} has only ${item.available} units available`
-          )
-          .join(", ");
-        return res.redirect(`/cart?message=${encodeURIComponent(message)}`);
-      }
-      return res.redirect(
-        "/cart?message=All items in your cart are unavailable"
-      );
+      return res.redirect("/cart?message=All items in your cart are unavailable");
     }
 
     // Calculate totals
-    const subtotal =
-      cartItems.reduce((sum, item) => sum + item.totalPrice, 0) || 0;
+    const subtotal = cartItems.reduce((sum, item) => sum + item.totalPrice, 0) || 0;
     const shipping = subtotal > 1000 ? 140 : 0;
     let discount = 0;
     let couponCode = null;
@@ -194,13 +203,8 @@ const getCheckoutPage = async (req, res) => {
       user,
     });
   } catch (error) {
-    console.error(
-      "Error in getCheckout:",
-      error.name,
-      error.message,
-      error.stack
-    );
-    res.redirect("/cart");
+    console.error("Error in getCheckout:", error.name, error.message, error.stack);
+    res.redirect("/cart?message=An error occurred while processing your request");
   }
 };
 
