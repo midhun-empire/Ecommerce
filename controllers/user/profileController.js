@@ -268,6 +268,7 @@ const loadProfilePage = async (req, res) => {
 
     // Determine active tab
     const activeTab = req.query.orderPage ? 'orders' : (req.query.walletPage ? 'wallet' : 'dashboard');
+    console.log('Rendering profile with activeTab:', activeTab, 'Query:', req.query);
 
     res.render('profile', {
       user: userData,

@@ -365,8 +365,9 @@
 
             <div class="col-md-8">
              <div class="tab-content dashboard-content">
-<% const tab = activeTab || 'dashboard'; %>
-<div class="tab-pane fade <%= tab === 'dashboard' ? 'show active' : '' %>" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">      <!-- Dashboard content unchanged -->
+              <% console.log('Template activeTab:', activeTab); %>
+<% const tab = (typeof activeTab !== 'undefined' ? activeTab : 'dashboard'); %>
+<div class="tab-pane fade <%= tab === 'dashboard' ? 'show active' : '' %>" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
       <div class="card card-green">
         <div class="card-header">
           <h5 class="mb-0 text-center">User Profile</h5>
