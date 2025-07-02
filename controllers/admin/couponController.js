@@ -22,6 +22,26 @@ const createCoupon = async (req, res) => {
       minimumPrice: parseInt(req.body.minimumPrice),
     };
 
+    // Validate coupon name: no lowercase letters allowed
+    const uppercaseRegex = /^[A-Z0-9]{1,50}$/;
+    if (!uppercaseRegex.test(data.couponName)) {
+      return res.status(400).json({
+        success: false,
+        message: "Coupon name must contain only uppercase letters and numbers, no lowercase letters."
+      });
+    }
+
+    // Check if a coupon with the same name (case-insensitive) already exists
+    const existingCoupon = await Coupon.findOne({
+      name: { $regex: `^${data.couponName}$`, $options: 'i' }
+    });
+    if (existingCoupon) {
+      return res.status(400).json({
+        success: false,
+        message: "A coupon with this name already exists."
+      });
+    }
+
     const newCoupon = new Coupon({
       name: data.couponName,
       createdOn: data.startDate,
@@ -36,8 +56,7 @@ const createCoupon = async (req, res) => {
     return res.redirect("/admin/coupon?created=true");
   } catch (error) {
     console.error("failed to create coupon ", error);
-
-    res.redirect("/pageerror");
+    res.redirect("/pageNotFound");
   }
 };
 
@@ -62,6 +81,21 @@ const updateCoupon = async (req, res) => {
     const selectedCoupon = await Coupon.findOne({ _id: oid });
 
     if (selectedCoupon) {
+      // Validate coupon name: no lowercase letters allowed
+      const uppercaseRegex = /^[A-Z0-9]{1,50}$/;
+      if (!uppercaseRegex.test(req.body.couponName)) {
+        return res.status(400).send("Coupon name must contain only uppercase letters and numbers, no lowercase letters.");
+      }
+
+      // Check if a coupon with the same name (case-insensitive) already exists, excluding the current coupon
+      const existingCoupon = await Coupon.findOne({
+        name: { $regex: `^${req.body.couponName}$`, $options: 'i' },
+        _id: { $ne: oid } // Exclude the current coupon
+      });
+      if (existingCoupon) {
+        return res.status(400).send("A coupon with this name already exists.");
+      }
+
       const startDate = new Date(req.body.startDate);
       const endDate = new Date(req.body.endDate);
       const updatedCoupon = await Coupon.updateOne(
@@ -78,14 +112,17 @@ const updateCoupon = async (req, res) => {
         { new: true }
       );
 
-      if (updatedCoupon != null) {
+      if (updatedCoupon.modifiedCount > 0) {
         res.send("coupon updated succesfully");
       } else {
         res.status(500).send("coupon updated failed");
       }
+    } else {
+      res.status(404).send("coupon not found");
     }
   } catch (error) {
     console.log(error);
+    res.status(500).json({ success: false, message: "Internal server error." });
   }
 };
 

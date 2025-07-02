@@ -541,11 +541,11 @@ a {
                 </div>
             </aside>
             <main class="product-grid">
-                <% for(let i = 0; i < products.length; i++) { %>
+                <% for(let i = 0; i < products.length; i++) { %> 
                     <div class="product-card">
                         <span class="wishlist-btn" onclick="addToWishlist('<%= products[i]._id %>')" aria-label="Add to wishlist">❤️</span>
                         <a href="/productDetails/<%= products[i]._id %>">
-                            <img src="/Uploads/re-image/<%= products[i].productImage[0] %>" alt="<%= products[i].productName %>" />
+                            <img src="/uploads/re-image/<%=product.productImage[i]%>" alt="<%= products[i].productName %>" />
                             <h4><%= products[i].productName %></h4>
                             <p>Brand: <%= products[i].brand.brandname %></p>
                             <p>Price: ₹<%= products[i].salePrice.toLocaleString('en-IN') %> <span class="text-muted"><strike>₹<%= products[i].regularPrice.toLocaleString('en-IN') %></strike></span></p>

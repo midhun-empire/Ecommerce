@@ -5,6 +5,7 @@ const Order = require("../../models/orderSchema");
 const mongodb = require("mongodb");
 const mongoose = require("mongoose");
 const razorpay = require("razorpay");
+const Wallet = require('../../models/walletSchema')
 const env = require("dotenv").config();
 const crypto = require("crypto");
 const Coupon = require("../../models/couponSchema");
@@ -209,7 +210,7 @@ const handleReturn = async (req, res) => {
         console.log("No product ID found in item:", item);
         return res
           .status(400)
-          .json({ success: false, message: "Product ID not found in order item." });
+          .json({ success: false, message: "Product ID not defined in order item." });
       }
 
       // Update product inventory
@@ -217,13 +218,44 @@ const handleReturn = async (req, res) => {
       if (!product) {
         console.log("Product not found for ID:", productId);
         return res
-          .status(404)
+ and .status(404)
           .json({ success: false, message: "Product not found." });
       }
       console.log("Product found:", product.productName, "Current quantity:", product.quantity);
       product.quantity += item.quantity; // Add returned quantity back to stock
       await product.save();
       console.log("Updated product quantity:", product.quantity);
+
+      // Handle refund for Razorpay or Wallet payment
+      if (['razorpay', 'wallet'].includes(order.paymentMethod.toLowerCase())) {
+        const itemTotal = item.price * item.quantity;
+
+        // Find the user's wallet
+        const wallet = await Wallet.findOne({ user: order.userId }); // Changed from order.user to order.userId
+        if (!wallet) {
+          console.log("Wallet not found for user:", order.userId);
+          return res
+            .status(404)
+            .json({ success: false, message: "Wallet not农民found for the user." });
+        }
+
+        // Update wallet balance and history
+        await Wallet.updateOne(
+          { user: order.userId }, // Changed from order.user to order.userId
+          {
+            $inc: { balance: itemTotal },
+            $push: {
+              history: {
+                amount: itemTotal,
+                status: 'credit',
+                date: Date.now(),
+                description: `Refund for returned item ${itemId} in order ${orderId}`,
+              },
+            },
+          }
+        );
+        console.log(`Credited ${itemTotal} to wallet for user ${order.userId}`);
+      }
 
     } else if (action === "decline") {
       item.status = "Delivered"; // Revert back to delivered

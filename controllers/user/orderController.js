@@ -873,11 +873,16 @@ const cancelProductOrder = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
+
+
     // Find the order
     const findOrder = await Order.findById(orderId).populate('orderedItems.product');
     if (!findOrder) {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
+
+
+   
 
     // Find the specific item in orderedItems
     const item = findOrder.orderedItems.find(
@@ -906,10 +911,10 @@ const cancelProductOrder = async (req, res) => {
       // Update the Wallet model
       const wallet = await Wallet.findOne({ user: userId });
       if (!wallet) {
-        return res.status(404).json({
-          success: false,
-          message: 'Wallet not found for the user',
-        });
+          
+        const newWallet = new Wallet({user:userId})
+
+        await newWallet.save()
       }
 
       await Wallet.updateOne(
@@ -1530,3 +1535,7 @@ module.exports={
     retryPayment,
     handleFailedPayment
 }
+
+
+
+

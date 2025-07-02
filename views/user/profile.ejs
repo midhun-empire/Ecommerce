@@ -429,12 +429,17 @@
     </div>
     <div class="tab-pane fade <%= activeTab === 'orders' ? 'show active' : '' %>" id="orders" role="tabpanel" aria-labelledby="orders-tab">
       <!-- Orders content unchanged -->
-  <% function getOrderStatus(orderedItems) {
+<% function getOrderStatus(orderedItems) {
   if (!orderedItems || orderedItems.length === 0) {
     return 'Unknown';
   }
-  const statusOrder = ['pending', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled', 'failed', 'returned'];
-  const statuses = orderedItems.map(item => (item.status || 'pending').toLowerCase());
+  const statusOrder = ['pending', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled', 'failed', 'return requested', 'returned'];
+  const statuses = orderedItems.map(item => (item.status || 'Pending').toLowerCase());
+
+  // Check if any item is return requested
+  if (statuses.includes('return requested')) {
+    return 'Return Requested';
+  }
 
   // Check if any item is returned
   if (statuses.includes('returned')) {
