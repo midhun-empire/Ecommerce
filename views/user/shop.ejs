@@ -472,94 +472,108 @@ a {
 </style>
 
 <div class="main-container">
-    <section class="shop-page container">
-        <div class="shop-topbar">
-            <div class="search-bar">
-                <form action="/search" method="POST" class="search-form">
-                    <input type="text" name="query" placeholder="Search items..." class="search-input" aria-label="Search products" />
-                    <button type="submit" class="search-button">Search</button>
-                </form>
-                <a href="/shop" class="clear-search-link">
-                    <button type="button" class="clear-search-btn" aria-label="Clear search">Clear</button>
-                </a>
-            </div>
+  <section class="shop-page container">
+    <div class="shop-topbar">
+      <div class="search-bar">
+        <form action="/search" method="POST" class="search-form" id="search-form">
+          <input type="text" name="query" placeholder="Search items..." class="search-input" aria-label="Search products" value="<%= query || '' %>" />
+          <input type="hidden" name="category" value="<%= selectedCategory || '' %>">
+          <input type="hidden" name="brand" value="<%= selectedBrand || '' %>">
+          <input type="hidden" name="gt" value="<%= gt || '' %>">
+          <input type="hidden" name="lt" value="<%= lt || '' %>">
+          <input type="hidden" name="sort" value="<%= sort || '' %>">
+          <button type="submit" class="search-button">Search</button>
+        </form>
+        <a href="/shop" class="clear-search-link">
+          <button type="button" class="clear-search-btn" aria-label="Clear search">Clear</button>
+        </a>
+      </div>
+    </div>
+
+    <div class="product-list-container">
+      <aside class="sidebar">
+        <div class="filter-section mt-4">
+          <div class="filter-title">Categories</div>
+          <div class="category-brand-container">
+            <ul>
+              <% for(let i=0; i<category.length; i++) { %>
+                <li class="filter-item">
+                  <a href="/filter?category=<%= encodeURIComponent(category[i]._id) %><%= queryString ? '&' + queryString : '' %>"><%= category[i].name %></a>
+                </li>
+              <% } %>
+            </ul>
+          </div>
         </div>
-  
-        <div class="product-list-container">
-            <aside class="sidebar">
-                <div class="filter-section mt-4">
-                    <div class="filter-title">Categories</div>
-                    <div class="category-brand-container">
-                        <ul>
-                            <% for(let i=0; i<category.length; i++) { %>
-                                <li class="filter-item">
-                                    <a href="/filter?category=<%= category[i]._id %>"><%= category[i].name %></a>
-                                </li>
-                            <% } %>
-                        </ul>
-                    </div>
-                </div>
-                <div class="filter-section">
-                    <div class="filter-title">Brands</div>
-                    <div class="category-brand-container">
-                        <ul>
-                            <% for(let i=0; i<brand.length; i++) { %>
-                                <li class="filter-item">
-                                    <a href="/filter?brand=<%= brand[i]._id %>"><%= brand[i].brandname %></a>
-                                </li>
-                            <% } %>
-                        </ul>
-                    </div>
-                </div>
-                <div class="price-filter mb-4">
-                    <div class="filter-title">Filter by Price</div>
-                    <form id="price-filter-form">
-                        <div class="price-options">
-                            <a href="/filterPrice?gt=0<=5000"><button type="button" class="price-button">Under ₹5000</button></a>
-                            <a href="/filterPrice?gt=5000<=10000"><button type="button" class="price-button">₹5000 - ₹10000</button></a>
-                            <a href="/filterPrice?gt=10000<=15000"><button type="button" class="price-button">₹10000- ₹15000</button></a>
-                            <a href="/filterPrice?gt=15000<=100000"><button type="button" class="price-button">Above ₹15000</button></a>
-                        </div>
-                    </form>
-                    <div class="filter-section mt-20">
-                        <div class="filter-title">Sort By</div>
-                        <form id="sort-form" action="/sort" method="GET">
-                            <select name="sort" class="form-control" onchange="document.getElementById('sort-form').submit()" aria-label="Sort products">
-                                <option value="">-- Select --</option>
-                                <option value="price-asc">Price: Low to High</option>
-                                <option value="price-desc">Price: High to Low</option>
-                                <option value="name-asc">Name: A to Z</option>
-                                <option value="name-desc">Name: Z to A</option>
-                            </select>
-                        </form>
-                        <div style="margin-top: 10px;">
-                            <a href="/shop">
-                                <button type="button" class="price-button" style="background-color: #000000; color: white;">Reset Filters</button>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </aside>
-            <main class="product-grid">
-    <% for(let i = 0; i < products.length; i++) { %> 
-        <div class="product-card">
-            <span class="wishlist-btn" onclick="addToWishlist('<%= products[i]._id %>')" aria-label="Add to wishlist">❤️</span>
-            <a href="/productDetails/<%= products[i]._id %>">
+        <div class="filter-section">
+          <div class="filter-title">Brands</div>
+          <div class="category-brand-container">
+            <ul>
+              <% for(let i=0; i<brand.length; i++) { %>
+                <li class="filter-item">
+                  <a href="/filter?brand=<%= encodeURIComponent(brand[i]._id) %><%= queryString ? '&' + queryString : '' %>"><%= brand[i].brandname %></a>
+                </li>
+              <% } %>
+            </ul>
+          </div>
+        </div>
+        <div class="price-filter mb-4">
+          <div class="filter-title">Filter by Price</div>
+          <form id="price-filter-form">
+            <div class="price-options">
+              <a href="/filterPrice?gt=0&<=5000<%= queryString ? '&' + queryString : '' %>"><button type="button" class="price-button">Under ₹5000</button></a>
+              <a href="/filterPrice?gt=5000&<=10000<%= queryString ? '&' + queryString : '' %>"><button type="button" class="price-button">₹5000 - ₹10000</button></a>
+              <a href="/filterPrice?gt=10000&<=15000<%= queryString ? '&' + queryString : '' %>"><button type="button" class="price-button">₹10000 - ₹15000</button></a>
+              <a href="/filterPrice?gt=15000&<=100000<%= queryString ? '&' + queryString : '' %>"><button type="button" class="price-button">Above ₹15000</button></a>
+            </div>
+          </form>
+          <div class="filter-section mt-20">
+            <div class="filter-title">Sort By</div>
+            <form id="sort-form" action="/sort" method="GET">
+              <input type="hidden" name="query" value="<%= encodeURIComponent(query || '') %>">
+              <input type="hidden" name="category" value="<%= encodeURIComponent(selectedCategory || '') %>">
+              <input type="hidden" name="brand" value="<%= encodeURIComponent(selectedBrand || '') %>">
+              <input type="hidden" name="gt" value="<%= encodeURIComponent(gt || '') %>">
+              <input type="hidden" name="lt" value="<%= encodeURIComponent(lt || '') %>">
+              <select name="sort" class="form-control" onchange="this.form.submit()" aria-label="Sort products">
+                <option value="" <%= !sort ? 'selected' : '' %>>-- Select --</option>
+                <option value="price-asc" <%= sort === 'price-asc' ? 'selected' : '' %>>Price: Low to High</option>
+                <option value="price-desc" <%= sort === 'price-desc' ? 'selected' : '' %>>Price: High to Low</option>
+                <option value="name-asc" <%= sort === 'name-asc' ? 'selected' : '' %>>Name: A to Z</option>
+                <option value="name-desc" <%= sort === 'name-desc' ? 'selected' : '' %>>Name: Z to A</option>
+              </select>
+            </form>
+            <div style="margin-top: 10px;">
+              <a href="/shop">
+                <button type="button" class="price-button" style="background-color: #000000; color: white;">Reset Filters</button>
+              </a>
+            </div>
+          </div>
+        </div>
+      </aside>
+      <main class="product-grid">
+        <% if (products.length === 0) { %>
+          <p style="text-align: center; color: #666;">No products found matching your criteria.</p>
+        <% } else { %>
+          <% for(let i = 0; i < products.length; i++) { %> 
+            <div class="product-card">
+              <span class="wishlist-btn" onclick="addToWishlist('<%= products[i]._id %>')" aria-label="Add to wishlist">❤️</span>
+              <a href="/productDetails/<%= products[i]._id %>">
                 <img src="/uploads/re-image/<%= products[i].productImage[0] %>" alt="<%= products[i].productName %>" />
                 <h4><%= products[i].productName %></h4>
                 <p>Brand: <%= products[i].brand.brandname %></p>
                 <p>Price: ₹<%= products[i].salePrice.toLocaleString('en-IN') %> <span class="text-muted"><strike>₹<%= products[i].regularPrice.toLocaleString('en-IN') %></strike></span></p>
-            </a>
-            <% if (products[i].quantity > 0) { %>
+              </a>
+              <% if (products[i].quantity > 0) { %>
                 <button class="add-to-cart-btn" onclick="handleAddToCart('<%= products[i]._id %>')">Add to Cart</button>
-            <% } else { %>
+              <% } else { %>
                 <button class="out-of-stock-btn" disabled>Out of Stock</button>
-            <% } %>
-        </div>
-    <% } %>
-</main>
-        </div>
-    </section>
+              <% } %>
+            </div>
+          <% } %>
+        <% } %>
+      </main>
+    </div>
+  </section>
 </div>
 
 <div class="pagination">

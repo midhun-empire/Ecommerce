@@ -1267,128 +1267,233 @@
 
     <script>
   
-    document.addEventListener('DOMContentLoaded', function() {
-        const mainImage = document.querySelector('.product-image-slider img');
-        const thumbnails = document.querySelectorAll('.slider-nav-thumbnails img');
-        const imageContainer = document.querySelector('.product-image-container');
+    document.addEventListener('DOMContentLoaded', function () {
+    const mainImage = document.querySelector('.product-image-slider img');
+    const thumbnails = document.querySelectorAll('.slider-nav-thumbnails img');
+    const imageContainer = document.querySelector('.product-image-container');
+    const wishlistBtn = document.querySelector('.action-btn'); // Wishlist button
+    const addToCartBtn = document.querySelector('.button-add-to-cart'); // Add to Cart button
 
-        if (thumbnails.length > 0) {
-            thumbnails[0].classList.add('active');
-        }
-
-        thumbnails.forEach(thumbnail => {
-            thumbnail.addEventListener('click', function() {
-                mainImage.src = this.src;
-                
-                thumbnails.forEach(thumb => thumb.classList.remove('active'));
-                this.classList.add('active');
-
-                mainImage.style.transform = 'scale(1)';
-                mainImage.style.transformOrigin = 'center center';
-            });
-        });
-
-        if (imageContainer) {
-            let isZoomed = false;
-
-            imageContainer.addEventListener('mousemove', function(e) {
-                if (!isZoomed) return;
-
-                const { left, top, width, height } = this.getBoundingClientRect();
-                const x = (e.clientX - left) / width;
-                const y = (e.clientY - top) / height;
-
-                mainImage.style.transformOrigin = `${x * 100}% ${y * 100}%`;
-            });
-
-            imageContainer.addEventListener('mouseenter', function() {
-                isZoomed = true;
-                mainImage.style.transform = 'scale(1.5)';
-            });
-
-            imageContainer.addEventListener('mouseleave', function() {
-                isZoomed = false;
-                mainImage.style.transform = 'scale(1)';
-                mainImage.style.transformOrigin = 'center center';
-            });
-
-            let touchTimeout;
-            imageContainer.addEventListener('touchstart', function() {
-                touchTimeout = setTimeout(() => {
-                    isZoomed = !isZoomed;
-                    mainImage.style.transform = isZoomed ? 'scale(1.5)' : 'scale(1)';
-                }, 200);
-            });
-
-            imageContainer.addEventListener('touchend', function() {
-                clearTimeout(touchTimeout);
-            });
-
-            imageContainer.addEventListener('touchmove', function(e) {
-                if (!isZoomed) return;
-                
-                const touch = e.touches[0];
-                const { left, top, width, height } = this.getBoundingClientRect();
-                const x = (touch.clientX - left) / width;
-                const y = (touch.clientY - top) / height;
-
-                mainImage.style.transformOrigin = `${x * 100}% ${y * 100}%`;
-                e.preventDefault(); 
-            });
-        }
-
-     });
-     
-     
-     function handleAddToCart(productId) {
-  $.ajax({
-    url: '/addToCart',
-    method: 'POST',
-    data: {
-      productId: productId,
-      quantity: 1
-    },
-    success: function (response) {
-      Swal.fire({
-        icon: 'success',
-        title: 'Added to Cart!',
-        text: 'Product has been added to your cart.',
-        timer: 2000,
-        showConfirmButton: false
-      });
-    },
-    error: function (xhr) {
-      if (xhr.status === 401) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Login Required',
-          text: 'Please login to add items to your cart.',
-          confirmButtonText: 'Login'
-        }).then(() => {
-          window.location.href = '/login';
-        });
-      } else if (xhr.status === 400) {
-        Swal.fire({
-          icon: 'error',
-          title: 'Cannot Add to Cart',
-          text: xhr.responseJSON.message || 'Cannot add item to cart.',
-          confirmButtonText: 'OK'
-        });
-      } else {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Something went wrong. Please try again later.',
-          confirmButtonText: 'OK'
-        });
-      }
+    // Image gallery functionality
+    if (thumbnails.length > 0) {
+      thumbnails[0].classList.add('active');
     }
+
+    thumbnails.forEach(thumbnail => {
+      thumbnail.addEventListener('click', function () {
+        mainImage.src = this.src;
+        thumbnails.forEach(thumb => thumb.classList.remove('active'));
+        this.classList.add('active');
+        mainImage.style.transform = 'scale(1)';
+        mainImage.style.transformOrigin = 'center center';
+      });
+    });
+
+    if (imageContainer) {
+      let isZoomed = false;
+
+      imageContainer.addEventListener('mousemove', function (e) {
+        if (!isZoomed) return;
+
+        const { left, top, width, height } = this.getBoundingClientRect();
+        const x = (e.clientX - left) / width;
+        const y = (e.clientY - top) / height;
+
+        mainImage.style.transformOrigin = `${x * 100}% ${y * 100}%`;
+      });
+
+      imageContainer.addEventListener('mouseenter', function () {
+        isZoomed = true;
+        mainImage.style.transform = 'scale(1.5)';
+      });
+
+      imageContainer.addEventListener('mouseleave', function () {
+        isZoomed = false;
+        mainImage.style.transform = 'scale(1)';
+        mainImage.style.transformOrigin = 'center center';
+      });
+
+      let touchTimeout;
+      imageContainer.addEventListener('touchstart', function () {
+        touchTimeout = setTimeout(() => {
+          isZoomed = !isZoomed;
+          mainImage.style.transform = isZoomed ? 'scale(1.5)' : 'scale(1)';
+        }, 200);
+      });
+
+      imageContainer.addEventListener('touchend', function () {
+        clearTimeout(touchTimeout);
+      });
+
+      imageContainer.addEventListener('touchmove', function (e) {
+        if (!isZoomed) return;
+
+        const touch = e.touches[0];
+        const { left, top, width, height } = this.getBoundingClientRect();
+        const x = (touch.clientX - left) / width;
+        const y = (touch.clientY - top) / height;
+
+        mainImage.style.transformOrigin = `${x * 100}% ${y * 100}%`;
+        e.preventDefault();
+      });
+    }
+
+    // Add to Cart function
+    function handleAddToCart(productId) {
+      if (addToCartBtn) {
+        addToCartBtn.disabled = true; // Disable button during request
+      }
+
+      $.ajax({
+        url: '/addToCart',
+        method: 'POST',
+        data: {
+          productId: productId,
+          quantity: 1
+        },
+        success: function (response) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Added to Cart!',
+            text: 'Product has been added to your cart.',
+            timer: 2000,
+            showConfirmButton: false
+          });
+        },
+        error: function (xhr) {
+          if (xhr.status === 401) {
+            Swal.fire({
+              icon: 'warning',
+              title: 'Login Required',
+              text: 'Please login to add items to your cart.',
+              confirmButtonText: 'Login'
+            }).then(() => {
+              window.location.href = '/login';
+            });
+          } else if (xhr.status === 400) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Cannot Add to Cart',
+              text: xhr.responseJSON.message || 'Cannot add item to cart.',
+              confirmButtonText: 'OK'
+            });
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Something went wrong. Please try again later.',
+              confirmButtonText: 'OK'
+            });
+          }
+        },
+        complete: function () {
+          if (addToCartBtn) {
+            addToCartBtn.disabled = false; // Re-enable button
+          }
+        }
+      });
+    }
+
+    // Add to Wishlist function (with toggle functionality)
+    function addToWishlist(productId) {
+      if (!wishlistBtn) return;
+
+      wishlistBtn.disabled = true; // Disable button during request
+
+      $.ajax({
+        url: '/addToWishlist',
+        method: 'POST',
+        data: { productId: productId },
+        success: function (response) {
+          if (response.status) {
+            wishlistBtn.innerHTML = '<i class="fas fa-heart"></i>'; // Filled heart
+            wishlistBtn.classList.add('active');
+            Swal.fire({
+              title: 'Added to Wishlist',
+              text: 'The product has been added to your wishlist',
+              icon: 'success',
+              timer: 2000,
+              showConfirmButton: false
+            });
+          } else if (response.removed) {
+            wishlistBtn.innerHTML = '<i class="far fa-heart"></i>'; // Empty heart
+            wishlistBtn.classList.remove('active');
+            Swal.fire({
+              title: 'Removed from Wishlist',
+              text: 'The product has been removed from your wishlist',
+              icon: 'info',
+              timer: 2000,
+              showConfirmButton: false
+            });
+          } else {
+            Swal.fire({
+              title: 'Already in Wishlist',
+              text: response.message,
+              icon: 'info',
+              timer: 2000,
+              showConfirmButton: false
+            });
+          }
+        },
+        error: function (xhr) {
+          if (xhr.status === 401) {
+            Swal.fire({
+              icon: 'warning',
+              title: 'Login Required',
+              text: 'Please login to add items to your wishlist.',
+              confirmButtonText: 'Login'
+            }).then(() => {
+              window.location.href = '/login';
+            });
+          } else {
+            Swal.fire({
+              title: 'Error',
+              text: 'Error while adding product to wishlist',
+              icon: 'error',
+              timer: 2000,
+              showConfirmButton: false
+            });
+          }
+        },
+        complete: function () {
+          wishlistBtn.disabled = false; // Re-enable button
+        }
+      });
+    }
+
+    // Check Wishlist Status on page load
+    function checkWishlistStatus(productId) {
+      if (!wishlistBtn) return;
+
+      $.ajax({
+        url: '/checkWishlistStatus',
+        method: 'POST',
+        data: { productId: productId },
+        success: function (response) {
+          if (response.isInWishlist) {
+            wishlistBtn.innerHTML = '<i class="fas fa-heart"></i>'; // Filled heart
+            wishlistBtn.classList.add('active');
+          } else {
+            wishlistBtn.innerHTML = '<i class="far fa-heart"></i>'; // Empty heart
+            wishlistBtn.classList.remove('active');
+          }
+        },
+        error: function () {
+          console.error('Failed to check wishlist status');
+          wishlistBtn.innerHTML = '<i class="far fa-heart"></i>'; // Default to empty heart
+          wishlistBtn.classList.remove('active');
+        }
+      });
+    }
+
+    // Expose functions to global scope for onclick
+    window.addToWishlist = addToWishlist;
+    window.handleAddToCart = handleAddToCart;
+
+    // Initialize wishlist status on page load
+    checkWishlistStatus('<%= product._id %>');
   });
-}
 
-
-  
- </script>
 </script>
   
 <%- include("../../views/partials/user/footer") %>

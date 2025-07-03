@@ -55,53 +55,117 @@ const loadHomepage = async (req, res) => {
 const loadShopPage = async (req, res, next) => {
   try {
     const user = req.session.user;
-    const userData = await User.findById(user);
-    const categories = await Category.find({ isListed: true });
+    const userData = user ? await User.findById(user._id) : null;
+    const categories = await Category.find({ isListed: true }).lean();
     const categoryIds = categories.map(c => c._id.toString());
+    const brands = await Brand.find({ isBlocked: false }).lean();
 
-    const page = parseInt(req.query.page) || 1;
+    // Extract query parameters
+    const { page = 1, query, category, brand, gt, lt, sort } = req.query;
     const limit = 6;
-    const skip = (page - 1) * limit;
+    const skip = (parseInt(page) - 1) * limit;
 
-    // Clear session-based search/filter data
-    delete req.session.filterProduct;
-    delete req.session.filteredProducts;
-
-    const products = await Product.find({
+    // Build the product query
+    const productQuery = {
       isBlocked: false,
       category: { $in: categoryIds },
-    })
+      quantity: { $gt: 0 },
+    };
+
+    // Apply search filter
+    if (query && query.trim()) {
+      productQuery.productName = { $regex: query, $options: 'i' };
+    }
+
+    // Apply category filter with validation
+    if (category && ObjectId.isValid(category)) {
+      productQuery.category = category;
+    }
+
+    // Apply brand filter with validation
+    if (brand && ObjectId.isValid(brand)) {
+      productQuery.brand = brand;
+    }
+
+    // Apply price filter
+    if (gt || lt) {
+      productQuery.salePrice = {};
+      if (gt && !isNaN(parseInt(gt))) productQuery.salePrice.$gt = parseInt(gt);
+      if (lt && !isNaN(parseInt(lt))) productQuery.salePrice.$lt = parseInt(lt);
+    }
+
+    // Apply sorting
+    let sortCriteria = {};
+    switch (sort) {
+      case 'price-asc':
+        sortCriteria = { salePrice: 1 };
+        break;
+      case 'price-desc':
+        sortCriteria = { salePrice: -1 };
+        break;
+      case 'name-asc':
+        sortCriteria = { productName: 1 };
+        break;
+      case 'name-desc':
+        sortCriteria = { productName: -1 };
+        break;
+      default:
+        sortCriteria = { createdAt: -1 }; // Default sort
+    }
+
+    // Fetch products
+    const products = await Product.find(productQuery)
       .populate('brand')
       .populate('category')
-      .sort({ createdAt: -1 })
+      .sort(sortCriteria)
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
-    const totalProducts = await Product.countDocuments({
-      isBlocked: false,
-      category: { $in: categoryIds },
-    });
-
+    const totalProducts = await Product.countDocuments(productQuery);
     const totalPages = Math.ceil(totalProducts / limit);
-    const brands = await Brand.find({ isBlocked: false });
 
-    // Construct queryString for pagination (if needed for other filters)
+    // Build query string for pagination
     const queryParams = { ...req.query };
     delete queryParams.page;
     const queryString = new URLSearchParams(queryParams).toString();
 
+    // Save search history if user is logged in
+    if (userData && (category || brand || query)) {
+      const searchEntry = {
+        category: category || null,
+        brand: brand ? (await Brand.findById(brand))?.brandname : null,
+        searchedOn: new Date(),
+      };
+      userData.searchHistory.push(searchEntry);
+      await userData.save();
+    }
+
+    // Debugging logs
+    console.log('Query Parameters:', req.query);
+    console.log('Product Query:', productQuery);
+    console.log('Products Found:', products.length);
+    console.log('Variables passed to template:', { query, selectedCategory: category, selectedBrand: brand, gt, lt, sort });
+
     return res.render('shop', {
       currentPage: 'shop',
       user: userData,
-      products: products,
+      products,
       brand: brands,
-      totalProducts: totalProducts,
-      totalPages: totalPages,
+      totalProducts,
+      totalPages,
       category: categories,
-      currentPage: page,
-      queryString: queryString,
+      currentPage: parseInt(page),
+      queryString,
+      query: query || '',
+      selectedCategory: category || null,
+      selectedBrand: brand || null,
+      sort: sort || '',
+      gt: gt || '', // Ensure gt is passed
+      lt: lt || '', // Ensure lt is passed
     });
   } catch (error) {
+    console.error('Error in loadShopPage:', error);
     error.statusCode = 500;
     error.message = 'Error loading shop page';
     next(error);

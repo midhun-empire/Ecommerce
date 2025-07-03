@@ -28,10 +28,29 @@ router.get("/pageNotFound", userController.pageNotFound);
 router.get("/shop",userController.loadShopPage);
 router.get("/about", userController.loadAboutPage);
 router.get("/contact", userController.loadContactPage);
-router.get('/filter',userController.filterProduct)
-router.get('/filterPrice',userController.filterByPrice)
-router.post('/search',userController.searchProducts)
-router.get('/sort',userController.sort)
+router.get('/filter', (req, res) => {
+  const queryParams = { ...req.query };
+  res.redirect(`/shop?${new URLSearchParams(queryParams).toString()}`);
+});
+
+router.get('/filterPrice', (req, res) => {
+  const queryParams = { ...req.query };
+  res.redirect(`/shop?${new URLSearchParams(queryParams).toString()}`);
+});
+
+router.post('/search', (req, res) => {
+  const query = req.body.query || req.query.query;
+  if (!query || query.trim() === '') {
+    return res.redirect('/shop');
+  }
+  const queryParams = { ...req.query, query };
+  res.redirect(`/shop?${new URLSearchParams(queryParams).toString()}`);
+});
+
+router.get('/sort', (req, res) => {
+  const queryParams = { ...req.query };
+  res.redirect(`/shop?${new URLSearchParams(queryParams).toString()}`);
+});
 
 //product management
 
