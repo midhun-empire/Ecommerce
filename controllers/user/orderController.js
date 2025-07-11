@@ -562,7 +562,8 @@ const orderSuccessPage =async (req, res) => {
 
     // Fetch the order using the custom orderId field and userId
     const order = await Order.findOne({ orderId: orderId, userId })
-      .populate('address') // Assuming address is a reference
+      .populate('address')
+      .populate('orderedItems.product') // Assuming address is a reference
       .exec();
       console.log("Order:", order);
 
@@ -572,6 +573,7 @@ const orderSuccessPage =async (req, res) => {
 
     res.render('order-success', {
       currentPage:'order-success',
+      order,
       orderId: order.orderId,
       orderDate: order.createdAt.toLocaleDateString(),
       paymentMethod: order.paymentMethod,
@@ -805,12 +807,11 @@ const generateInvoice = async (req, res) => {
     const summaryX = 400;
     const totalPrice = Number(order.totalPrice) || 0;
     const discount = Number(order.discount) || 0;
-    const shipping = Number(order.shipping) || 0;
     const finalAmount = Number(order.finalAmount) || 0;
     console.log('Invoice Values:', {
       totalPrice,
       discount,
-      shipping,
+   
       finalAmount,
       rawShipping: order.shipping,
     });
@@ -825,10 +826,7 @@ const generateInvoice = async (req, res) => {
         .text(`-${discount.toString()}`, summaryX + 100, y, { align: 'right' });
     }
 
-    y += 20;
-    doc
-      .text('Shipping', summaryX, y)
-      .text(shipping.toString(), summaryX + 100, y, { align: 'right' });
+   
 
     y += 20;
     doc
@@ -836,12 +834,7 @@ const generateInvoice = async (req, res) => {
       .text('Grand Total', summaryX, y, { bold: true })
       .text(finalAmount.toString(), summaryX + 100, y, { align: 'right', bold: true });
 
-    doc
-      .fontSize(10)
-      .text('        Thank you for shopping with Brigton!', {
-        align: 'center',
-        y: 700,
-      });
+   
 
     doc.end();
   } catch (error) {
@@ -854,7 +847,7 @@ const generateInvoice = async (req, res) => {
 };
 
 
-const cancelProductOrder = async (req, res) => {
+const cancelProductOrder = async (req, res) => { 
   try {
     const userId = req.session.user;
     const { orderId, itemId, cancellationReason } = req.body;
@@ -906,8 +899,7 @@ const cancelProductOrder = async (req, res) => {
 
     // Handle refund for Razorpay or Wallet payment
     if (['razorpay', 'wallet'].includes(findOrder.paymentMethod.toLowerCase()) && item.status !== 'Cancelled') {
-      const itemTotal = item.price * item.quantity;
-
+      const itemTotal = findOrder.finalAmount * item.quantity;
       // Update the Wallet model
       const wallet = await Wallet.findOne({ user: userId });
       if (!wallet) {
@@ -918,7 +910,7 @@ const cancelProductOrder = async (req, res) => {
       }
 
       await Wallet.updateOne(
-        { user: userId },
+        { user: userId }, 
         {
           $inc: { balance: itemTotal },
           $push: {
@@ -937,25 +929,19 @@ const cancelProductOrder = async (req, res) => {
     item.status = 'Cancelled';
     item.cancellationReason = cancellationReason;
 
-    // Recalculate totalPrice and finalAmount
-    const itemTotal = item.price * item.quantity;
-    findOrder.totalPrice -= itemTotal;
-    findOrder.finalAmount = findOrder.totalPrice - findOrder.discount;
-
-    // Update overall order status and financial fields
+  
     const allItemsCancelledOrReturned = findOrder.orderedItems.every(
       (item) => item.status === 'Cancelled' || item.status === 'Return Requested'
     );
     if (allItemsCancelledOrReturned) {
       findOrder.status = 'Cancelled';
-      findOrder.totalPrice = 0;
-      findOrder.subtotal = 0;
-      findOrder.discount = 0;
-      findOrder.deliveryCharge = 0;
-      findOrder.finalAmount = 0;
+      
     } else if (findOrder.status === 'Cancelled') {
       findOrder.status = 'Pending';
     }
+
+
+   
 
     // Update product stock
     const product = await Product.findById(item.product);

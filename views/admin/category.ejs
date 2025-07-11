@@ -369,57 +369,66 @@
   }
 
 
-  async function addOffer(categoryId){
-    const {value : amount} = await Swal.fire({
-      title:'offer in percentage',
-      input:'number',
-      inputLabel:'percentage',
-      inputPlaceholder:'%',
-    inputAttributes: {
-    min: 1,
-    max: 100,
-    step: 1
-   },
-   showCancelButton: true,
-   confirmButtonText: 'Add Offer',
-   cancelButtonText: 'Cancel'
-    })
+    async function addOffer(categoryId) {
+    const {value: amount} = await Swal.fire({
+      title: 'Offer in percentage',
+      input: 'number',
+      inputLabel: 'Percentage',
+      inputPlaceholder: '%',
+      inputAttributes: {
+        min: 1,
+        max: 50,
+        step: 1
+      },
+      showCancelButton: true,
+      confirmButtonText: 'Add Offer',
+      cancelButtonText: 'Cancel',
+      inputValidator: (value) => {
+        if (!value) {
+          return 'Please enter a percentage!';
+        }
+        if (value <= 0) {
+          return 'Offer percentage cannot be negative or zero!';
+        }
+        if (value > 50) {
+          return 'Offer cannot exceed 50%!';
+        }
+      }
+    });
 
-    if(amount){
-      try{
-        const response = await fetch('/admin/addcategoryOffer',{
-          method:'POST',
-          headers:{
-            'content-type':'application/json', 
+    if (amount) {
+      try {
+        const response = await fetch('/admin/addcategoryOffer', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
           },
-          body:JSON.stringify({
-            percentage:amount,
-            categoryId:categoryId,
+          body: JSON.stringify({
+            percentage: amount,
+            categoryId: categoryId,
           }),
+        });
 
-        })
+        const data = await response.json();
 
-  const data = await response.json()
-
-  if(response.ok && data.status === true){
-    Swal.fire(
-      'Offer added',
-      'Offer has been added',
-      "success"
-    ).then(()=>{
-      location.reload()
-    })
-  }else{
-    Swal.fire('Failed',data.message || 'Adding offer failed','error')
-  }
-
-      }catch(error){
-             Swal.fire(
-              "Error",
-              "An error occured While adding the Offer",
-              "error"
-             );
-             console.log("Error adding offer",error)
+        if (response.ok && data.status === true) {
+          Swal.fire(
+            'Offer added',
+            'Offer has been added',
+            'success'
+          ).then(() => {
+            location.reload();
+          });
+        } else {
+          Swal.fire('Failed', data.message || 'Adding offer failed', 'error');
+        }
+      } catch (error) {
+        Swal.fire(
+          'Error',
+          'An error occurred while adding the offer',
+          'error'
+        );
+        console.log('Error adding offer', error);
       }
     }
   }

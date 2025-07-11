@@ -129,13 +129,13 @@ const getOrderDetailsPageAdmin = async (req, res) => {
       throw new Error("Order not found");
     }
 
-    let totalGrant = 0;
+    let subtotal = 0;
     findOrder.orderedItems.forEach((item) => {
-      totalGrant += item.price * item.quantity;
+      subtotal += item.price * item.quantity;
     });
 
     const totalPrice = findOrder.totalPrice;
-    const discount = totalGrant - totalPrice;
+    const discount = subtotal - totalPrice;
     const finalAmount = findOrder.finalAmount;
 
     // Check if any item has a return request and collect return reasons
@@ -149,12 +149,17 @@ const getOrderDetailsPageAdmin = async (req, res) => {
         reason: item.returnReason || "Not specified",
       }));
 
+      const shippingPrice = findOrder.totalPrice > 1000 ? 140 : 0;
+
+
     res.render("order-details-admin", {
       orders: findOrder,
       orderId: orderId,
       finalAmount: finalAmount,
       hasReturnRequest,
       returnReasons,
+      shippingPrice,
+      subtotal
     });
   } catch (error) {
     console.error("Error in getOrderDetailsPageAdmin:", error.message);
@@ -217,8 +222,7 @@ const handleReturn = async (req, res) => {
       const product = await Product.findById(productId);
       if (!product) {
         console.log("Product not found for ID:", productId);
-        return res
- and .status(404)
+        return res .status(404)
           .json({ success: false, message: "Product not found." });
       }
       console.log("Product found:", product.productName, "Current quantity:", product.quantity);
@@ -228,15 +232,14 @@ const handleReturn = async (req, res) => {
 
       // Handle refund for Razorpay or Wallet payment
       if (['razorpay', 'wallet'].includes(order.paymentMethod.toLowerCase())) {
-        const itemTotal = item.price * item.quantity;
+        const itemTotal = order.finalAmount* item.quantity;
 
         // Find the user's wallet
         const wallet = await Wallet.findOne({ user: order.userId }); // Changed from order.user to order.userId
         if (!wallet) {
-          console.log("Wallet not found for user:", order.userId);
-          return res
-            .status(404)
-            .json({ success: false, message: "Wallet not农民found for the user." });
+         const newWallet = new Wallet({user: order.userId})
+
+         await newWallet.save()
         }
 
         // Update wallet balance and history

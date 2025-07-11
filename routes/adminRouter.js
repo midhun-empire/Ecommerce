@@ -61,6 +61,21 @@ router.post('/deleteImage',adminAuth,productController.deleteSingleImage)
 router.get('/deleteProduct',adminAuth,productController.deleteProduct)
 router.post('/addProductsOffer',adminAuth,productController.addProductsOffer)
 router.post('/removeProductsOffer',adminAuth,productController.removeProductOffer)
+router.get('/checkProductName/:name/:id', async (req, res) => {
+  try {
+    const { name, id } = req.params;
+
+    const existingProduct = await Product.findOne({
+      productName: { $regex: new RegExp(`^${name}$`, 'i') },
+      _id: { $ne: id } // Exclude the current product being edited
+    });
+
+    res.json({ exists: !!existingProduct });
+  } catch (error) {
+    console.error('Error checking product name:', error);
+    res.status(500).json({ exists: false, message: 'Server error' });
+  }
+});
 
 //order management 
 

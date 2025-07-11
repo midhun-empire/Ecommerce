@@ -199,7 +199,7 @@ body {
                         <th>Product</th>
                         <th>Quantity</th>
                         <th>Price</th>
-                        <th>Subtotal</th>
+                        <th>Total</th>
                         <th>Order Status</th>
                         <th>Return Request</th>
                       </tr>
@@ -212,18 +212,26 @@ body {
                           </td>
                           <td><%= item.quantity %></td>
                           <td><%= item.price.toFixed(2) %></td>
-                          <td><%= (item.price * item.quantity).toFixed(2) %></td>
-                          <td>
-                            <select class="form-select product-status-select"
-                                    data-order-id="<%= orders._id %>"
-                                    data-item-id="<%= item._id %>">
-                              <option value="pending" <%= item.status === 'pending' ? 'selected' : '' %>>Pending</option>
-                              <option value="shipped" <%= item.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
-                              <option value="out_for_delivery" <%= item.status === 'out_for_delivery' ? 'selected' : '' %>>Out for Delivery</option>
-                              <option value="delivered" <%= item.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
-                              <option value="cancelled" <%= item.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
-                            </select>
-                          </td>
+                          <td><%=  orders.totalPrice.toFixed(2) %></td>
+                        <td>
+  <% if (item.status === 'Return Requested' || item.status === 'Returned' || item.status === 'delivered') { %>
+    <!-- Show non-editable dropdown-like display -->
+    <select class="form-select" disabled>
+      <option selected><%= item.status %></option>
+    </select>
+  <% } else { %>
+    <!-- Show editable dropdown -->
+    <select class="form-select product-status-select"
+            data-order-id="<%= orders._id %>"
+            data-item-id="<%= item._id %>">
+      <option value="pending" <%= item.status === 'pending' ? 'selected' : '' %>>Pending</option>
+      <option value="shipped" <%= item.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+      <option value="out_for_delivery" <%= item.status === 'out_for_delivery' ? 'selected' : '' %>>Out for Delivery</option>
+      <option value="delivered" <%= item.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+      <option value="cancelled" <%= item.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+    </select>
+  <% } %>
+</td>
                           <td>
                             <% if (item.status === 'Return Requested') { %>
                               <div>
@@ -244,32 +252,37 @@ body {
             </div>
           </div>
   
-          <div class="col-md-4">
+          <div class="col-md-4"> 
             <div class="card">
               <div class="card-header">
                 <h4>Order Summary</h4>
-              </div>
-              <div class="card-body">
-                <div class="mb-3">
-                  <strong>Subtotal:</strong>
-                  <span class="float-end"><%= (finalAmount + (orders.discount || 0)).toFixed(2) %></span>
-                </div>
-                <% if (orders.discount > 0) { %>
-                  <div class="mb-3">
-                    <strong>Discount:</strong>
-                    <span class="float-end text-success">-<%= orders.discount.toFixed(2) %></span>
-                  </div>
-                <% } %>
-                <div class="mb-3">
-                  <strong>Shipping:</strong>
-                  <span class="float-end"><%= orders.shippingPrice ? orders.shippingPrice.toFixed(2) : '0.00' %></span>
-                </div>
-                <hr>
-                <div class="mb-3">
-                  <h5>Total Amount:</h5>
-                  <h4 class="float-end text-primary"><%= finalAmount.toFixed(2) %></h4>
-                </div>
-              </div>
+              </div> 
+             <div class="card-body">
+  <div class="mb-3">
+    <strong>Subtotal:</strong>
+    <span class="float-end"><%= subtotal.toFixed(2) %></span>
+  </div>
+
+  <% if (orders.discount > 0) { %>
+    <div class="mb-3">
+      <strong>Discount:</strong>
+      <span class="float-end text-success">-<%= orders.discount.toFixed(2) %></span>
+    </div>
+  <% } %>
+
+  <div class="mb-3">
+    <strong>Shipping:</strong>
+    <span class="float-end"><%= shippingPrice.toFixed(2) %></span>
+  </div>
+
+  <hr>
+  <div class="mb-3">
+    <h5>Total Amount:</h5>
+    <h4 class="float-end text-primary"><%= finalAmount.toFixed(2) %></h4>
+  </div>
+</div>
+
+
             </div>
   
             <div class="card mt-3">

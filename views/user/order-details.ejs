@@ -500,40 +500,59 @@
                     </div>
                 </div>
     
-                <!-- Order Summary -->
-                <div class="col-md-5">
-                    <div class="card mb-4">
-                        <div class="card-header bg-white py-3">
-                            <h5 class="mb-0">Order Summary</h5>
-                        </div>
-                        <div class="card-body">
-                            <p class="mb-2"><strong>Order Date:</strong> <%= order.createdAt.toLocaleDateString() %></p>
-                            <p class="mb-2"><strong>Payment Method:</strong> <%= order.paymentMethod %></p>
-                            <hr>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Subtotal:</span>
-                                <span>₹<%= order.totalPrice %></span>
-                            </div>
-                            <% if(order.discount > 0) { %>
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Discount:</span>
-                                    <span class="text-success">-₹<%= order.discount %></span>
-                                </div>
-                            <% } %>
-                            <div class="d-flex justify-content-between fw-bold">
-                                <span>Total:</span>
-                                <span>₹<%= order.finalAmount %></span>
-                            </div>
-    
-                            <!-- Invoice -->
-                            <div class="mt-4">
-                                <a href="/download-invoice/<%= order._id %>" class="btn btn-primary w-100">
-                                    <i class="bi bi-download me-2"></i>Download Invoice
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+               <!-- Order Summary -->
+<div class="col-md-5">
+    <div class="card mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Order Summary</h5>
+        </div>
+        <div class="card-body">
+            <p class="mb-2"><strong>Order Date:</strong> <%= order.createdAt.toLocaleDateString() %></p>
+            <p class="mb-2"><strong>Payment Method:</strong> <%= order.paymentMethod %></p>
+            <hr>
+            <% 
+                // Calculate subtotal as sum of item.price * item.quantity
+                const subtotal = order.orderedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                const deliveryCharge = subtotal > 1000 ? 140 : 0;
+                const calculatedTotal = subtotal - (order.discount || 0) + deliveryCharge;
+            %>
+            <div class="d-flex justify-content-between mb-2">
+                <span>Subtotal:</span>
+                <span>₹<%= subtotal %></span>
+            </div>
+            <% if (order.discount > 0) { %>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Discount:</span>
+                    <span class="text-success">-₹<%= order.discount %></span>
                 </div>
+            <% } %>
+            <% if (deliveryCharge > 0) { %>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Delivery Charge:</span>
+                    <span>₹<%= deliveryCharge %></span>
+                </div>
+            <% } %>
+            <div class="d-flex justify-content-between fw-bold">
+                <span>Total:</span>
+                <span>₹<%= order.finalAmount %></span>
+            </div>
+
+            <!-- Invoice -->
+            <div class="mt-4">
+                <% 
+                    const allItemsCancelledOrReturned = order.orderedItems.every(item => 
+                        item.status.toLowerCase() === 'cancelled' || item.status.toLowerCase() === 'returned'
+                    );
+                %>
+                <a href="/download-invoice/<%= order._id %>" 
+                   class="btn btn-primary w-100 <%= allItemsCancelledOrReturned ? 'disabled' : '' %>" 
+                   <%= allItemsCancelledOrReturned ? 'disabled' : '' %>>
+                    <i class="bi bi-download me-2"></i>Download Invoice
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
             </div>
     
             </div>

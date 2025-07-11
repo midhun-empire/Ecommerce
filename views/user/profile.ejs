@@ -491,7 +491,7 @@
                   <% orders.forEach(order => { %>
                     <% const displayStatus = getOrderStatus(order.orderedItems); %>
                     <tr>
-                      <td><%= order.orderId %></td>
+                      <td><%= order.displayOrderId %></td>
                    <td>
   <span class="<%= displayStatus === 'Delivered' ? 'text-success' : (displayStatus === 'Cancelled' || displayStatus === 'Failed' || displayStatus === 'Returned') ? 'text-danger' : 'text-warning' %>">
     <%= displayStatus %>

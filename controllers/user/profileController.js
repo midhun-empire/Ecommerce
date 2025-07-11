@@ -248,7 +248,15 @@ const loadProfilePage = async (req, res) => {
       .skip(orderSkip)
       .limit(orderLimit);
 
-    console.log('Orders from loadProfilePage:', orders.length, 'Page:', orderPage);
+    // Calculate displayOrderId starting from #101
+    const formattedOrders = orders.map((order, index) => {
+      const orderNumber = totalOrders - orderSkip - index; // Calculate position from total
+      const displayOrderId = `#${Math.max(101, 101 + orderNumber - 1)}`; // Ensure starts at #101
+      return {
+        ...order.toObject(), // Spread original order data
+        displayOrderId: displayOrderId // Add displayOrderId
+      };
+    });
 
     // Pagination parameters for wallet history
     const walletPage = Math.max(1, parseInt(req.query.walletPage) || 1); // Validate page
@@ -274,7 +282,7 @@ const loadProfilePage = async (req, res) => {
       user: userData,
       currentPage: 'profile',
       userAddress: addressData,
-      orders,
+      orders: formattedOrders, // Use formatted orders
       currentPageNum: orderPage,
       totalPages: totalOrderPages,
       totalOrders,
@@ -644,6 +652,7 @@ const postAddAddress = async (req, res) => {
 
     // Calculate total amount for each order
     const formattedOrders = orders.map(order => {
+      
       return {
         _id: order._id,
         orderId: order.orderId,

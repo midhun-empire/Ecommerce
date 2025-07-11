@@ -56,7 +56,7 @@
                            </div>
                            <div class="col-lg-4 mb-4">
                                <label class="form-label">Brand</label>
-                               <select name="brand">
+                               <select name="brand"  class="form-select border" style="width: 150px;">
                                 <% brand.forEach(brand => { %>
                                   <option value="<%= brand._id %>" <%= product.brand.equals(brand._id) ? 'selected' : '' %>><%= brand.brandname %></option>
                                 <% }) %>
@@ -143,7 +143,7 @@
                            class="fa-thin fa-x"></i>
                     </td>
                 </div>
-            </div>
+            </div> 
         </div>
     <% } %>
     <div class="card-body">
@@ -221,239 +221,233 @@
    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs/dist/cropper.min.css">
    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
 
 
 <%- include("../../views/partials/admin/footer") %>
 
 
 <script>
-    let deletedImages = []; // Array to track images marked for deletion
-    
-    function markImageForDeletion(imageId, element) {
-        // Add image ID to deletedImages array if not already present
-        if (!deletedImages.includes(imageId)) {
-            deletedImages.push(imageId);
-        }
-        // Remove the image's parent row from the DOM
-        element.closest('.col-md-12').remove();
+let deletedImages = [];
+
+// Store initial existing images count on page load
+document.addEventListener('DOMContentLoaded', () => {
+    window.initialExistingImages = document.querySelectorAll('.existing-image').length;
+    console.log('Initial Existing Images:', window.initialExistingImages);
+});
+
+function markImageForDeletion(imageId, element) {
+    if (!deletedImages.includes(imageId)) {
+        deletedImages.push(imageId);
+        console.log('Deleted Images:', deletedImages); // Debug log
     }
-    
-    function validateAndSubmit() {
-        if (validateForm()) {
-            // Update the hidden input with deleted image IDs
+    element.closest('.col-md-12').remove();
+}
+
+function validateAndSubmit() {
+    clearErrorMessages();
+    validateForm().then(isValid => {
+        if (isValid) {
             document.getElementById('deletedImages').value = deletedImages.join(',');
             Swal.fire({
                 icon: 'success',
-                title: 'Success!',
-                text: 'Product Edited successfully.',
+                title: 'Product Updated!',
                 showConfirmButton: false,
                 timer: 1500
             }).then(() => {
                 document.forms[0].submit();
             });
         }
-    }
-    
-    // Image preview functions
-    function viewImage1(event) {
-        document.getElementById('imgView1').src = URL.createObjectURL(event.target.files[0]);
-        initCropper(event, 1);
-    }
-    
-    function viewImage2(event) {
-        document.getElementById('imgView2').src = URL.createObjectURL(event.target.files[0]);
-        initCropper(event, 2);
-    }
-    
-    function viewImage3(event) {
-        document.getElementById('imgView3').src = URL.createObjectURL(event.target.files[0]);
-        initCropper(event, 3);
-    }
-    
-    function viewImage4(event) {
-        document.getElementById('imgView4').src = URL.createObjectURL(event.target.files[0]);
-        initCropper(event, 4);
-    }
-    
-    function initCropper(event, index) {
-        const input = event.target;
-        const reader = new FileReader();
-        
-        reader.onload = function() {
-            const dataUrl = reader.result;
-            const image = document.getElementById('imgView' + index);
-            image.src = dataUrl;
-            
-            if (image.cropper) {
-                image.cropper.destroy();
-            }
-            
-            const cropper = new Cropper(image, {
-                aspectRatio: 1,
-                viewMode: 1,
-                guides: true,
-                background: false,
-                autoCropArea: 1,
-                zoomable: true
-            });
-            
-            image.cropper = cropper;
-            
-            const cropperContainer = document.querySelector('#croppedImg' + index).parentNode;
-            cropperContainer.style.display = 'flex';
-            
-            const saveButton = document.getElementById('saveButton' + index);
-            saveButton.onclick = function() {
-                saveCroppedImage(cropper, index);
-                cropperContainer.style.display = 'none';
-            };
-        };
-        
-        reader.readAsDataURL(input.files[0]);
-    }
-    
-    function saveCroppedImage(cropper, index) {
-        const croppedCanvas = cropper.getCroppedCanvas();
-        const croppedImage = document.getElementById('croppedImg' + index);
-        croppedImage.src = croppedCanvas.toDataURL('image/jpeg', 1.0);
-        
-        const timestamp = new Date().getTime();
-        const fileName = `cropped-img-${timestamp}-${index}.png`;
-        
-        croppedCanvas.toBlob(blob => {
-            const input = document.getElementById('input' + index);
-            const imgFile = new File([blob], fileName, { type: 'image/png' });
-            const fileList = new DataTransfer();
-            fileList.items.add(imgFile);
-            input.files = fileList.files;
-        });
-    }
-    
-  async  function validateForm() {
-        clearErrorMessages();
-        const name = document.getElementsByName('productName')[0].value;
-        const description = document.getElementById('descriptionid').value;
-        const brand = document.getElementsByName('brand')[0].value;
-        const price = document.getElementsByName('regularPrice')[0].value;
-        const saleprice = document.getElementsByName('salePrice')[0].value;
-        const category = document.getElementsByName('category')[0].value;
-        const quantity = document.getElementsByName('quantity')[0].value;
-        let isValid = true;
-    
-        // Product name validation
-        if (name.trim() === "") {
-            displayErrorMessage('productName-error', 'Please enter a product name.');
-            isValid = false;
-        } else if (!/^[a-zA-Z\s]+$/.test(name.trim())) {
-            displayErrorMessage('productName-error', 'Product name should contain only alphabetic characters.');
-            isValid = false;
-        }else {
-        // Check for existing product name (case-insensitive)
+    });
+}
+
+async function validateForm() {
+    let isValid = true;
+
+    const name = document.getElementsByName('productName')[0].value.trim();
+    const description = document.getElementById('descriptionid').value.trim();
+    const brand = document.getElementsByName('brand')[0].value.trim();
+    const price = document.getElementsByName('regularPrice')[0].value.trim();
+    const saleprice = document.getElementsByName('salePrice')[0].value.trim();
+    const quantity = document.getElementsByName('quantity')[0].value.trim();
+    const category = document.getElementsByName('category')[0].value.trim();
+
+    if (!name) {
+        displayErrorMessage('productName-error', 'Please enter a product name.');
+        isValid = false;
+    } else if (!/^[a-zA-Z\s]+$/.test(name)) {
+        displayErrorMessage('productName-error', 'Name should contain only letters.');
+        isValid = false;
+    } else {
         try {
-            const productId = window.location.pathname.split('/').pop(); // Extract product ID from URL
+            const productId = window.location.pathname.split('/').pop();
             const response = await fetch(`/admin/checkProductName/${encodeURIComponent(name)}/${productId}`);
             const data = await response.json();
             if (data.exists) {
-                displayErrorMessage('productName-error', 'A product with this name already exists (case-insensitive).');
+                displayErrorMessage('productName-error', 'Product with this name already exists.');
                 isValid = false;
             }
-        } catch (error) {
-            console.error('Error checking product name:', error);
-            displayErrorMessage('productName-error', 'Error checking product name availability.');
+        } catch (err) {
+            console.error('Fetch error:', err);
+            displayErrorMessage('productName-error', 'Error checking name availability.');
             isValid = false;
         }
     }
 
-
-
-        
-        
-        // Description validation
-        if (description.trim() === "") {
-            displayErrorMessage('description-error', 'Please enter a product description.');
-            isValid = false;
-        } else if (!/^[a-zA-Z\s,.()-]+$/.test(description.trim())) {
-            displayErrorMessage('description-error', 'Product description should contain only alphabetic characters.');
-            isValid = false;
-        }
-
-
-           // Brand validation
-        if (!brand || brand.trim() === "") {
-            displayErrorMessage('brand-error', 'Please select a brand.');
-            isValid = false;
-        }
-        
-        // Category validation
-        if (!category || category.trim() === "") {
-            displayErrorMessage('category-error', 'Please select a category.');
-            isValid = false;
-        }
-        // Quantity validation
-        if (quantity.trim() === "") {
-            displayErrorMessage('quantity-error', 'Please enter a quantity.');
-            isValid = false;
-        } else if (!/^\d+$/.test(quantity.trim()) || parseInt(quantity) < 0) {
-            displayErrorMessage('quantity-error', 'Please enter a valid non-negative integer quantity.');
-            isValid = false;
-        }
-        
-        // Regular price validation
-        if (!/^\d+(\.\d{1,2})?$/.test(price) || parseFloat(price) < 0) {
-            displayErrorMessage('regularPrice-error', 'Please enter a valid non-negative price.');
-            isValid = false;
-        }
-        
-        // Sale price validation
-        if (!/^\d+(\.\d{1,2})?$/.test(saleprice) || parseFloat(saleprice) < 0) {
-            displayErrorMessage('salePrice-error', 'Please enter a valid non-negative price.');
-            isValid = false;
-        }
-    
-        // Price comparison
-        if (parseFloat(price) <= parseFloat(saleprice)) {
-            displayErrorMessage('regularPrice-error', 'Regular price must be greater than sale price.');
-            isValid = false;
-        }
-    
-        // Image validation
-        const existingImages = document.querySelectorAll('.existing-image').length;
-        let newImageCount = 0;
-        for (let i = 1; i <= 4; i++) {
-            const input = document.getElementById('input' + i);
-            if (input && input.files && input.files.length > 0) {
-                newImageCount++;
-            }
-        }
-        
-        // Total images after accounting for deletions
-        const totalImages = existingImages + newImageCount;
-        if (totalImages < 4) {
-            displayErrorMessage('images-error', 'Please ensure at least 4 images (existing or new).');
-            // Display error under each file input for clarity
-            for (let i = 1; i <= 4; i++) {
-                displayErrorMessage(`images-error-${i}`, 'Please upload at least 4 images total.');
-            }
-            isValid = false;
-        }
-    
-        return isValid;
+    if (!description) {
+        displayErrorMessage('description-error', 'Enter product description.');
+        isValid = false;
     }
-    
-    function displayErrorMessage(elementId, message) {
-        const errorElement = document.getElementById(elementId);
-        if (errorElement) {
-            errorElement.innerText = message;
-            errorElement.style.display = "block";
+
+    if (!brand) {
+        displayErrorMessage('brand-error', 'Select a brand.');
+        isValid = false;
+    }
+
+    if (!category) {
+        displayErrorMessage('category-error', 'Select a category.');
+        isValid = false;
+    }
+
+    if (!quantity || !/^\d+$/.test(quantity)) {
+        displayErrorMessage('quantity-error', 'Enter a valid quantity.');
+        isValid = false;
+    }
+
+    if (!price || isNaN(price) || parseFloat(price) <= 0) {
+        displayErrorMessage('regularPrice-error', 'Enter valid regular price.');
+        isValid = false;
+    }
+
+    if (!saleprice || isNaN(saleprice) || parseFloat(saleprice) < 0) {
+        displayErrorMessage('salePrice-error', 'Enter valid sale price.');
+        isValid = false;
+    }
+
+    if (parseFloat(saleprice) >= parseFloat(price)) {
+        displayErrorMessage('salePrice-error', 'Sale price should be less than regular price.');
+        isValid = false;
+    }
+
+    // Count remaining existing images
+    const totalExistingImages = window.initialExistingImages || 0;
+    const imagesToDelete = deletedImages.length;
+    const remainingExisting = totalExistingImages - imagesToDelete;
+
+    // Count new images selected
+    let newImages = 0;
+    for (let i = 1; i <= 4; i++) {
+        const input = document.getElementById('input' + i);
+        if (input && input.files && input.files.length > 0) {
+            newImages++;
+            console.log(`Input ${i} files:`, input.files); // Debug log
         }
     }
-    
-    function clearErrorMessages() {
-        const errorElements = document.getElementsByClassName('error-message');
-        Array.from(errorElements).forEach(element => {
-            element.innerText = '';
-            element.style.display = "none";
+
+    const totalImagesAfterUpdate = remainingExisting + newImages;
+
+    console.log('Total Existing Images:', totalExistingImages);
+    console.log('Images to Delete:', imagesToDelete);
+    console.log('Remaining Existing Images:', remainingExisting);
+    console.log('New Images:', newImages);
+    console.log('Total Images After Update:', totalImagesAfterUpdate);
+
+    if (totalImagesAfterUpdate < 4) {
+        displayErrorMessage('images-error', `Minimum 4 images are required. Currently selected: ${totalImagesAfterUpdate}`);
+        isValid = false;
+    }
+
+    return isValid;
+}
+
+function displayErrorMessage(id, message) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.innerText = message;
+        el.style.display = 'block';
+    }
+}
+
+function clearErrorMessages() {
+    document.querySelectorAll('.error-message').forEach(el => {
+        el.innerText = '';
+        el.style.display = 'none';
+    });
+}
+
+// ----------- CROPPER.JS FUNCTIONS BELOW -----------
+
+function viewImage1(event) {
+    document.getElementById('imgView1').src = URL.createObjectURL(event.target.files[0]);
+    initCropper(event, 1);
+}
+function viewImage2(event) {
+    document.getElementById('imgView2').src = URL.createObjectURL(event.target.files[0]);
+    initCropper(event, 2);
+}
+function viewImage3(event) {
+    document.getElementById('imgView3').src = URL.createObjectURL(event.target.files[0]);
+    initCropper(event, 3);
+}
+function viewImage4(event) {
+    document.getElementById('imgView4').src = URL.createObjectURL(event.target.files[0]);
+    initCropper(event, 4);
+}
+
+function initCropper(event, index) {
+    const input = event.target;
+    const reader = new FileReader();
+
+    reader.onload = function () {
+        const dataUrl = reader.result;
+        const image = document.getElementById('imgView' + index);
+        image.src = dataUrl;
+
+        if (image.cropper) {
+            image.cropper.destroy();
+        }
+
+        const cropper = new Cropper(image, {
+            aspectRatio: 1,
+            viewMode: 1,
+            guides: true,
+            background: false,
+            autoCropArea: 1,
+            zoomable: true
         });
-    }
-    </script>
+
+        image.cropper = cropper;
+
+        const cropperContainer = document.querySelector('#croppedImg' + index).parentNode;
+        cropperContainer.style.display = 'flex';
+
+        const saveButton = document.getElementById('saveButton' + index);
+        saveButton.onclick = function () {
+            saveCroppedImage(cropper, index);
+            cropperContainer.style.display = 'none';
+        };
+    };
+
+    reader.readAsDataURL(input.files[0]);
+}
+
+function saveCroppedImage(cropper, index) {
+    const croppedCanvas = cropper.getCroppedCanvas();
+    const croppedImage = document.getElementById('croppedImg' + index);
+    croppedImage.src = croppedCanvas.toDataURL('image/jpeg', 1.0);
+
+    const timestamp = new Date().getTime();
+    const fileName = `cropped-img-${timestamp}-${index}.png`;
+
+    croppedCanvas.toBlob(blob => {
+        const input = document.getElementById('input' + index);
+        const imgFile = new File([blob], fileName, { type: 'image/png' });
+        const fileList = new DataTransfer();
+        fileList.items.add(imgFile);
+        input.files = fileList.files;
+
+        console.log(`Cropped image assigned to input ${index}:`, input.files); // Debug log
+    }, 'image/png');
+}
+</script>

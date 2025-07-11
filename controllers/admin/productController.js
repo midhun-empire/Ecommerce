@@ -284,7 +284,7 @@ const addProductsOffer = async (req, res) => {
         status: false,
         message: "The product category already has a category offer",
       });
-    }
+    }  
 
     findProduct.salePrice = Math.floor(
       findProduct.regularPrice * (1 - percentage / 100)

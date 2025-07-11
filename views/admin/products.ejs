@@ -122,32 +122,41 @@
 
 
 async function addOffer(productId) {
-  const {value:amount} = await Swal.fire({
-      
-    title:'Offer in percentage',
-    input:'number',
-    inputLabel:'percentage',
-    inputPlaceholder:'%',
-     inputAttributes: {
-    min: 1,
-    max: 100,
-    step: 1
-   },
-   showCancelButton: true,
-   confirmButtonText: 'Add Offer',
-   cancelButtonText: 'Cancel'
-   
-
-  })
-  
-  $.ajax({
-    url:'/admin/addProductsOffer',
-    method:'POST',
-    data:{
-      percentage:amount,
-      productId:productId
+  const {value: amount} = await Swal.fire({
+    title: 'Offer in percentage',
+    input: 'number',
+    inputLabel: 'Percentage',
+    inputPlaceholder: '%',
+    inputAttributes: {
+      min: 1,
+      max: 50,
+      step: 1
     },
-    success: (response) => {
+    showCancelButton: true,
+    confirmButtonText: 'Add Offer',
+    cancelButtonText: 'Cancel',
+    inputValidator: (value) => {
+      if (!value) {
+        return 'Please enter a percentage!';
+      }
+      if (value <= 0) {
+        return 'Offer percentage cannot be negative or zero!';
+      }
+      if (value > 50) {
+        return 'Offer cannot exceed 50%!';
+      }
+    }
+  });
+
+  if (amount) {
+    $.ajax({
+      url: '/admin/addProductsOffer',
+      method: 'POST',
+      data: {
+        percentage: amount,
+        productId: productId
+      },
+      success: (response) => {
         if (response.status === true) {
           Swal.fire('Offer Added', response.message || 'The offer has been added successfully', 'success').then(() => {
             location.reload();
@@ -160,10 +169,10 @@ async function addOffer(productId) {
         Swal.fire('Error', 'An error occurred while adding the offer. Please try again.', 'error');
         console.error('AJAX error:', textStatus, errorThrown);
       }
-
-  })
-
+    });
+  }
 }
+
 
 
 function removeOffer(productId){
