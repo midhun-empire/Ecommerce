@@ -578,7 +578,7 @@ const orderSuccessPage =async (req, res) => {
       orderDate: order.createdAt.toLocaleDateString(),
       paymentMethod: order.paymentMethod,
       address: order.address,
-      totalAmount: order.totalPrice,
+      totalAmount: order.finalAmount,
     });
   } catch (error) {
     console.error('Error fetching order:', error);

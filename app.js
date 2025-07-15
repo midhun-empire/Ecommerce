@@ -8,7 +8,6 @@ const userMiddleware = require('./middlewares/usermiddleware')
 const adminRouter = require('./routes/adminRouter.js')
 const nocache = require('nocache');
 const errorHandler = require('./middlewares/errorHandling.js')
-const flash = require('connect-flash')
 const env = require("dotenv").config()
 const db = require("./config/db.js")
 
@@ -26,14 +25,8 @@ app.use(session({
   }))
 
 
-  // Flash middleware
-app.use(flash());
+  
 
-// Optional: Make flash messages available to all views
-app.use((req, res, next) => {
-  res.locals.message = req.flash();
-  next();
-});
 
 app.use(nocache());
 app.use(userMiddleware)
