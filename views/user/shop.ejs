@@ -560,7 +560,7 @@ a {
               <a href="/productDetails/<%= products[i]._id %>">
                 <img src="/uploads/re-image/<%= products[i].productImage[0] %>" alt="<%= products[i].productName %>" />
                 <h4><%= products[i].productName %></h4>
-                <p>Brand: <%= products[i].brand.brandname %></p>
+                <p>Brand: <%= products[i].brand.brandname %></p>   
                 <p>Price: ₹<%= products[i].salePrice.toLocaleString('en-IN') %> <span class="text-muted"><strike>₹<%= products[i].regularPrice.toLocaleString('en-IN') %></strike></span></p>
               </a>
               <% if (products[i].quantity > 0) { %>

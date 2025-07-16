@@ -22,30 +22,41 @@ const { ObjectId } = require('mongodb');
 
 const loadHomepage = async (req, res) => {
     try {
-      const user = req.session.user;
-      console.log("User from session:", user);
-  
-      if (!user || !user._id) {
-        console.log("No user in session.");
-        return res.render("home", { currentPage: "home", user: null });
-      }
-  
-      console.log("Looking for user with ID:", user._id);
-      const userData = await User.findById(user._id);
-      console.log("UserData from DB:", userData);
-  
-      if (!userData) {
-             const error = new Error('User not found');
-            error.statusCode = 404;
-            throw error;
-      }
-  
-      res.render("home", { currentPage: "home", user: userData });
+        const user = req.session.user;
+        let userData = null;
+
+        // Fetch user data if user is logged in
+        if (user && user._id) {
+            console.log("Looking for user with ID:", user._id);
+            userData = await User.findById(user._id).lean();
+            if (!userData) {
+                console.warn("User not found in database for ID:", user._id);
+            }
+        } else {
+            console.log("No user in session.");
+        }
+
+        // Fetch products for the homepage (e.g., 3 featured products)
+        const products = await Product.find({
+            isBlocked: false,
+            quantity: { $gt: 0 },
+        })
+            .populate('brand')
+            .populate('category')
+            .sort({ createdAt: -1 }) // Sort by newest first
+            .limit(3) // Limit to 3 products
+            .lean();
+
+        console.log("Products fetched for homepage:", products.length);
+
+        res.render("home", {
+            currentPage: "home",
+            user: userData,
+            products: products, // Pass products to the template
+        });
   
     } catch (error) {
-        error.statusCode = error.statusCode || 500;
-        error.message = error.message || 'Error loading homepage';
-        next(error);
+      console.error('Error loading homepage',error)
     }
   };
   
@@ -400,7 +411,7 @@ const VerifyOtp = async (req, res) => {
 
             // Store the user ID in the session for later use (logged-in user)
           
-            res.json({ success: true, redirectUrl: '/' });
+            res.json({ success: true, redirectUrl: '/login' });
             // Clear the OTP and user data from the session since the signup is complete
             req.session.userOtp = null;
             req.session.userData = null;
