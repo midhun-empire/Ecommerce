@@ -251,7 +251,7 @@ const loadProfilePage = async (req, res) => {
     // Calculate displayOrderId starting from #101
     const formattedOrders = orders.map((order, index) => {
       const orderNumber = totalOrders - orderSkip - index; // Calculate position from total
-      const displayOrderId = `#${Math.max(101, 101 + orderNumber - 1)}`; // Ensure starts at #101
+      const displayOrderId = `ORD${Math.max(320, 320 + orderNumber - 1)}`; // Ensure starts at #101
       return {
         ...order.toObject(), // Spread original order data
         displayOrderId: displayOrderId // Add displayOrderId
@@ -313,51 +313,40 @@ const changeEmail = async (req,res)=>{
 }
 
 
-const changeEmailValid =  async(req,res)=>{
+const changeEmailValid = async (req, res) => {
     try {
-        const {email} = req.body;
-        const userExists = await User.findOne({email})
+        const { email } = req.body;
+        const userExists = await User.findOne({ email });
 
-        if(userExists){
-            const otp = generateOtp()
-            const emailSent = await sendVerificationEmail(email,otp)
-
-            if(emailSent){
-                req.session.userOtp = otp;
-                req.session.userData = req.body;
-                req.session.email = email;
-                res.render('change-email-otp',{currentPage:'change-email-otp'})
-                console.log('Email Sent ',email);
-                console.log('OTP:',otp)
-                
-
-            }else{
-                res.json('email-error')
-            }
-        }else{
-            res.render('change-email',{
-                message:'User with this email not exists'
-            })
+        if (userExists) {
+            req.session.userData = { email, userId: userExists._id };
+            res.redirect('/new-email');
+        } else {
+            res.render('change-email', {
+                message: 'User with this email does not exist',
+                currentPage: 'change-email'
+            });
         }
     } catch (error) {
-
-        console.error('change email failed ',error)
-        res.redirect('/pageNotFound')
-        
+        console.error('Change email validation failed ', error);
+        res.redirect('/pageNotFound');
     }
-}
+};
 
 
 const verifyEmailOtp = async (req, res) => {
     try {
-        const enteredOtp = req.body.otp;
-
-        if (enteredOtp === req.session.userOtp) {
-            req.session.userData = req.body.userData;
-
+        const { otp } = req.body;
+        if (otp === req.session.userOtp) {
+            const updatedUser = await User.findByIdAndUpdate(
+                req.session.userId,
+                { email: req.session.newEmail },
+                { new: true }
+            );
+            req.session.user = updatedUser;
             return res.json({
                 success: true,
-                redirectUrl: '/new-email' // or wherever you want to redirect
+                redirectUrl: '/profile'
             });
         } else {
             return res.json({
@@ -366,7 +355,7 @@ const verifyEmailOtp = async (req, res) => {
             });
         }
     } catch (error) {
-        console.error(error);
+        console.error('OTP verification failed ', error);
         return res.status(500).json({
             success: false,
             message: 'Server error'
@@ -394,26 +383,42 @@ const newEmail = async (req, res) => {
   
 
 
-  const updateEmail = async (req, res) => {
+const updateEmail = async (req, res) => {
     try {
-      const newEmail = req.body.newEmail;
-      const userId = req.body.user;
-  
-      const updatedUser = await User.findByIdAndUpdate(
-        userId,
-        { email: newEmail },
-        { new: true } // return the updated document
-      );
-  
-      // Update the session with the new user data
-      req.session.user = updatedUser;
-  
-      res.redirect('/profile');
+        const { newEmail, user } = req.body;
+        const userExists = await User.findOne({ email: newEmail });
+
+        if (userExists) {
+            return res.render('new-email', {
+                message: 'Email is already in use',
+                currentPage: 'new-email',
+                userId: user
+            });
+        }
+
+        const otp = generateOtp();
+        const emailSent = await sendVerificationEmail(newEmail, otp);
+
+        if (emailSent) {
+            req.session.userOtp = otp;
+            req.session.newEmail = newEmail;
+            req.session.userId = user;
+            res.render('change-email-otp', { currentPage: 'change-email-otp' });
+            console.log('Email Sent ', newEmail);
+            console.log('OTP:', otp);
+        } else {
+            res.render('new-email', {
+                message: 'Failed to send OTP to email',
+                currentPage: 'new-email',
+                userId: user
+            });
+        }
     } catch (error) {
-      console.error('update failed', error);
-      res.redirect('/pageNotFound');
+        console.error('Update email failed ', error);
+        res.redirect('/pageNotFound');
     }
-  };
+};
+
   
 
   const changePassword = async (req,res)=>{

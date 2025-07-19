@@ -26,10 +26,7 @@ app.use(session({
 
 
   
-app.use('/admin-assets', express.static('admin-assets'));
 
-// Serve static files from 'public' (if still used)
-app.use(express.static('public'));
 
 app.use(nocache());
 app.use(userMiddleware)

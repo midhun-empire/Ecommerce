@@ -91,6 +91,7 @@
             value="<%= searchQuery || '' %>"
           />
           <button class="btn" type="submit">Search</button>
+            <button class="btn" type="button" id="clearSearch" style=" padding: 5px 15px;">Clear</button>
         </div>
       </form>
     </header>
@@ -238,6 +239,14 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
   <script>
+
+      $(document).ready(function () {
+      // Clear search functionality
+      $('#clearSearch').click(function () {
+        $('#searchInput').val(''); // Clear the input field
+        window.location.href = '/admin/category/'; // Redirect to /admin/category/
+      });
+    });
 
 
      function handleFormSubmit(event) {

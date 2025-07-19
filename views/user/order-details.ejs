@@ -335,7 +335,7 @@
                     <% for(let i=0; i < order.orderedItems.length; i++) { 
                         const item = order.orderedItems[i];
                         const currentStatus = item.status;
-                        const statusOrder = ['Pending', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
+                        const statusOrder = ['Pending', 'Processing', 'Shipped', 'out_for_delivery', 'Delivered'];
                         const currentStatusIndex = statusOrder.indexOf(currentStatus);
                         const isCancelled = currentStatus === 'Cancelled';
                         const isReturned = currentStatus === 'Returned';
@@ -346,37 +346,37 @@
                         <div class="tracking-progress">
                             <!-- Order Placed -->
                             <div
-                                class="tracking-step <%= ['Pending', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
+                                class="tracking-step <%= ['Pending', 'Processing', 'Shipped', 'out_for_delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
                                 <div class="icon">✔</div>
                                 <p>Order Placed</p>
                             </div>
                             <div
-                                class="tracking-line <%= ['Processing', 'Shipped', 'Out for Delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
+                                class="tracking-line <%= ['Processing', 'Shipped', 'out_for_delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
                             </div>
 
                             <!-- Order Processed -->
                             <div
-                                class="tracking-step <%= ['Processing', 'Shipped', 'Out for Delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
+                                class="tracking-step <%= ['Processing', 'Shipped', 'out_for_delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
                                 <div class="icon">✔</div>
                                 <p>Processing</p>
                             </div>
                             <div
-                                class="tracking-line <%= ['Shipped', 'Out_for_Delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
+                                class="tracking-line <%= ['Shipped', 'out_for_delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
                             </div>
 
                             <!-- Shipped -->
                             <div
-                                class="tracking-step <%= ['Shipped', 'Out_for_Delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
+                                class="tracking-step <%= ['Shipped', 'out_for_delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
                                 <div class="icon">🚚</div>
                                 <p>Shipped</p>
                             </div>
                             <div
-                                class="tracking-line <%= ['Out_for_Delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
+                                class="tracking-line <%= ['out_for_delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
                             </div>
 
                             <!-- Out for Delivery -->
                             <div
-                                class="tracking-step <%= ['Out_for_Delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
+                                class="tracking-step <%= ['out_for_delivery', 'Delivered'].includes(order.orderedItems[i].status) ? 'completed' : '' %>">
                                 <div class="icon">📦</div>
                                 <p>Out for Delivery</p>
                             </div>

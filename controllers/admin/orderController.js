@@ -49,7 +49,7 @@ const changeOrderStatus = async (req, res) => {
     );
 
     if (updateResult.modifiedCount === 0) {
-      return res
+      return res 
         .status(404)
         .json({ success: false, message: "Order or item not found" });
     }
@@ -60,6 +60,10 @@ const changeOrderStatus = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+
+
+
 
 const filterOrders = async (req, res) => {
   try {
@@ -179,7 +183,7 @@ const handleReturn = async (req, res) => {
     }
 
     // Fetch the order
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(orderId).populate('orderedItems.product');
     if (!order) {
       return res
         .status(404)
@@ -222,7 +226,8 @@ const handleReturn = async (req, res) => {
       const product = await Product.findById(productId);
       if (!product) {
         console.log("Product not found for ID:", productId);
-        return res .status(404)
+        return res
+          .status(404)
           .json({ success: false, message: "Product not found." });
       }
       console.log("Product found:", product.productName, "Current quantity:", product.quantity);
@@ -232,19 +237,19 @@ const handleReturn = async (req, res) => {
 
       // Handle refund for Razorpay or Wallet payment
       if (['razorpay', 'wallet'].includes(order.paymentMethod.toLowerCase())) {
-        const itemTotal = order.finalAmount* item.quantity;
+        // Refund the item's price
+        const itemTotal = item.price;
 
-        // Find the user's wallet
-        const wallet = await Wallet.findOne({ user: order.userId }); // Changed from order.user to order.userId
+        // Find or create the wallet
+        let wallet = await Wallet.findOne({ user: order.userId });
         if (!wallet) {
-         const newWallet = new Wallet({user: order.userId})
-
-         await newWallet.save()
+          wallet = new Wallet({ user: order.userId });
+          await wallet.save();
         }
 
         // Update wallet balance and history
         await Wallet.updateOne(
-          { user: order.userId }, // Changed from order.user to order.userId
+          { user: order.userId },
           {
             $inc: { balance: itemTotal },
             $push: {
@@ -267,6 +272,14 @@ const handleReturn = async (req, res) => {
       return res
         .status(400)
         .json({ success: false, message: "Invalid action." });
+    }
+
+    // Check if all items are returned or cancelled to update order status
+    const allItemsProcessed = order.orderedItems.every(
+      (item) => item.status === 'Returned' || item.status === 'Cancelled'
+    );
+    if (allItemsProcessed) {
+      order.status = 'Cancelled';
     }
 
     await order.save();

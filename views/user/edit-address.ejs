@@ -71,102 +71,139 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-   document.getElementById('submitButton').addEventListener('click', function (event) {
-       if (!validateForm()) {
-           event.preventDefault();
-       }
-   });
-
-
-   function validateForm() {
-        let isValid = true;
-        const requiredFields = ["addressType", "name", "city", "landMark", "state", "pincode", "phone", "altPhone"];
-        
-        requiredFields.forEach(function (field) {
-            const input = document.getElementById(field);
-            const inputValue = input.value.trim();
-            const errorElement = document.getElementById(field + '-error');
-
-            if (inputValue === "") {
-                if (!errorElement) {
-                    const errorMessage = "This field is required.";
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = "text-danger";
-                    errorDiv.textContent = errorMessage;
-                    errorDiv.id = field + '-error';
-                    input.parentNode.appendChild(errorDiv);
-                }
-                isValid = false;
-            } else {
-                if (errorElement) {
-                    errorElement.remove();
-                }
-            }
-        });
-
-        const name = document.getElementById('name').value.trim();
-        const city = document.getElementById('city').value.trim();
-        const landMark = document.getElementById('landMark').value.trim();
-        const state = document.getElementById('state').value.trim();
-        const pincode = document.getElementById('pincode').value.trim();
-        const phone = document.getElementById('phone').value.trim();
-        const altPhone = document.getElementById('altPhone').value.trim();
-
-        const namePattern = /^[A-Za-z\s]{2,}$/;
-        const pincodePattern = /^[1-9][0-9]{5}$/;
-        const phonePattern = /^\d{10}$/;
-        const repeatedDigitsPattern = /^(\d)\1{9}$/;
-
-        if (!namePattern.test(name)) {
-            Swal.fire({ title: 'Error', text: 'Name must contain at least 2 letters and only alphabets.', icon: 'error' });
-            isValid = false;
-        }
-
-        if (!namePattern.test(city)) {
-            Swal.fire({ title: 'Error', text: 'City must contain at least 2 letters and only alphabets.', icon: 'error' });
-            isValid = false;
-        }
-
-        if (!namePattern.test(landMark)) {
-            Swal.fire({ title: 'Error', text: 'Landmark must contain at least 2 letters and only alphabets.', icon: 'error' });
-            isValid = false;
-        }
-
-        if (!namePattern.test(state)) {
-            Swal.fire({ title: 'Error', text: 'State must contain at least 2 letters and only alphabets.', icon: 'error' });
-            isValid = false;
-        }
-
-        if (!pincodePattern.test(pincode)) {
-            Swal.fire({ title: 'Error', text: 'Pincode must be a valid 6-digit number starting from 1-9.', icon: 'error' });
-            isValid = false;
-        }
-
-        if (!phonePattern.test(phone) || repeatedDigitsPattern.test(phone)) {
-            Swal.fire({
-                title: 'Error',
-                text: 'Phone number must be a valid 10-digit number and should not have all repeated digits (e.g., 1111111111).',
-                icon: 'error'
-            });
-            isValid = false;
-        }
-
-        if (!phonePattern.test(altPhone) || repeatedDigitsPattern.test(altPhone)) {
-            Swal.fire({
-                title: 'Error',
-                text: 'Alternate phone number must be a valid 10-digit number and should not have all repeated digits.',
-                icon: 'error'
-            });
-            isValid = false;
-        }
-
-        if (phone === altPhone) {
-            Swal.fire({ title: 'Error', text: 'Phone number and alternate phone number must be different.', icon: 'error' });
-            isValid = false;
-        }
-
-        return isValid;
+ document.getElementById('addressForm').addEventListener('submit', function(event) {
+    if (!validateForm()) {
+        event.preventDefault();
     }
+});
+
+function validateForm() {
+    let isValid = true;
+    const requiredFields = ["addressType", "name", "city", "landMark", "state", "pincode", "phone", "altPhone"];
+    const namePattern = /^[A-Za-z\s]{2,}$/;
+    const pincodePattern = /^[1-9][0-9]{5}$/;
+    const phonePattern = /^\d{10}$/;
+    const repeatedDigitsPattern = /^(\d)\1{9}$/;
+
+    // Clear previous error messages
+    const errorElements = document.querySelectorAll('.text-danger');
+    errorElements.forEach(el => el.remove());
+
+    // Validate required fields
+    requiredFields.forEach(function(field) {
+        const input = document.getElementById(field);
+        const inputValue = input.value.trim();
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'text-danger';
+        errorDiv.style.fontSize = '12px';
+        errorDiv.style.marginTop = '5px';
+
+        if (inputValue === "") {
+            errorDiv.textContent = `${input.previousElementSibling.textContent.replace(':', '')} is required.`;
+            input.parentNode.appendChild(errorDiv);
+            isValid = false;
+        }
+    });
+
+    // Additional validations for specific fields
+    const name = document.getElementById('name').value.trim();
+    const city = document.getElementById('city').value.trim();
+    const landMark = document.getElementById('landMark').value.trim();
+    const state = document.getElementById('state').value.trim();
+    const pincode = document.getElementById('pincode').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const altPhone = document.getElementById('altPhone').value.trim();
+
+    // Name validation
+    if (name && !namePattern.test(name)) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'text-danger';
+        errorDiv.style.fontSize = '12px';
+        errorDiv.style.marginTop = '5px';
+        errorDiv.textContent = 'Name must contain at least 2 letters and only alphabets.';
+        document.getElementById('name').parentNode.appendChild(errorDiv);
+        isValid = false;
+    }
+
+    // City validation
+    if (city && !namePattern.test(city)) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'text-danger';
+        errorDiv.style.fontSize = '12px';
+        errorDiv.style.marginTop = '5px';
+        errorDiv.textContent = 'City must contain at least 2 letters and only alphabets.';
+        document.getElementById('city').parentNode.appendChild(errorDiv);
+        isValid = false;
+    }
+
+    // Landmark validation
+    if (landMark && !namePattern.test(landMark)) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'text-danger';
+        errorDiv.style.fontSize = '12px';
+        errorDiv.style.marginTop = '5px';
+        errorDiv.textContent = 'Landmark must contain at least 2 letters and only alphabets.';
+        document.getElementById('landMark').parentNode.appendChild(errorDiv);
+        isValid = false;
+    }
+
+    // State validation
+    if (state && !namePattern.test(state)) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'text-danger';
+        errorDiv.style.fontSize = '12px';
+        errorDiv.style.marginTop = '5px';
+        errorDiv.textContent = 'State must contain at least 2 letters and only alphabets.';
+        document.getElementById('state').parentNode.appendChild(errorDiv);
+        isValid = false;
+    }
+
+    // Pincode validation
+    if (pincode && !pincodePattern.test(pincode)) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'text-danger';
+        errorDiv.style.fontSize = '12px';
+        errorDiv.style.marginTop = '5px';
+        errorDiv.textContent = 'Pincode must be a valid 6-digit number starting from 1-9.';
+        document.getElementById('pincode').parentNode.appendChild(errorDiv);
+        isValid = false;
+    }
+
+    // Phone validation
+    if (phone && (!phonePattern.test(phone) || repeatedDigitsPattern.test(phone))) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'text-danger';
+        errorDiv.style.fontSize = '12px';
+        errorDiv.style.marginTop = '5px';
+        errorDiv.textContent = 'Phone number must be a valid 10-digit number and not all repeated digits.';
+        document.getElementById('phone').parentNode.appendChild(errorDiv);
+        isValid = false;
+    }
+
+    // Alternate Phone validation
+    if (altPhone && (!phonePattern.test(altPhone) || repeatedDigitsPattern.test(altPhone))) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'text-danger';
+        errorDiv.style.fontSize = '12px';
+        errorDiv.style.marginTop = '5px';
+        errorDiv.textContent = 'Alternate phone number must be a valid 10-digit number and not all repeated digits.';
+        document.getElementById('altPhone').parentNode.appendChild(errorDiv);
+        isValid = false;
+    }
+
+    // Check if phone and alternate phone are different
+    if (phone && altPhone && phone === altPhone) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'text-danger';
+        errorDiv.style.fontSize = '12px';
+        errorDiv.style.marginTop = '5px';
+        errorDiv.textContent = 'Phone number and alternate phone number must be different.';
+        document.getElementById('altPhone').parentNode.appendChild(errorDiv);
+        isValid = false;
+    }
+
+    return isValid;
+}
 </script>
 <%- include("../../views/partials/user/footer") %>
 

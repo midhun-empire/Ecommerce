@@ -349,11 +349,7 @@
                       <i class="fi-rs-shopping-cart-check mr-10"></i>Wallet History
                     </a>
                   </li>
-                  <li class="nav-item">
-                    <a class="nav-link" id="track-orders-tab" data-bs-toggle="tab" href="#referal" role="tab" aria-controls="track-orders" aria-selected="false">
-                      <i class="fi-rs-shopping-cart-check mr-10"></i>Referals
-                    </a>
-                  </li>
+                 
                   <li class="nav-item">
                     <a class="nav-link" href="/logout" onclick="softLogout()">
                       <i class="fi-rs-sign-out mr-10"></i>Logout
@@ -664,18 +660,17 @@
 
 <script>
 
+  
 document.addEventListener("DOMContentLoaded", function() {
-  // Activate tab based on URL hash
   const hash = window.location.hash;
-  if (hash === '#orders') {
-    const tabTrigger = document.querySelector('[href="#orders"]');
+  if (hash) {
+    const tabTrigger = document.querySelector(`[href="${hash}"]`);
     if (tabTrigger) {
       const tab = new bootstrap.Tab(tabTrigger);
       tab.show();
     }
   }
 
-  // Initialize orders pagination
   const paginationLinks = document.querySelectorAll('#pagination .page-link');
   paginationLinks.forEach(link => {
     link.addEventListener('click', function(e) {
@@ -685,7 +680,6 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   });
 
-  // Keep existing wallet and logout functions
   initializeWalletTab();
   fetchWalletDetails();
   initializeWalletHistoryPagination();
@@ -772,32 +766,60 @@ function initializeWalletTab() {
           description: 'Add Money to Wallet',
           order_id: data.order.id,
           handler: async function(response) {
-            const verifyResponse = await fetch('/verifyPayment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                amount: amount
-              })
-            });
-
-            const verifyData = await verifyResponse.json();
-
-            if (verifyData.success) {
-              Swal.fire({
-                title: 'Success!',
-                text: 'Money added to wallet successfully!',
-                icon: 'success',
-                confirmButtonText: 'OK'
-              }).then(() => {
-                window.location.reload();
+            try {
+              const verifyResponse = await fetch('/verifyPayment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  amount: amount
+                })
               });
-            } else {
+
+              const verifyData = await verifyResponse.json();
+
+              if (verifyData.success) {
+                // Show success message
+                await Swal.fire({
+                  title: 'Success!',
+                  text: 'Money added to wallet successfully!',
+                  icon: 'success',
+                  confirmButtonText: 'OK'
+                });
+
+                // Update wallet balance via AJAX
+                const walletResponse = await fetch('/walletDetails');
+                const walletData = await walletResponse.json();
+                if (walletData.success) {
+                  document.getElementById('walletBalance').textContent = walletData.balance.toFixed(2);
+                } else {
+                  console.error('Failed to update wallet balance:', walletData.message);
+                }
+
+                // Switch to Wallet Status tab
+                const tabTrigger = document.querySelector('[href="#track-orders"]');
+                if (tabTrigger) {
+                  const tab = new bootstrap.Tab(tabTrigger);
+                  tab.show();
+                }
+
+                // Reset the input field
+                amountInput.value = '';
+              } else {
+                Swal.fire({
+                  title: 'Error!',
+                  text: verifyData.message || 'Payment verification failed',
+                  icon: 'error',
+                  confirmButtonText: 'OK'
+                });
+              }
+            } catch (error) {
+              console.error('Error in payment verification:', error);
               Swal.fire({
                 title: 'Error!',
-                text: verifyData.message || 'Payment verification failed',
+                text: 'An error occurred during payment verification',
                 icon: 'error',
                 confirmButtonText: 'OK'
               });
@@ -909,8 +931,7 @@ function confirmDeleteAddress(addressId) {
     }
   });
 }
-
-    </script>
+</script>
 
 <%- include("../../views/partials/user/footer") %>
 

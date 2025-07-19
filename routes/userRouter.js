@@ -76,11 +76,13 @@ router.get('/reset-password',profileController.getResetPassPage)
 router.post('/resend-forgot-otp',profileController.resendOtp)
 router.post('/reset-password',profileController.postNewPassword)
 router.get('/profile',userAuth,profileController.loadProfilePage)
+
 router.get('/change-email',userAuth,profileController.changeEmail)
 router.post('/change-email',userAuth,profileController.changeEmailValid)
 router.post('/verify-email-otp',userAuth,profileController.verifyEmailOtp)
 router.get('/new-email',userAuth,profileController.newEmail)
 router.post('/update-email',userAuth,profileController.updateEmail)
+
 router.get('/change-password',userAuth,profileController.changePassword)
 router.get('/change-password',userAuth,profileController.changePassword)
 router.post('/change-password',userAuth,profileController.changePasswordValid)

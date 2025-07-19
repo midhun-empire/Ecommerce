@@ -204,8 +204,9 @@
     function resendOTP(){
         clearInterval(timerInterval)
         timer=60
-        document.getElementById('otp').disabled=true;
+        document.getElementById('otp').disabled=false;
         document.getElementById('timerValue').classList.remove('expired');
+           document.getElementById('otp').value = '';
         startTimer()
         $.ajax({
             type:'POST',

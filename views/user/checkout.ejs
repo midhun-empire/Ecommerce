@@ -1145,6 +1145,136 @@
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
     <script>
+
+// Address Form Validation
+function validateAddressForm(formId) {
+  const form = document.getElementById(formId);
+  const phoneRegex = /^[6-9]\d{9}$/; // Indian phone number format
+  const pincodeRegex = /^\d{6}$/; // 6-digit PIN code
+  const noSymbolsRegex = /^[a-zA-Z\s]*$/; // Only letters and spaces allowed
+  let isValid = true;
+
+  // Clear previous error messages
+  const errorElements = form.querySelectorAll('.error-message');
+  errorElements.forEach(el => el.remove());
+
+  const fields = {
+    name: "Full Name",
+    phone: "Phone Number",
+    altPhone: "Alternate Phone Number",
+    landMark: "Landmark",
+    city: "City",
+    state: "State",
+    pincode: "PIN Code",
+    addressType: "Address Type",
+  };
+
+  const noSymbolFields = ['name', 'city', 'state', 'landMark']; // Fields that shouldn't contain symbols
+  const minLengthFields = ['name', 'state', 'city', 'landMark']; // Fields requiring more than 1 character
+
+  // Check if phone and alternate phone are the same
+  const phoneInput = form.querySelector('[name="phone"]');
+  const altPhoneInput = form.querySelector('[name="altPhone"]');
+  
+  if (phoneInput && altPhoneInput && phoneInput.value && altPhoneInput.value && phoneInput.value === altPhoneInput.value) {
+    const errorSpan = document.createElement('span');
+    errorSpan.className = 'error-message';
+    errorSpan.style.color = '#dc3545';
+    errorSpan.style.fontSize = '12px';
+    errorSpan.style.display = 'block';
+    errorSpan.style.marginTop = '5px';
+    errorSpan.textContent = 'Phone Number and Alternate Phone Number cannot be the same';
+    altPhoneInput.parentElement.appendChild(errorSpan);
+    isValid = false;
+  }
+
+  for (const [field, label] of Object.entries(fields)) {
+    const input = form.querySelector(`[name="${field}"]`);
+    const errorSpan = document.createElement('span');
+    errorSpan.className = 'error-message';
+    errorSpan.style.color = '#dc3545';
+    errorSpan.style.fontSize = '12px';
+    errorSpan.style.display = 'block';
+    errorSpan.style.marginTop = '5px';
+
+    if (!input.value.trim()) {
+      errorSpan.textContent = `${label} is required.`;
+      input.parentElement.appendChild(errorSpan);
+      isValid = false;
+    } else if (minLengthFields.includes(field) && input.value.trim().length <= 1) {
+      errorSpan.textContent = `${label} must be more than one character.`;
+      input.parentElement.appendChild(errorSpan);
+      isValid = false;
+    } else if (noSymbolFields.includes(field) && !noSymbolsRegex.test(input.value)) {
+      errorSpan.textContent = `${label} should only contain letters and spaces (no symbols or numbers).`;
+      input.parentElement.appendChild(errorSpan);
+      isValid = false;
+    } else if (field === "phone" || field === "altPhone") {
+      if (!phoneRegex.test(input.value)) {
+        errorSpan.textContent = `${label} must be a valid 10-digit Indian phone number starting with 6-9.`;
+        input.parentElement.appendChild(errorSpan);
+        isValid = false;
+      }
+    } else if (field === "pincode" && !pincodeRegex.test(input.value)) {
+      errorSpan.textContent = `PIN Code must be a 6-digit number.`;
+      input.parentElement.appendChild(errorSpan);
+      isValid = false;
+    }
+  }
+
+  return isValid;
+}
+
+// Handle Edit Address Click
+function handleEditClick(id, type, name, phone, altPhone, landmark, city, state, pincode) {
+  // Populate the edit form fields
+  document.getElementById("editAddressId").value = id || '';
+  document.getElementById("editAddressType").value = type || '';
+  document.getElementById("editName").value = name || '';
+  document.getElementById("editPhone").value = phone || '';
+  document.getElementById("editAltPhone").value = altPhone || '';
+  document.getElementById("editLandmark").value = landmark || '';
+  document.getElementById("editCity").value = city || '';
+  document.getElementById("editState").value = state || '';
+  document.getElementById("editPincode").value = pincode || '';
+
+  // Show the edit modal
+  const editModal = new bootstrap.Modal(document.getElementById("editAddressModal"));
+  editModal.show();
+}
+
+// Form Submission Handlers
+document.getElementById("addressForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  if (validateAddressForm("addressForm")) {
+    this.submit();
+  }
+});
+
+document.getElementById("editAddressForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  if (validateAddressForm("editAddressForm")) {
+    this.submit();
+  }
+});
+function handleEditClick(id, type, name, phone, altPhone, landmark, city, state, pincode) {
+  document.getElementById("editAddressId").value = id;
+  document.getElementById("editAddressType").value = type;
+  document.getElementById("editName").value = name;
+  document.getElementById("editPhone").value = phone;
+  document.getElementById("editAltPhone").value = altPhone;
+  document.getElementById("editLandmark").value = landmark;
+  document.getElementById("editCity").value = city;
+  document.getElementById("editState").value = state;
+  document.getElementById("editPincode").value = pincode;
+
+  const editModal = new bootstrap.Modal(document.getElementById("editAddressModal"));
+  editModal.show();
+}
+
+
+
+
       function handleEditClick(
         id,
         type,
@@ -1171,6 +1301,8 @@
         );
         editModal.show();
       }
+
+      
 
       async function placeOrder() {
         const selectedAddress = document.querySelector(

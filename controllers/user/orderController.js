@@ -13,6 +13,9 @@ const { v4: uuidv4 } = require('uuid');
 const env = require('dotenv').config()
 const Wallet = require('../../models/walletSchema')
 
+
+
+
 //razorpay
 const razorpayInstance = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -866,16 +869,11 @@ const cancelProductOrder = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-
-
     // Find the order
     const findOrder = await Order.findById(orderId).populate('orderedItems.product');
     if (!findOrder) {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
-
-
-   
 
     // Find the specific item in orderedItems
     const item = findOrder.orderedItems.find(
@@ -889,7 +887,7 @@ const cancelProductOrder = async (req, res) => {
     }
 
     // Check if the item is eligible for cancellation
-    const cancellableStatuses = ['Pending', 'Processing', 'Shipped', 'Out for Delivery'];
+    const cancellableStatuses = ['pending', 'Processing', 'shipped', 'Out for Delivery','Pending','Shipped','processing'];
     if (!cancellableStatuses.includes(item.status)) {
       return res.status(400).json({
         success: false,
@@ -899,16 +897,36 @@ const cancelProductOrder = async (req, res) => {
 
     // Handle refund for Razorpay or Wallet payment
     if (['razorpay', 'wallet'].includes(findOrder.paymentMethod.toLowerCase()) && item.status !== 'Cancelled') {
-      const itemTotal = findOrder.finalAmount * item.quantity;
-      // Update the Wallet model
-      const wallet = await Wallet.findOne({ user: userId });
-      if (!wallet) {
-          
-        const newWallet = new Wallet({user:userId})
+      let itemTotal;
 
-        await newWallet.save()
+      // Calculate total price of non-cancelled items (excluding the current item)
+      const nonCancelledItemsTotal = findOrder.orderedItems
+        .filter(i => i._id.toString() !== itemId && i.status !== 'Cancelled' && i.status !== 'Return Requested')
+        .reduce((sum, i) => sum + i.price, 0);
+
+      // If this is the last non-cancelled item, refund the remaining finalAmount
+      if (nonCancelledItemsTotal === 0 && findOrder.orderedItems.some(i => i.status !== 'Cancelled' || i._id.toString() === itemId)) {
+        // Calculate total refunded so far for this order
+        const wallet = await Wallet.findOne({ user: userId });
+        const totalRefunded = wallet ? wallet.history
+          .filter(h => h.description.includes(`order ${orderId}`) && h.status === 'credit')
+          .reduce((sum, h) => sum + h.amount, 0) : 0;
+
+        // Refund the remaining amount to match finalAmount
+        itemTotal = findOrder.finalAmount - totalRefunded;
+      } else {
+        // For multi-item orders, refund the item's price
+        itemTotal = findOrder.orderedItems.length === 1 ? findOrder.finalAmount : item.price;
       }
 
+      // Find or create the wallet
+      let wallet = await Wallet.findOne({ user: userId });
+      if (!wallet) {
+        wallet = new Wallet({ user: userId });
+        await wallet.save();
+      }
+
+      // Update the wallet with the refund amount
       await Wallet.updateOne(
         { user: userId }, 
         {
@@ -929,19 +947,15 @@ const cancelProductOrder = async (req, res) => {
     item.status = 'Cancelled';
     item.cancellationReason = cancellationReason;
 
-  
+    // Check if all items are cancelled or returned
     const allItemsCancelledOrReturned = findOrder.orderedItems.every(
       (item) => item.status === 'Cancelled' || item.status === 'Return Requested'
     );
     if (allItemsCancelledOrReturned) {
       findOrder.status = 'Cancelled';
-      
     } else if (findOrder.status === 'Cancelled') {
       findOrder.status = 'Pending';
     }
-
-
-   
 
     // Update product stock
     const product = await Product.findById(item.product);

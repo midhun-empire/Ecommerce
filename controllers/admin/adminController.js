@@ -39,7 +39,7 @@ const Login = async (req, res) => {
     }
   } catch (error) {
     console.log("login error", error);
-    return res.redirect("/admin/login", { message: "Wrong Password" });
+    return res.redirect("/admin/login");
   }
 };
 

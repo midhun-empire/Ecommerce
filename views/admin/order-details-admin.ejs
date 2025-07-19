@@ -199,7 +199,6 @@ body {
                         <th>Product</th>
                         <th>Quantity</th>
                         <th>Price</th>
-                        <th>Total</th>
                         <th>Order Status</th>
                         <th>Return Request</th>
                       </tr>
@@ -212,9 +211,22 @@ body {
                           </td>
                           <td><%= item.quantity %></td>
                           <td><%= item.price.toFixed(2) %></td>
-                          <td><%=  orders.totalPrice.toFixed(2) %></td>
                         <td>
-  <% if (item.status === 'Return Requested' || item.status === 'Returned' || item.status === 'delivered') { %>
+                           <% 
+                              // Define valid next statuses based on current status
+                              const statusTransitions = {
+                                'pending': ['shipped', 'out_for_delivery', 'delivered'],
+                                'shipped': ['out_for_delivery', 'delivered'],
+                                'out_for_delivery': ['delivered'],
+                                'delivered': [],
+                                'Cancelled': [],
+                                'Returned': [],
+                                'Return Requested': [],
+                                'failed': []
+                              };
+                              const validStatuses = statusTransitions[item.status.toLowerCase()] || [];
+                            %>
+  <% if (item.status === 'Return Requested' || item.status === 'Returned' || item.status === 'delivered' || item.status ===  'Cancelled' || item.status === 'failed' || item.status ===  'cancelled' ) { %>
     <!-- Show non-editable dropdown-like display -->
     <select class="form-select" disabled>
       <option selected><%= item.status %></option>
@@ -224,11 +236,13 @@ body {
     <select class="form-select product-status-select"
             data-order-id="<%= orders._id %>"
             data-item-id="<%= item._id %>">
-      <option value="pending" <%= item.status === 'pending' ? 'selected' : '' %>>Pending</option>
-      <option value="shipped" <%= item.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
-      <option value="out_for_delivery" <%= item.status === 'out_for_delivery' ? 'selected' : '' %>>Out for Delivery</option>
-      <option value="delivered" <%= item.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
-      <option value="cancelled" <%= item.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+       <option value="<%= item.status.toLowerCase() %>" selected><%= item.status %></option>
+                                <% validStatuses.forEach(status => { %>
+                                  <option value="<%= status %>">
+                                    <%= status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, ' ') %>
+                                  </option>
+                                <% }) %>
+
     </select>
   <% } %>
 </td>

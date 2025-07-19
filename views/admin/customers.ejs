@@ -12,10 +12,11 @@
         
             <header class="card-header text-center mb-20">
                 <form action="/admin/customers/" method="get" class="d-inline">
-                    <div class="input-group input-group-sm border border-1 border-grey rounded-pill" style="width: 500px; margin-left: 230px;">
-                        <input type="text" class="form-control border-0 rounded-pill" placeholder="Search customers..." name="search">
-                        <button class="btn  border-0" type="submit">Search</button>
-                    </div>
+                  <div class="input-group input-group-sm border border-1 border-grey rounded-pill" style="width: 500px; margin-left: 230px;">
+                <input type="text" class="form-control border-0 rounded-pill" placeholder="Search customers..." name="search" id="searchInput">
+                <button class="btn border-0" type="submit">Search</button>
+                <button class="btn border-0" type="button" id="clearSearch" style="border: 1px solid #ccc; border-radius: 20px; padding: 5px 15px;">Clear</button>
+            </div>
                 </form>
             </header>
             <div class="right mt-5">
@@ -75,6 +76,7 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
         <script>
+
              $(document).ready(function () {
     $('.block-btn').click(function () {
       const userId = $(this).data('id');
@@ -98,6 +100,14 @@
         }
       });
     });
+
+    $('#clearSearch').click(function () {
+                $('#searchInput').val(''); // Clear the input field
+                window.location.href = '/admin/customers'; // Redirect to /customers
+            });
   });
+
+
+  
         </script>
         <%- include("../../views/partials/admin/footer") %>

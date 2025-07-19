@@ -80,7 +80,7 @@ const loadShopPage = async (req, res, next) => {
     const productQuery = {
       isBlocked: false,
       category: { $in: categoryIds },
-      quantity: { $gt: 0 },
+      // Removed quantity: { $gt: 0 } to include products with quantity = 0
     };
 
     // Apply search filter
@@ -156,6 +156,7 @@ const loadShopPage = async (req, res, next) => {
     console.log('Query Parameters:', req.query);
     console.log('Product Query:', productQuery);
     console.log('Products Found:', products.length);
+    console.log('Products:', products.map(p => ({ id: p._id, name: p.productName, quantity: p.quantity })));
     console.log('Variables passed to template:', { query, selectedCategory: category, selectedBrand: brand, gt, lt, sort });
 
     return res.render('shop', {
@@ -172,8 +173,8 @@ const loadShopPage = async (req, res, next) => {
       selectedCategory: category || null,
       selectedBrand: brand || null,
       sort: sort || '',
-      gt: gt || '', // Ensure gt is passed
-      lt: lt || '', // Ensure lt is passed
+      gt: gt || '',
+      lt: lt || '',
     });
   } catch (error) {
     console.error('Error in loadShopPage:', error);
